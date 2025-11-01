@@ -1,80 +1,80 @@
 from dataclasses import dataclass
 import math
+
 @dataclass
 class Tile:
-    tipo: str #ex: chao, parede, lama, porta, etc
-    custo_tempo: float #peso
-    dano_hp: int
-    passavel: bool
+    Tipo: str          # ex: Chao, Parede, Lama, Porta, etc
+    CustoTempo: float  # peso
+    DanoHp: int
+    Passavel: bool
 
-#Instancias do tile:
-parede = Tile(
-    tipo = "Parede",
-    custo_tempo = math.inf,
-    dano_hp = 0,
-    passavel = False
+# Instâncias do tile
+Parede = Tile(
+    Tipo="Parede",
+    CustoTempo=math.inf,
+    DanoHp=0,
+    Passavel=False
 )
 
-chao = Tile(
-    tipo = "Chao",
-    custo_tempo = 1.0,
-    dano_hp = 0,
-    passavel = True
+Chao = Tile(
+    Tipo="Chao",
+    CustoTempo=1.0,
+    DanoHp=0,
+    Passavel=True
 )
 
-lama = Tile(
-    tipo = "Lama",
-    custo_tempo = 5.0,
-    dano_hp = 0,
-    passavel = True
+Lama = Tile(
+    Tipo="Lama",
+    CustoTempo=5.0,
+    DanoHp=0,
+    Passavel=True
 )
 
-lava = Tile(
-    tipo = "Lava",
-    custo_tempo = 1.0,
-    dano_hp = -20,
-    passavel = True
+Lava = Tile(
+    Tipo="Lava",
+    CustoTempo=1.0,
+    DanoHp=-20,
+    Passavel=True
 )
 
-espinhos = Tile(
-    tipo = "Espinhos",
-    custo_tempo = 1.0,
-    dano_hp = -20,
-    passavel = True
+Espinhos = Tile(
+    Tipo="Espinhos",
+    CustoTempo=1.0,
+    DanoHp=-20,
+    Passavel=True
 )
 
-porta = Tile(
-    tipo = "Porta",
-    custo_tempo = math.inf,
-    dano_hp = 0,
-    passavel = True
+Porta = Tile(
+    Tipo="Porta",
+    CustoTempo=math.inf,
+    DanoHp=0,
+    Passavel=True
 )
 
-escada_subir = Tile(
-    tipo = "Escada",
-    custo_tempo = 6.0,
-    dano_hp = 0,
-    passavel = True
+EscadaSubir = Tile(
+    Tipo="Escada",
+    CustoTempo=6.0,
+    DanoHp=0,
+    Passavel=True
 )
 
-escada_descer = Tile(
-    tipo = "Escada",
-    custo_tempo = 1.0,
-    dano_hp = 0,
-    passavel = True
+EscadaDescer = Tile(
+    Tipo="Escada",
+    CustoTempo=1.0,
+    DanoHp=0,
+    Passavel=True
 )
 
-torre = Tile(
-    tipo = "Torre",
-    custo_tempo = 1.0,
-    dano_hp = 0,
-    passavel = True
+Torre = Tile(
+    Tipo="Torre",
+    CustoTempo=1.0,
+    DanoHp=0,
+    Passavel=True
 )
 
-terminal = Tile(
-    tipo = "Terminal",
-    custo_tempo = 1.0,
-    dano_hp = 0,
-    passavel = True
+Terminal = Tile(
+    Tipo="Terminal",
+    CustoTempo=1.0,
+    DanoHp=0,
+    Passavel=True
 )
-

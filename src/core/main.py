@@ -1,15 +1,15 @@
-from world import map
+from world import world_map
 
 def main():
-    #Faz o Grid
-    grid = map.gera_grid()
-    
-    #Gera o labirinto
-    
-    map.gera_labirinto_dfs(grid, 1, 1)
-    
-    #Visualização
-    map.imprimir_grid(grid)
+    """Executa a geração e visualização do labirinto."""
+    # 1. Cria o grid
+    grid = world_map.gerar_grid()
+
+    # 2. Gera o labirinto usando DFS
+    world_map.gerar_labirinto(grid, inicio=(1, 1))
+
+    # 3. Exibe o labirinto no console
+    world_map.imprimir_grid(grid)
 
 if __name__ == "__main__":
     main()
