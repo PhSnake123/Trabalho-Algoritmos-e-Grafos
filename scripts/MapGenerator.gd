@@ -64,3 +64,22 @@ func _cavar_caminho(grid, pos1, pos2):
 	var meio_y = (pos1.y + pos2.y) / 2
 	grid[meio_y][meio_x] = TileType.CHAO
 	_marcar_como_chao(grid, pos2.x, pos2.y)
+
+# Esta função cria atalhos e loops, quebrando paredes internas.
+func quebrar_paredes_internas(grid, porcentagem_quebra = 0.15):
+	# Itera pelo grid, mas evita as bordas externas (range 1 até -1)
+	for y in range(1, ALTURA - 1):
+		for x in range(1, LARGURA - 1):
+			
+			# Se este tile for uma parede, veja se é uma "parede interna"
+			if grid[y][x] == TileType.PAREDE:
+				
+				# Checa se é uma parede "horizontal" (chão em cima e embaixo)
+				if grid[y-1][x] == TileType.CHAO and grid[y+1][x] == TileType.CHAO:
+					if randf() < porcentagem_quebra: # randf() = float aleatório 0.0 a 1.0
+						grid[y][x] = TileType.CHAO
+				
+				# Checa se é uma parede "vertical" (chão à esquerda e à direita)
+				elif grid[y][x-1] == TileType.CHAO and grid[y][x+1] == TileType.CHAO:
+					if randf() < porcentagem_quebra:
+						grid[y][x] = TileType.CHAO

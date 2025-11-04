@@ -1,6 +1,8 @@
 # res://scripts/Main.gd
 extends Node2D
 
+@export var fog_enabled := true
+
 # 1. Carrega o script de lógica
 const MapGenerator = preload("res://scripts/MapGenerator.gd")
 const TILE_SIZE := 16
@@ -8,16 +10,24 @@ const TILE_SIZE := 16
 # 2. Referência aos nós da cena
 @onready var tile_map = $TileMap
 @onready var tile_map_fog = $TileMap_Fog
+@onready var tile_map_path = $TileMap_Path
 @onready var camera: Camera2D = $Player/Camera2D
 
 # 3. IDs dos Tiles
 const ID_PAREDE = 0
 const ID_CHAO = 1
+const ID_SAIDA = 2
 const ID_FOG = 0
+const ID_CAMINHO = 0
 
 # 4. Dados do mapa
 var map_data = []
 var fog_logic: FogOfWar
+var grafo: Graph
+var dijkstra: Dijkstra
+var vertice_fim: Vector2i
+var camera_zoom_X = 3.0
+var camera_zoom_Y = 3.0
 
 # Esta função roda quando o jogo começa
 func _ready():
@@ -28,15 +38,34 @@ func _ready():
 	map_data = map_generator.gerar_grid()
 	map_generator.gerar_labirinto_dfs(map_data, 1, 1) # Começa a cavar em (1, 1)
 	
-	# 7. Desenha o resultado visual
+	# 6.5. Quebra paredes para criar loops e complexidade
+	map_generator.quebrar_paredes_internas(map_data, 0.15) # (Use 0.2 para 20%, etc)
+	
+	# 7. Cria o grafo a partir do mapa
+	grafo = Graph.new(map_data)
+	
+	# 8. Cria o Dijkstra e encontra o ponto final
+	dijkstra = Dijkstra.new(grafo)
+	var vertice_inicio = Vector2i(1, 1) # Posição inicial do Player
+	vertice_fim = dijkstra.encontrar_vertice_final(vertice_inicio)
+	
+	print("Vértice inicial definido em: ", vertice_inicio)
+	print("Vértice final definido em: ", vertice_fim)
+	
+	# 9. Desenha o resultado visual
 	_draw_map()
+	
+	# _desenhar_caminho_minimo(vertice_inicio, vertice_fim)
+	
 	_setup_camera()
 	
-	# 8. Cria a instância da lógica da névoa
+	# 10. Cria a instância da lógica da névoa
 	fog_logic = FogOfWar.new(MapGenerator.LARGURA, MapGenerator.ALTURA, 3) # Raio de visão 3
 
-	# 9. Desenha a névoa inicial (tudo oculto)
-	_draw_fog()
+	# 11. Verifica o interruptor.
+	if not fog_enabled:
+		tile_map_fog.hide()
+	#_draw_fog()
 	# --- Fim da seção nova ---
 
 
@@ -63,6 +92,9 @@ func _draw_fog():
 # --- Atualiza e Redesenha a Névoa ---
 # Esta função será chamada pelo Player
 func update_fog(player_grid_pos: Vector2i):
+	# Não desenha a fog se o interruptor estiver ligado.
+	if not fog_enabled:
+		return
 	# 1. Manda a lógica revelar a nova área
 	# (Passamos o map_data para ele saber onde estão as paredes)
 	fog_logic.revelar_area(player_grid_pos.x, player_grid_pos.y, map_data)
@@ -80,9 +112,14 @@ func _draw_map():
 			var tile_tipo = map_data[y][x]
 			var tile_pos = Vector2i(x, y)
 			
-			if tile_tipo == MapGenerator.TileType.PAREDE:
+			if tile_pos == vertice_fim:
+				# Desenha a saída
+				tile_map.set_cell(0, tile_pos, ID_SAIDA, Vector2i(0, 0))
+			elif tile_tipo == MapGenerator.TileType.PAREDE:
+				# Desenha a parede
 				tile_map.set_cell(0, tile_pos, ID_PAREDE, Vector2i(0, 0))
 			else:
+				# Desenha o chão
 				tile_map.set_cell(0, tile_pos, ID_CHAO, Vector2i(0, 0))
 
 
@@ -101,7 +138,7 @@ func _setup_camera():
 	# 1. Define o zoom desejado
 	# Valores maiores = mais perto.
 	# (Tente 1.0 para 1:1, ou 2.0, 3.0 para um look mais "pixelado")
-	camera.zoom = Vector2(3.0, 3.0)
+	camera.zoom = Vector2(camera_zoom_X, camera_zoom_Y)
 	
 	# 2. Calcula o tamanho total do mapa em pixels 
 	var map_size_pixels = Vector2(MapGenerator.LARGURA, MapGenerator.ALTURA) * TILE_SIZE
@@ -113,6 +150,26 @@ func _setup_camera():
 	camera.limit_top = 0
 	camera.limit_right = map_size_pixels.x
 	camera.limit_bottom = map_size_pixels.y
+
+func _desenhar_caminho_minimo(inicio: Vector2i, fim: Vector2i):
+	# 1. Limpa o caminho antigo
+	tile_map_path.clear()
+	
+	# 2. Pede ao Dijkstra para construir o caminho
+	var caminho_encontrado = dijkstra.reconstruir_caminho(inicio, fim)
+	
+	if caminho_encontrado.is_empty():
+		print("FALHA AO DESENHAR: Caminho mínimo não pôde ser reconstruído.")
+		return
+		
+	# 3. Pega os dados do pincel do caminho
+	var path_source_id = ID_CAMINHO
+	var path_atlas_coord = Vector2i(0, 0) # Assumindo (0,0)
+	
+	# 4. Desenha cada tile do caminho (exceto o início e o fim)
+	for i in range(1, caminho_encontrado.size() - 1):
+		var pos = caminho_encontrado[i]
+		tile_map_path.set_cell(0, pos, path_source_id, path_atlas_coord)
 
 #Função setup camera antiga
 
