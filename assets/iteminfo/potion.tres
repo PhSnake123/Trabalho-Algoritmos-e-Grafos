@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://cow4da02a7s"]
+
+[ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_qdb6v"]
+[ext_resource type="Texture2D" uid="uid://kk55aibbw1q" path="res://assets/UI/potion_small.png" id="2_718pt"]
+
+[resource]
+script = ExtResource("1_qdb6v")
+nome_item = "Poção"
+descricao = "Recupera 20 de vida."
+tipo_item = 5
+efeito = "CURA_HP"
+valor_efeito = 20.0
+textura_icon = ExtResource("2_718pt")
+metadata/_custom_type_script = "uid://d01dm40km4s0s"

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://20bwobltdapx"]
+
+[ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_ksuql"]
+[ext_resource type="Texture2D" uid="uid://degijigyqstb1" path="res://assets/UI/boots.png" id="2_vlrgl"]
+
+[resource]
+script = ExtResource("1_ksuql")
+nome_item = "Bota"
+descricao = "Diminui tempo de travessia para tiles do tipo lama e dano."
+tipo_item = 3
+efeito = "EQUIP_BOTAS"
+valor_efeito = 2.0
+durabilidade = 5
+textura_icon = ExtResource("2_vlrgl")
+metadata/_custom_type_script = "uid://d01dm40km4s0s"
