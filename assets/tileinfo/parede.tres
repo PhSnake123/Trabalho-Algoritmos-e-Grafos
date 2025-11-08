@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="MapTileData" load_steps=2 format=3 uid="uid://dkdyyfut74ngw"]
+
+[ext_resource type="Script" uid="uid://df1qp63ebn5q8" path="res://scripts/MapTileData.gd" id="1_lg6ve"]
+
+[resource]
+script = ExtResource("1_lg6ve")
+tipo = "Parede"
+custo_tempo = 9999.0
+passavel = false
+metadata/_custom_type_script = "uid://df1qp63ebn5q8"

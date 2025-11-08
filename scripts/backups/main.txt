@@ -73,11 +73,11 @@ func _ready():
 
 	# 6. DESENHA E CONFIGURA O RESTO
 	_draw_map()
-	#_desenhar_caminho_minimo(vertice_inicio, vertice_fim)
+	_desenhar_caminho_minimo(vertice_inicio, vertice_fim)
 	_setup_camera()
 	
-	# 7. CONFIGURA A NÉVOA. Ajustar campo de visão mexendo no último número.
-	fog_logic = FogOfWar.new(MapGenerator.LARGURA, MapGenerator.ALTURA, 10)
+	# 7. CONFIGURA A NÉVOA
+	fog_logic = FogOfWar.new(MapGenerator.LARGURA, MapGenerator.ALTURA, 3)
 	if not fog_enabled:
 		tile_map_fog.hide()
 
@@ -191,15 +191,8 @@ func _desenhar_caminho_minimo(inicio: Vector2i, fim: Vector2i):
 		var pos = caminho_encontrado[i]
 		tile_map_path.set_cell(0, pos, path_source_id, path_atlas_coord)
 
-func get_tile_data(grid_pos: Vector2i) -> MapTileData:
-	if grid_pos.x < 0 or grid_pos.x >= MapGenerator.LARGURA:
-		return null # Fora dos limites
-	if grid_pos.y < 0 or grid_pos.y >= MapGenerator.ALTURA:
-		return null # Fora dos limites
-
-	return map_data[grid_pos.y][grid_pos.x]
-
 #Função setup camera antiga
+
 #func _setup_camera():
 #	var viewport_size = get_viewport().get_visible_rect().size
 #	var map_size_pixels = Vector2(MapGenerator.LARGURA, MapGenerator.ALTURA) * TILE_SIZE
