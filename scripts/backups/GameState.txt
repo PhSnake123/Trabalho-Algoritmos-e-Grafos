@@ -8,7 +8,7 @@ var vida_jogador: int = 100       # Valor inicial padrão
 
 # O inventário será um Resource
 # Por enquanto, apenas declaramos a variável.
-var inventario_jogador: Inventory
+var inventario_jogador: Resource # = preload("res://inventory.tres") (quando existir)
 
 # Arrays para rastrear o movimento e o caminho ideal
 var caminho_jogador: Array[Vector2i] = []
@@ -50,12 +50,9 @@ func reset_run_state():
 	terminais_ativos = 0
 	terminais_necessarios = 0
 	
-	# Lógica do inventário
-	if inventario_jogador:
-		inventario_jogador.clear_items()
-	else:
-		# Cria a nova instância do inventário
-		inventario_jogador = Inventory.new() 
+	# Lógica do inventário (Quando Inventory.gd da Fase 1.2 existir)
+	# if inventario_jogador:
+	#    inventario_jogador.clear_items() 
 	
 	print("GameState: Estado da run resetado.")
 
