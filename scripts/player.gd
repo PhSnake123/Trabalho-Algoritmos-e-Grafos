@@ -76,16 +76,15 @@ func move_towards_target(delta):
 		var tile_data: MapTileData = main_script.get_tile_data(grid_pos)
 
 		if tile_data:
-			# 2. Adiciona o custo de tempo ao GameState (e printa)
-			# (O GameState ainda não existe, mas vamos fingir que sim)
-			# GameState.tempo_jogador += tile_data.custo_tempo
-			# print("Tempo Acumulado: ", GameState.tempo_jogador)
+			#2. Adiciona o custo de tempo ao GameState (e printa)
+			Game_State.tempo_jogador += tile_data.custo_tempo
+			print("Tempo Acumulado: ", Game_State.tempo_jogador)
 
 			# 3. Aplica dano (e printa)
 			if tile_data.dano_hp > 0:
-				# GameState.vida_jogador -= tile_data.dano_hp
+				Game_State.vida_jogador -= tile_data.dano_hp
 				print("DANO: %s! Você pisou em '%s'." % [tile_data.dano_hp, tile_data.tipo])
-				# print("Vida restante: ", GameState.vida_jogador)
+				print("Vida restante: ", Game_State.vida_jogador)
 		# --- Atualiza a névoa ---
 		# Avisa o Main que chegamos em um novo tile
 		main_script.update_fog(grid_pos)
