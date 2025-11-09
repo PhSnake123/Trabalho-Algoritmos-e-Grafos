@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3 uid="uid://b71216r0fhp7t"]
+
+[ext_resource type="Script" uid="uid://dxpbcankcgevp" path="res://scripts/AudioManager.gd" id="1_hux41"]
+
+[node name="AudioManager" type="Node"]
+script = ExtResource("1_hux41")
+
+[node name="MusicPlayer" type="AudioStreamPlayer" parent="."]
+autoplay = true
+bus = &"Music"
+
+[node name="SFXPlayer" type="AudioStreamPlayer" parent="."]
+autoplay = true
+bus = &"SFX"

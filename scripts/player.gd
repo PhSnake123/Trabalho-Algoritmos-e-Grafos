@@ -1,6 +1,7 @@
 extends CharacterBody2D
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
+var sfx_teste = preload("res://Audio/sounds/hurt.wav") # SFX para o passo do jogador
 
 const TILE_SIZE := 16   # Tamanho de 1 tile
 const SPEED := 80.0    # Velocidade (pixels por segundo)
@@ -54,6 +55,7 @@ func start_moving(dir: Vector2):
 	var target_grid_pos = grid_pos + Vector2i(dir)
 
 	if main_script.is_tile_passable(target_grid_pos):
+		AudioManager.play_sfx(sfx_teste) #Chama o audio manager para executar o som do passo od jogador
 		grid_pos = target_grid_pos
 		move_dir = dir
 		moving = true
