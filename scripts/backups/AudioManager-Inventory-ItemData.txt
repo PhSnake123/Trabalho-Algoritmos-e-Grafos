@@ -1,0 +1,169 @@
+{AudioManager.gd}
+extends Node
+
+#Referência aos nós filhos que vamos criar na cena 
+@onready var music_player: AudioStreamPlayer = $MusicPlayer
+@onready var sfx_player: AudioStreamPlayer = $SFXPlayer
+
+"""
+Função para tocar música.
+Para a música atual e toca a nova.
+"""
+func play_music(music_stream: AudioStream):
+	if not music_stream:
+		print("AudioManager: Tentativa de tocar música nula.")
+		return
+		
+	# Para a música atual antes de tocar a nova
+	if music_player.playing:
+		music_player.stop()
+		
+	music_player.stream = music_stream
+	# O ideal é que a música seja importada com "Loop" ativado
+	music_player.play()
+
+"""
+Função para tocar efeitos sonoros.
+"""
+func play_sfx(sfx_stream: AudioStream):
+	if not sfx_stream:
+		print("AudioManager: Tentativa de tocar SFX nulo.")
+		return
+
+	# Toca o som no player de SFX
+	# NOTA: Como o plano especifica um único nó "SFXPlayer", 
+	# este método vai cortar qualquer SFX que já estiver tocando.
+	# (Para o futuro, a gente pode melhorar isso com um "pool" de players,
+	# mas por enquanto, vamos deixar assim
+	sfx_player.stream = sfx_stream
+	sfx_player.play()
+
+
+{Inventory.gd}
+# res://scripts/resources/Inventory.gd
+class_name Inventory
+extends Resource
+
+# (Fase 1.2)
+# Estes sinais são para a UI (Fase 5).
+# Quando um item for adicionado, a UI vai ouvir este sinal
+# e adicionar um ícone novo na tela.
+signal item_adicionado(item: ItemData)
+signal item_removido(item: ItemData)
+
+# O array que armazena os dados dos nossos itens.
+# Ao usar @export, poderemos ver os itens no Inspetor (ótimo para debug).
+@export var items: Array[ItemData] = []
+
+
+# --- Funções Principais do Inventário ---
+
+"""
+Adiciona um item (Resource) ao array e avisa a UI.
+"""
+func adicionar_item(item: ItemData):
+	if not item:
+		print("WARNING - Inventory: Tentativa de adicionar item nulo.")
+		return
+		
+	items.push_back(item)
+	item_adicionado.emit(item)
+	print("Inventory: '", item.nome_item, "' adicionado.")
+
+
+"""
+Remove um item do array e avisa a UI.
+"""
+func remover_item(item: ItemData):
+	if not item:
+		print("WARNING - Inventory: Tentativa de remover item nulo.")
+		return
+		
+	if items.has(item):
+		items.erase(item)
+		item_removido.emit(item)
+		print("Inventory: '", item.nome_item, "' removido.")
+	else:
+		print("WARNING - Inventory: Tentativa de remover '", item.nome_item, "' que não existe.")
+
+
+"""
+Limpa todos os itens. (Usado no reset_run_state)
+"""
+func clear_items():
+	items.clear()
+	# (Opcional: emitir sinais de remoção para a UI aqui)
+	print("Inventory: Inventário limpo.")
+
+
+# --- Funções de Busca (Helpers) ---
+
+"""
+Verifica se o inventário contém pelo menos um item de um tipo específico.
+Ex: tem_item_por_tipo(ItemData.ItemTipo.CHAVE)
+"""
+func tem_item_por_tipo(tipo: ItemData.ItemTipo) -> bool:
+	for item in items:
+		if item.tipo_item == tipo:
+			return true # Encontrou!
+	return false # Não encontrou
+
+
+"""
+Retorna o *primeiro* item encontrado de um tipo específico.
+Útil para pegar a chave para abrir a porta.
+"""
+func get_item_por_tipo(tipo: ItemData.ItemTipo) -> ItemData:
+	for item in items:
+		if item.tipo_item == tipo:
+			return item # Retorna o Resource ItemData
+	return null # Não encontrou
+
+{ItemData.gd}
+# res://scripts/resources/ItemData.gd
+class_name ItemData
+extends Resource
+
+# (Fase 1.1) Enum para categorizar os itens
+enum ItemTipo { 
+	GENERICO, 
+	CHAVE, 
+	POTION, 
+	EQUIP, 
+	OBJETIVO, 
+	DRONE
+}
+
+# (Fase 1.1) Strings para definir o que um item faz
+# Usamos strings para flexibilidade. O 'main.gd' ou 'player.gd'
+# vai ler esta string e decidir o que fazer.
+const EFEITO_CURA_HP = "CURA_HP"
+const EFEITO_ABRE_PORTA = "ABRE_PORTA"
+# Efeitos dos Drones
+const EFEITO_DRONE_RECON_BFS = "DRONE_RECON_BFS"
+const EFEITO_DRONE_PATH_DIJKSTRA = "DRONE_PATH_DIJKSTRA"
+const EFEITO_DRONE_PATH_ASTAR = "DRONE_PATH_ASTAR"
+const EFEITO_DRONE_PATH_BELLMAN = "DRONE_PATH_BELLMAN"
+const EFEITO_DRONE_GEO_BFS = "DRONE_GEO_BFS"
+const EFEITO_DRONE_ANALISE_PONTE = "DRONE_ANALISE_PONTE"
+
+
+# --- Propriedades do Item ---
+# Estas variáveis aparecerão no Inspetor do Godot
+# quando criarmos os arquivos .tres
+
+@export var nome_item: String = "Item"
+
+@export_multiline var descricao: String = "Uma breve descrição do item."
+
+@export var tipo_item: ItemTipo = ItemTipo.GENERICO
+
+@export var efeito: String = "" # Ex: "CURA_HP" ou "DRONE_RECON_BFS"
+
+# Um valor numérico para o efeito (ex: 20.0 para CURA_HP, ou 5.0 para raio do drone)
+@export var valor_efeito: float = 0.0 
+
+# Quantas vezes pode ser usado. -1 = infinito (equipamento), 1 = consumível
+@export var durabilidade: int = 1 
+
+@export var textura_icon: Texture2D # O ícone que aparecerá no HUD

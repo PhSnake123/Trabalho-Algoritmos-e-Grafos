@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3 uid="uid://bu1k71g557xsf"]
+
+[ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_0nno3"]
+
+[resource]
+script = ExtResource("1_0nno3")
+nome_item = "Terminal de Save"
+descricao = "Salva progresso atual. Uso único."
+efeito = "SAVE_GAME"
+metadata/_custom_type_script = "uid://d01dm40km4s0s"

@@ -18,7 +18,7 @@ var target_pos := Vector2.ZERO # Alvo em pixels
 func _ready():
 	global_position = (Vector2(grid_pos) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
 	target_pos = global_position # Define o alvo inicial
-	main_script.call_deferred("update_fog", grid_pos)
+	SaveManager.register_player(self) # Chama o save manager
 
 
 func _physics_process(delta):
@@ -56,6 +56,18 @@ func start_moving(dir: Vector2):
 
 	if main_script.is_tile_passable(target_grid_pos):
 		AudioManager.play_sfx(sfx_teste) #Chama o audio manager para executar o som do passo od jogador
+		
+		# --- LOG DE AÇÃO (PARA ITEM DE DESFAZER AÇÕES) ---
+		# Salva o estado do jogador antes de se mover.
+		# O 'duplicate(true)' é essencial para copiar o inventário.
+		var player_snapshot = {
+			"pos": grid_pos,
+			"hp": Game_State.vida_jogador,
+			"time": Game_State.tempo_jogador,
+			"inventory": Game_State.inventario_jogador.items.duplicate(true)
+		}
+		Game_State.log_player_action(player_snapshot)
+		
 		grid_pos = target_grid_pos
 		move_dir = dir
 		moving = true
@@ -74,9 +86,14 @@ func move_towards_target(delta):
 		global_position = target_pos
 		moving = false
 		anim.play("idle_" + last_facing)
+		
+		# --- LOG DE POSIÇÃO (PARA MAPA FINAL) ---
+		# Registra a posição no GameState *após* chegar.
+		Game_State.log_player_position(grid_pos)
+		
 		# 1. Pega os dados do tile onde chegamos
 		var tile_data: MapTileData = main_script.get_tile_data(grid_pos)
-
+		
 		if tile_data:
 			#2. Adiciona o custo de tempo ao GameState (e printa)
 			Game_State.tempo_jogador += tile_data.custo_tempo
@@ -87,8 +104,19 @@ func move_towards_target(delta):
 				Game_State.vida_jogador -= tile_data.dano_hp
 				print("DANO: %s! Você pisou em '%s'." % [tile_data.dano_hp, tile_data.tipo])
 				print("Vida restante: ", Game_State.vida_jogador)
+			
 		# --- Atualiza a névoa ---
 		# Avisa o Main que chegamos em um novo tile
 		main_script.update_fog(grid_pos)
 	else:
 		global_position += move_dir * step
+
+# Chamada pelo SaveManager para forçar o reset da máquina de estado do jogador
+func reset_state_on_load():
+	moving = false
+	target_pos = global_position
+	move_dir = Vector2.ZERO
+	
+	# Garante que 'anim' (AnimatedSprite2D) esteja pronto antes de usá-lo
+	if is_node_ready() and anim:
+		anim.play("idle_" + last_facing)

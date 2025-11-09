@@ -2,6 +2,8 @@
 extends Node2D
 
 @export var fog_enabled := true
+# --- Carrega a Musica---
+var musica_teste = preload("res://Audio/music/time_for_adventure.mp3") # <-- Mude o nome do arquivo
 
 # 1. Carrega o script de lógica
 const TILE_SIZE := 16
@@ -34,6 +36,8 @@ var camera_zoom_Y = 1.3
 
 func _ready():
 	var vertice_inicio = Vector2i(1, 1) # Posição inicial do Player
+	#Chamando o Audio manager
+	AudioManager.play_music(musica_teste)
 
 	# 1. GERAÇÃO DO MAPA BASE
 	var map_generator = MapGenerator.new()
