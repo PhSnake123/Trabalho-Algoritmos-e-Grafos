@@ -1,7 +1,7 @@
 # res://scripts/Main.gd
 extends Node2D
 
-@export var fog_enabled := true
+@export var fog_enabled := false
 # --- Carrega a Musica---
 var musica_teste = preload("res://Audio/music/time_for_adventure.mp3") # <-- Mude o nome do arquivo
 
@@ -36,6 +36,19 @@ var save_point_pos
 var camera_zoom_X = 2
 var camera_zoom_Y = 2
 
+#Variáveis para o AStar
+var astar: AStar
+var caminho_ativo_info = {
+	"ativo": false,
+	"passos_restantes": 0,
+	"passos_total": 0,
+	"eh_temporario": false
+}
+
+# Dicionário de caminhos
+# Chave: ID único (String/Int) | Valor: Dictionary com dados do caminho
+var caminhos_ativos: Dictionary = {} 
+var _proximo_id_caminho: int = 0 # Contador para gerar IDs únicos
 # Esta função roda quando o jogo começa
 
 func _ready():
@@ -49,7 +62,7 @@ func _ready():
 	var map_generator = MapGenerator.new()
 	map_data = map_generator.gerar_grid()
 	map_generator.gerar_labirinto_dfs(map_data, 1, 1)
-	map_generator.quebrar_paredes_internas(map_data, 0.05)
+	map_generator.quebrar_paredes_internas(map_data, 0.3)
 
 	# 2. COLOCA OS TILES ESPECIAIS
 	map_generator.adicionar_terrenos_especiais(
@@ -59,13 +72,14 @@ func _ready():
 		vertice_inicio # total_portas_faceis (preenchimento)
 	)
 	
-	# 4. CRIA O GRAFO "FINAL" E O DIJKSTRA
+	# 4. CRIA O GRAFO "FINAL" E OS ALGORITMOS
 	# Agora que o map_data está finalizado (com Portas e Lava),
 	# criamos o grafo oficial que o jogo usará.
 	# Como as Portas são 'passavel = false', o Dijkstra
 	# calculará o caminho ao redor delas.
 	grafo = Graph.new(map_data)
 	dijkstra = Dijkstra.new(grafo)
+	astar = AStar.new(grafo)
 
 	# 5. ENCONTRA O FIM E O "TEMPO PAR"
 	vertice_fim = dijkstra.encontrar_vertice_final(vertice_inicio)
@@ -143,9 +157,13 @@ func _draw_fog():
 # --- Atualiza e Redesenha a Névoa ---
 # Esta função será chamada pelo Player
 func update_fog(player_grid_pos: Vector2i):
+	# 1. Processa o passo do jogador (Drones, heat map, etc)
+	processar_passo_jogador()
+	
 	# Não desenha a fog se o interruptor estiver ligado.
 	if not fog_enabled:
 		return
+	
 	# 1. Manda a lógica revelar a nova área
 	# (Passamos o map_data para ele saber onde estão as paredes)
 	fog_logic.revelar_area(player_grid_pos.x, player_grid_pos.y, map_data)
@@ -242,6 +260,118 @@ func get_tile_data(grid_pos: Vector2i) -> MapTileData:
 
 	return map_data[grid_pos.y][grid_pos.x]
 
+# Registra o caminho no dicionário e força o redesenho
+func _registrar_novo_caminho(caminho_completo: Array[Vector2i], cor: Color, max_tiles: int, duracao: int, temporario: bool):
+	_proximo_id_caminho += 1
+	var id = _proximo_id_caminho
+	
+	# Filtra o caminho para respeitar o alcance máximo AGORA
+	var caminho_filtrado: Array[Vector2i] = []
+	var limite = caminho_completo.size()
+	if max_tiles != -1 and max_tiles < limite:
+		limite = max_tiles
+	
+	# Começa do índice 1 para não pintar o pé do jogador
+	for i in range(1, limite):
+		caminho_filtrado.push_back(caminho_completo[i])
+	
+	# Cria uma instância dedicada de TileMap para este caminho
+	var visual_node = tile_map_path.duplicate()
+	visual_node.name = "DronePath_" + str(id)
+	visual_node.modulate = cor # Define a cor SÓ para este caminho
+	visual_node.clear() # Garante que venha vazio
+	add_child(visual_node) # Adiciona à cena
+	
+	# Desenha os tiles neste novo nó IMEDIATAMENTE
+	var path_source_id = ID_CAMINHO
+	var path_atlas_coord = Vector2i(0, 0)
+	for pos in caminho_filtrado:
+		visual_node.set_cell(0, pos, path_source_id, path_atlas_coord)
+		
+	# Guarda os dados
+	caminhos_ativos[id] = {
+		"tiles": caminho_filtrado,
+		"cor": cor,
+		"duracao_atual": duracao,
+		"duracao_max": duracao,
+		"temporario": temporario,
+		"node": visual_node
+	}
+	
+	print("Drone: Caminho ID %s registrado." % id)
+
+func processar_passo_jogador():
+	if caminhos_ativos.is_empty():
+		return
+		
+	var ids_para_remover = []
+	
+	for id in caminhos_ativos:
+		var dados = caminhos_ativos[id]
+		
+		# Só processa se for temporário
+		if dados["temporario"]:
+			dados["duracao_atual"] -= 1
+			var node = dados["node"]
+			
+			# Se acabou o tempo
+			if dados["duracao_atual"] <= 0:
+				ids_para_remover.push_back(id)
+			else:
+				# Lógica de Fade-Out INDEPENDENTE
+				# Afeta apenas o nó deste drone específico
+				var alpha = float(dados["duracao_atual"]) / float(dados["duracao_max"])
+				if is_instance_valid(node):
+					node.modulate.a = alpha
+	
+	# Remove os expirados
+	for id in ids_para_remover:
+		_remover_caminho_visual(id)
+		print("Drone: Caminho ID %s expirou." % id)
+
+# Função auxiliar para limpar a sujeira
+func _remover_caminho_visual(id: int):
+	if caminhos_ativos.has(id):
+		var dados = caminhos_ativos[id]
+		var node = dados["node"]
+		
+		# Destrói o nó visual da cena
+		if is_instance_valid(node):
+			node.queue_free()
+			
+		caminhos_ativos.erase(id)
+
+func usar_item(item: ItemData):
+	print("Main: Processando item ", item.nome_item)
+	
+	# Variáveis que serão preenchidas baseadas no item
+	var algoritmo_para_usar = null
+	var cor_caminho = Color.WHITE
+	
+	match item.efeito:
+		ItemData.EFEITO_DRONE_PATH_ASTAR:
+			algoritmo_para_usar = astar
+			cor_caminho = Color.CYAN # Ciano para A*
+		ItemData.EFEITO_DRONE_PATH_DIJKSTRA:
+			algoritmo_para_usar = dijkstra
+			cor_caminho = Color.GREEN # Verde para Dijkstra
+	
+	# Se identificamos um algoritmo válido, executamos a lógica comum
+	if algoritmo_para_usar:
+		var caminho = algoritmo_para_usar.calcular_caminho(player.grid_pos, vertice_fim)
+		
+		if caminho.is_empty():
+			print("Drone: Caminho não encontrado!")
+			return
+			
+		# Define parâmetros baseados no TIPO do item
+		var eh_temporario = (item.tipo_item == ItemData.ItemTipo.DRONE_TEMPORARIO)
+		var duracao = int(item.valor_efeito) if eh_temporario else -1
+		var alcance = item.alcance_maximo
+		
+		# Registra e desenha
+		_registrar_novo_caminho(caminho, cor_caminho, alcance, duracao, eh_temporario)
+
 func _unhandled_input(event):
 	# Pressiona F5 para Salvar
 	if event.is_action_pressed("save"):
@@ -290,6 +420,92 @@ func _unhandled_input(event):
 		else:
 			print("DEBUG: Erro, get_tile_data() retornou null.")
 				
+# --- SISTEMA DE SAVE/LOAD DE CAMINHOS ---
+
+# Chamado pelo SaveManager para pegar os dados prontos para JSON
+func get_paths_save_data() -> Dictionary:
+	var save_data = {}
+	for id in caminhos_ativos:
+		var info = caminhos_ativos[id]
+		
+		# 1. Serializa o Array de Vector2i para Array de Arrays [x, y]
+		var tiles_coords = []
+		for pos in info["tiles"]:
+			tiles_coords.push_back([pos.x, pos.y])
+		
+		# 2. Serializa a Cor para String HTML (ex: "00ffff")
+		var cor_html = info["cor"].to_html()
+		
+		save_data[str(id)] = {
+			"tiles": tiles_coords,
+			"cor_html": cor_html,
+			"duracao_atual": info["duracao_atual"],
+			"duracao_max": info["duracao_max"],
+			"temporario": info["temporario"]
+		}
+	return save_data
+
+# Chamado pelo SaveManager para restaurar os caminhos
+func load_paths_save_data(data: Dictionary):
+	# 1. Limpa tudo que existe atualmente (Visual e Dados)
+	for id in caminhos_ativos:
+		var node = caminhos_ativos[id]["node"]
+		if is_instance_valid(node):
+			node.queue_free()
+	caminhos_ativos.clear()
+	_proximo_id_caminho = 0 
+	
+	# 2. Recria baseado no Save
+	for id_str in data:
+		var info = data[id_str]
+		
+		# Deserializa dados básicos
+		var tiles_vec: Array[Vector2i] = []
+		for coord in info["tiles"]:
+			tiles_vec.push_back(Vector2i(int(coord[0]), int(coord[1])))
+		var nova_cor = Color.html(info["cor_html"])
+		var dur_atual = int(info["duracao_atual"])
+		var dur_max = int(info["duracao_max"])
+		var is_temp = bool(info["temporario"])
+		
+		# --- RECRIAÇÃO VISUAL ---
+		# Aqui repetimos a lógica de criar o nó duplicado
+		var visual_node = tile_map_path.duplicate()
+		visual_node.name = "DronePath_Load_" + id_str
+		visual_node.modulate = nova_cor
+		
+		# Aplica o alpha correto se for temporário
+		if is_temp and dur_max > 0:
+			visual_node.modulate.a = float(dur_atual) / float(dur_max)
+		else:
+			visual_node.modulate.a = 1.0
+			
+		visual_node.clear()
+		add_child(visual_node)
+		
+		var path_source_id = ID_CAMINHO
+		var path_atlas_coord = Vector2i(0, 0)
+		for pos in tiles_vec:
+			visual_node.set_cell(0, pos, path_source_id, path_atlas_coord)
+		# ------------------------
+
+		# Atualiza ID
+		var id_int = int(id_str)
+		if id_int > _proximo_id_caminho:
+			_proximo_id_caminho = id_int
+			
+		# Salva no dicionário com a referência ao novo node
+		caminhos_ativos[id_int] = {
+			"tiles": tiles_vec,
+			"cor": nova_cor,
+			"duracao_atual": dur_atual,
+			"duracao_max": dur_max,
+			"temporario": is_temp,
+			"node": visual_node # <--- Importante
+		}
+	
+	print("Main: Caminhos recarregados com nós visuais independentes.")
+
 #Função setup camera antiga
 #func _setup_camera():
 #	var viewport_size = get_viewport().get_visible_rect().size

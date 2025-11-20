@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3 uid="uid://b1dmmik5qm0oe"]
+
+[ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_b6p2m"]
+
+[resource]
+script = ExtResource("1_b6p2m")
+nome_item = "Drone de Vanguarda"
+descricao = "Traça caminho temporário até a saída evitando tiles de dano."
+tipo_item = 6
+efeito = "DRONE_PATH_ASTAR"
+valor_efeito = 20.0
+alcance_maximo = -1
+metadata/_custom_type_script = "uid://d01dm40km4s0s"

@@ -127,3 +127,12 @@ func reconstruir_caminho(inicio: Vector2i, fim: Vector2i) -> Array[Vector2i]:
 	
 	# Este retorno agora funciona, pois 'caminho' foi inicializado corretamente.
 	return caminho
+
+# Função Wrapper para compatibilidade com o Main.gd
+# Assim, tanto A* quanto Dijkstra podem ser chamados do mesmo jeito.
+func calcular_caminho(inicio: Vector2i, fim: Vector2i) -> Array[Vector2i]:
+	# 1. Preenche os mapas de distância e predecessores
+	calcular_caminho_minimo(inicio)
+	
+	# 2. Reconstrói e retorna o array do caminho
+	return reconstruir_caminho(inicio, fim)

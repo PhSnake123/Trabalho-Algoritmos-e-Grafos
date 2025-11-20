@@ -8,8 +8,8 @@ const DANO: MapTileData = preload("res://assets/tileinfo/dano.tres")
 const BLOCK: MapTileData = preload("res://assets/tileinfo/bloco.tres")
 
 # 2. Constantes do 'world_map.py'
-const LARGURA = 51
-const ALTURA = 31
+const LARGURA = 43 #51
+const ALTURA = 33 #31
 
 # 3. Tradução do 'gerar_grid()'
 # Retorna um Array 2D preenchido com PAREDE

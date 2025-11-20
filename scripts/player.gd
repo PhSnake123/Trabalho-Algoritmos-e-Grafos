@@ -120,3 +120,37 @@ func reset_state_on_load():
 	# Garante que 'anim' (AnimatedSprite2D) esteja pronto antes de usá-lo
 	if is_node_ready() and anim:
 		anim.play("idle_" + last_facing)
+
+func _usar_drone_avancado(efeito: String, tipo: ItemData.ItemTipo):
+	var item = Game_State.inventario_jogador.get_item_especifico(efeito, tipo)
+	
+	if item:
+		print("Player: Usando item '%s'..." % item.nome_item)
+		main_script.usar_item(item)
+		
+		if item.durabilidade > 0:
+			item.durabilidade -= 1
+			if item.durabilidade <= 0:
+				Game_State.inventario_jogador.remover_item(item)
+	else:
+		print("Player: Item (Efeito: %s | Tipo: %s) não encontrado." % [efeito, tipo])
+		
+func _unhandled_input(event):
+	# Mantemos os inputs de movimento no _physics_process ou handle_input
+	# Mas ações pontuais (como apertar um botão uma vez) ficam ótimas aqui.
+	
+	# Tecla '1' -> Tenta usar o Drone A* (Vanguarda)
+	if event is InputEventKey and event.pressed and event.keycode == KEY_1:
+		# ERRO COMUM: Estar chamando _usar_drone_especifico(...)
+		# CORREÇÃO: Chamar _usar_drone_avancado(...)
+		_usar_drone_avancado(ItemData.EFEITO_DRONE_PATH_ASTAR, ItemData.ItemTipo.DRONE_TEMPORARIO)
+	
+	# Tecla '2' -> Drone Dijkstra (Permanente / Seguro)
+	if event is InputEventKey and event.pressed and event.keycode == KEY_2:
+		_usar_drone_avancado(ItemData.EFEITO_DRONE_PATH_DIJKSTRA, ItemData.ItemTipo.DRONE)
+	
+	# 3. Drone A* (Estratégico/Permanente) <--- NOVO
+	if event is InputEventKey and event.pressed and event.keycode == KEY_3:
+		_usar_drone_avancado(ItemData.EFEITO_DRONE_PATH_ASTAR, ItemData.ItemTipo.DRONE)
+	# if event.keycode == KEY_2:
+	#     _usar_drone_especifico(ItemData.EFEITO_DRONE_PATH_DIJKSTRA)

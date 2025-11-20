@@ -1,14 +1,20 @@
 # res://scripts/Graph.gd
 class_name Graph
 
-var largura: int = MapGenerator.LARGURA
-var altura: int = MapGenerator.ALTURA
+var largura: int
+var altura: int
 var grid_logico: Array
 var adjacencias = {} # Nosso dicionário de adjacências
 
 # Construtor (como o __init__ do Python)
 func _init(p_grid_logico: Array):
 	self.grid_logico = p_grid_logico
+	# Detecta o tamanho automaticamente baseado no array que recebeu
+	self.altura = grid_logico.size()
+	if self.altura > 0:
+		self.largura = grid_logico[0].size()
+	else:
+		self.largura = 0
 	_construir_grafo()
 
 # Constrói a lista de adjacências

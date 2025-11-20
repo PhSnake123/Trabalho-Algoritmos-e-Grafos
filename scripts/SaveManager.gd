@@ -131,7 +131,9 @@ func _get_current_game_state_dict() -> Dictionary:
 		# Serializa o mapa
 		"map_data": _serialize_map(main_ref.map_data),
 		# Fog é Array[Array[bool]], é seguro para JSON
-		"fog_data": main_ref.fog_logic.fog_data
+		"fog_data": main_ref.fog_logic.fog_data,
+		# --- Salva os caminhos dos drones ---
+		"active_paths": main_ref.get_paths_save_data()
 	}
 	
 	return data
@@ -217,6 +219,15 @@ func _apply_game_state_dict(data: Dictionary):
 	
 	# Deserializa a fog
 	main_ref.fog_logic.fog_data = w_data["fog_data"]
+	
+	# Carrega os caminhos dos drones
+	# Verificamos com .has() para compatibilidade com saves antigos que não tinham isso
+	if w_data.has("active_paths"):
+		main_ref.load_paths_save_data(w_data["active_paths"])
+	else:
+		# Se for um save antigo, garante que não tenha lixo na tela
+		main_ref.caminhos_ativos.clear()
+		main_ref.tile_map_path.clear()
 	
 	# 5. --- ESSENCIAL: REDESENHA TUDO! ---
 	main_ref._draw_map()
