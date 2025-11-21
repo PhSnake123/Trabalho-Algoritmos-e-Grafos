@@ -94,6 +94,7 @@ func start_moving(dir: Vector2):
 	else:
 		# Se bateu na parede
 		anim.play("idle_" + last_facing)
+		moving = false
 
 func move_towards_target(delta):
 	var step = SPEED * delta

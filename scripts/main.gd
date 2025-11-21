@@ -34,6 +34,7 @@ var map_data = []
 var fog_logic: FogOfWar
 var grafo: Graph
 var dijkstra: Dijkstra
+var bfs: BFS
 var vertice_fim: Vector2i
 var save_point_pos
 var camera_zoom_X = 2
@@ -61,7 +62,7 @@ func _ready():
 	map_generator.quebrar_paredes_internas(map_data, 0.3)
 
 	# 2. CONFIGURAÇÃO DO MODO DE JOGO
-	var modo_jogo = "MST" 
+	var modo_jogo = "NORMAL" 
 	print("--- MODO DE JOGO ATUAL: ", modo_jogo, " ---")
 	
 	# Reseta estado da saída
@@ -85,6 +86,7 @@ func _ready():
 	grafo = Graph.new(map_data)
 	dijkstra = Dijkstra.new(grafo)
 	astar = AStar.new(grafo)
+	bfs = BFS.new(grafo)
 	
 	# 4. CÁLCULO DE OBJETIVOS E TEMPO PAR
 	
@@ -132,13 +134,13 @@ func _ready():
 		print("Tempo PAR Ajustado (MST + Saída): ", custo_mst)
 		
 		# --- DESENHA A MST NO MAPA ---
-		_desenhar_mst(resultado_mst["arestas"])
+		#_desenhar_mst(resultado_mst["arestas"])
 		
 		# --- CORREÇÃO CRÍTICA 1: RESET DO DIJKSTRA ---
 		# Como rodamos o Dijkstra várias vezes acima (para os terminais), 
 		# precisamos rodar uma última vez do INÍCIO para garantir que
 		# a reconstrução do caminho do Save Point funcione.
-		dijkstra.calcular_caminho_minimo(vertice_inicio)
+		#dijkstra.calcular_caminho_minimo(vertice_inicio)
 
 	# 5. LÓGICA DO SAVE POINT
 	var caminho_minimo = dijkstra.reconstruir_caminho(vertice_inicio, vertice_fim)
@@ -173,6 +175,7 @@ func _ready():
 
 	update_fog(vertice_inicio)
 	SaveManager.save_auto_game()
+	#executar_teste_bfs()
 	print("Ready concluído.")
 
 func _draw_map():
@@ -479,3 +482,35 @@ func _desenhar_mst(arestas_abstratas: Array):
 		# Desenha o caminho no mapa
 		for pos in caminho:
 			mst_visual_node.set_cell(0, pos, path_source_id, path_atlas_coord)
+
+
+
+
+
+
+
+# --- TESTE TEMPORÁRIO BFS ---
+"""func executar_teste_bfs():
+	print("--- INICIANDO TESTE VISUAL DO BFS ---")
+	
+	# 1. Define origem e alcance
+	var centro = Vector2i(1, 1) # Começa onde o player nasce
+	var raio_teste = 20
+	
+	# 2. Roda o algoritmo
+	var tiles_alcance = bfs.obter_area_alcance(centro, raio_teste)
+	print("BFS: Encontrados ", tiles_alcance.size(), " tiles num raio de ", raio_teste)
+	
+	# 3. Desenha visualmente para conferirmos (usando o TileMap de Path)
+	# Vamos usar uma cor Magenta para diferenciar dos caminhos normais
+	var debug_node = tile_map_path.duplicate()
+	debug_node.name = "Debug_BFS_Area"
+	debug_node.modulate = Color.MAGENTA
+	debug_node.modulate.a = 0.6 # Transparente
+	add_child(debug_node)
+	
+	for pos in tiles_alcance:
+		# Usamos o ID 0 (Caminho) apenas para marcar o tile
+		debug_node.set_cell(0, pos, ID_CAMINHO, Vector2i(0,0))
+
+	print("BFS: Área desenhada em Magenta.")"""
