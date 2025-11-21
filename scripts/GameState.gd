@@ -71,9 +71,11 @@ func reset_run_state():
 	# <--- [NOVO] IMPLEMENTAÇÃO DRONE SCANNER: Item de Teste
 	# Certifique-se de criar este arquivo .tres conforme as instruções anteriores
 	var drone_scanner = load("res://assets/iteminfo/DRONE_SCANNER.tres")
-	if drone_scanner: 
-		inventario_jogador.adicionar_item(drone_scanner.duplicate())
-		print("GameState: Drone Scanner de teste adicionado.")
+	if drone_scanner: inventario_jogador.adicionar_item(drone_scanner.duplicate())
+	
+	var drone_limpeza = load("res://assets/iteminfo/DroneTerraformer.tres")
+	if drone_limpeza: inventario_jogador.adicionar_item(drone_limpeza.duplicate())	
+	
 	# ------------------------------------------------------
 
 	print("GameState: Estado da run resetado.")

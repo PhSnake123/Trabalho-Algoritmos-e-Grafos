@@ -292,7 +292,7 @@ func update_fog(player_grid_pos: Vector2i):
 	# --- CORREÇÃO 3: MENSAGEM DE VITÓRIA ---
 	if player_grid_pos == vertice_fim and saida_destrancada:
 		print(">>> PARABÉNS! VOCÊ CHEGOU À SAÍDA! <<<")
-		OS.alert("Você escapou do labirinto!\nPontuação Final: " + str(Game_State.tempo_jogador), "VITÓRIA!")
+		# OS.alert("Você escapou do labirinto!\nPontuação Final: " + str(Game_State.tempo_jogador), "VITÓRIA!")
 		# Aqui você pode pausar a tree se quiser:
 		# get_tree().paused = true
 
@@ -437,6 +437,53 @@ func ativar_drone_scanner(origem: Vector2i, alcance: int, _duracao: float):
 	
 	scanners_ativos.push_back(novo_scanner)
 
+#Lógica do Drone Terraformer (Limpa Lava/Lama)
+func ativar_drone_terraformer(origem: Vector2i, alcance: int):
+	# 1. Pega os tiles na área geométrica (independente do custo)
+	var area_tiles = bfs.obter_area_alcance(origem, alcance)
+	var tiles_alterados = 0
+	
+	print("Terraformer: Escaneando %d tiles ao redor de %s..." % [area_tiles.size(), origem])
+	
+	for pos in area_tiles:
+		# Pega o dado atual do tile
+		var tile_atual: MapTileData = map_data[pos.y][pos.x]
+		
+		# CRITÉRIO DE LIMPEZA:
+		# É do tipo "Dano"? OU Tem custo alto (Lama)? E não é parede/porta?
+		if tile_atual.passavel and (tile_atual.tipo == "Dano" or tile_atual.custo_tempo > 1.0):
+			
+			# 2. IMPORTANTE: Duplicar o recurso para não alterar todos os tiles iguais do mapa
+			var tile_novo = tile_atual.duplicate()
+			
+			# 3. Aplica as mudanças (Transforma em Chão Padrão)
+			tile_novo.tipo = "Chao"
+			tile_novo.custo_tempo = 1.0  # Custo normal
+			tile_novo.dano_hp = 0        # Sem dano
+			
+			# Substitui no array de dados
+			map_data[pos.y][pos.x] = tile_novo
+			
+			# 4. Atualiza Visual (Muda a textura para Chão)
+			tile_map.set_cell(0, pos, ID_CHAO, Vector2i(0,0))
+			
+			# 5. Atualiza Grafo (Avisa que o peso mudou!)
+			if grafo:
+				grafo.atualizar_aresta_dinamica(pos)
+				
+			tiles_alterados += 1
+			
+			# Efeito visual extra: revela na névoa também, já que limpamos
+			if fog_enabled:
+				fog_logic.fog_data[pos.y][pos.x] = false
+	
+	# Atualiza a névoa visualmente se mudamos algo
+	if tiles_alterados > 0:
+		_draw_fog()
+		print("Terraformer: Sucesso! %d tiles perigosos foram neutralizados." % tiles_alterados)
+	else:
+		print("Terraformer: Nenhum terreno perigoso encontrado na área.")
+
 func usar_item(item: ItemData):
 	print("Main: Processando item ", item.nome_item)
 	var algoritmo_para_usar = null
@@ -456,6 +503,11 @@ func usar_item(item: ItemData):
 			ativar_drone_scanner(player.grid_pos, item.alcance_maximo, item.valor_efeito)
 			# O 'return' aqui garante que a função pare e não tente rodar o código de caminhos abaixo
 			return 
+		
+		ItemData.EFEITO_DRONE_TERRAFORMER:
+			# O valor_efeito aqui é ignorado, pois a mudança é instantânea/permanente
+			ativar_drone_terraformer(player.grid_pos, item.alcance_maximo)
+			return
 	
 	if algoritmo_para_usar:
 		var caminho = algoritmo_para_usar.calcular_caminho(player.grid_pos, vertice_fim)

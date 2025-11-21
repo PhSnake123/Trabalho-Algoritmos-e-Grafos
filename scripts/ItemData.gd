@@ -27,6 +27,7 @@ const EFEITO_DRONE_GEO_BFS = "DRONE_GEO_BFS"
 const EFEITO_DRONE_ANALISE_PONTE = "DRONE_ANALISE_PONTE"
 const EFEITO_SAVE_GAME = "SAVE_GAME"
 const EFEITO_DRONE_SCANNER = "DRONE_SCANNER"
+const EFEITO_DRONE_TERRAFORMER = "DRONE_TERRAFORMER"
 # --- Propriedades do Item ---
 # Estas variáveis aparecerão no Inspetor do Godot
 # quando criarmos os arquivos .tres

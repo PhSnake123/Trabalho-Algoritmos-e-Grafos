@@ -147,6 +147,8 @@ func _unhandled_input(event):
 		_usar_drone_avancado(ItemData.EFEITO_DRONE_PATH_ASTAR, ItemData.ItemTipo.DRONE)
 	if event is InputEventKey and event.pressed and event.keycode == KEY_4:
 		_usar_drone_avancado(ItemData.EFEITO_DRONE_SCANNER, ItemData.ItemTipo.DRONE)
+	if event is InputEventKey and event.pressed and event.keycode == KEY_5:
+		_usar_drone_avancado(ItemData.EFEITO_DRONE_TERRAFORMER, ItemData.ItemTipo.DRONE)
 	# -------------------------------------------------------
 
 	if event.is_action_pressed("usar_chave"):
