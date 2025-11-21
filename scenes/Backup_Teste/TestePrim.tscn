@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c8whi4eggpgtg"]
+
+[ext_resource type="Script" uid="uid://cy2vqi1sxtu25" path="res://scripts/Scripts_Test/Teste_Prim.gd" id="1_jux13"]
+
+[node name="TestePrim" type="Node"]
+script = ExtResource("1_jux13")
