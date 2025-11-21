@@ -1,13 +1,14 @@
+# res://scripts/player.gd
 extends CharacterBody2D
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
-var sfx_teste = preload("res://Audio/sounds/hurt.wav") # SFX para o passo do jogador
+var sfx_teste = preload("res://Audio/sounds/hurt.wav") 
 
-const TILE_SIZE := 16   # Tamanho de 1 tile
-const SPEED := 80.0    # Velocidade (pixels por segundo)
+const TILE_SIZE := 16   
+const SPEED := 80.0    
 
 # --- CONFIGURAÇÃO POKÉMON (Turn Delay) ---
-const TURN_DELAY_TIME: float = 0.08 # Atraso leve para virar parado
+const TURN_DELAY_TIME: float = 0.08 
 var turn_timer: float = 0.0
 
 var grid_pos := Vector2i(1, 1)
@@ -15,7 +16,7 @@ var grid_pos := Vector2i(1, 1)
 var moving := false
 var move_dir := Vector2.ZERO
 var last_facing := "down"
-var target_pos := Vector2.ZERO # Alvo em pixels
+var target_pos := Vector2.ZERO 
 
 @onready var main_script = get_parent()
 
@@ -25,7 +26,6 @@ func _ready():
 	SaveManager.register_player(self) 
 
 func _physics_process(delta):
-	# Timer do "Turn Delay" (só afeta se estiver parado)
 	if turn_timer > 0:
 		turn_timer -= delta
 
@@ -34,7 +34,6 @@ func _physics_process(delta):
 	else:
 		move_towards_target(delta)
 
-# Função auxiliar para ler input (Evita repetir código)
 func _get_input_direction() -> Vector2:
 	if Input.is_action_pressed("ui_right"): return Vector2.RIGHT
 	if Input.is_action_pressed("ui_left"): return Vector2.LEFT
@@ -42,7 +41,6 @@ func _get_input_direction() -> Vector2:
 	if Input.is_action_pressed("ui_up"): return Vector2.UP
 	return Vector2.ZERO
 
-# Função auxiliar para converter vetor em string de direção
 func _get_facing_from_dir(dir: Vector2) -> String:
 	if dir == Vector2.RIGHT: return "right"
 	if dir == Vector2.LEFT: return "left"
@@ -55,14 +53,11 @@ func handle_input():
 	
 	if input_dir != Vector2.ZERO:
 		var desired_facing = _get_facing_from_dir(input_dir)
-		
-		# 1. Se estamos parados e mudamos de direção -> Aplica Delay (Giro no lugar)
 		if desired_facing != last_facing:
 			last_facing = desired_facing
 			anim.play("idle_" + last_facing)
-			turn_timer = TURN_DELAY_TIME # Inicia o atraso
+			turn_timer = TURN_DELAY_TIME 
 		else:
-			# 2. Se já estamos olhando ou o delay acabou -> Anda
 			if turn_timer <= 0:
 				start_moving(input_dir)
 	else:
@@ -74,7 +69,6 @@ func start_moving(dir: Vector2):
 	if main_script.is_tile_passable(target_grid_pos):
 		AudioManager.play_sfx(sfx_teste)
 		
-		# Salva snapshot para Undo
 		var player_snapshot = {
 			"pos": grid_pos,
 			"hp": Game_State.vida_jogador,
@@ -88,11 +82,9 @@ func start_moving(dir: Vector2):
 		moving = true
 		target_pos = (Vector2(grid_pos) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
 		
-		# Garante a animação correta (útil para o Continuous Movement)
 		last_facing = _get_facing_from_dir(dir)
 		anim.play("walk_" + last_facing)
 	else:
-		# Se bateu na parede
 		anim.play("idle_" + last_facing)
 		moving = false
 
@@ -101,10 +93,8 @@ func move_towards_target(delta):
 	var dist = target_pos - global_position
 
 	if dist.length() <= step:
-		# Chegou no destino!
 		global_position = target_pos
 		
-		# --- Lógica de chegada no tile ---
 		Game_State.log_player_position(grid_pos)
 		
 		var tile_data: MapTileData = main_script.get_tile_data(grid_pos)
@@ -117,16 +107,11 @@ func move_towards_target(delta):
 			
 		main_script.update_fog(grid_pos)
 		
-		# --- CONTINUOUS MOVEMENT (O Segredo da Curva Suave) ---
-		# Antes de parar, checamos se o jogador quer continuar andando
 		var next_input = _get_input_direction()
 		
 		if next_input != Vector2.ZERO:
-			# Se tem input, emenda o próximo movimento IMEDIATAMENTE!
-			# Isso pula o 'handle_input' e o 'turn_timer', criando a curva suave.
 			start_moving(next_input)
 		else:
-			# Só para se não tiver input nenhum
 			moving = false
 			anim.play("idle_" + last_facing)
 			
@@ -160,12 +145,12 @@ func _unhandled_input(event):
 		_usar_drone_avancado(ItemData.EFEITO_DRONE_PATH_DIJKSTRA, ItemData.ItemTipo.DRONE)
 	if event is InputEventKey and event.pressed and event.keycode == KEY_3:
 		_usar_drone_avancado(ItemData.EFEITO_DRONE_PATH_ASTAR, ItemData.ItemTipo.DRONE)
-	# Lógica NOVA e SEPARADA para Portas
+	if event is InputEventKey and event.pressed and event.keycode == KEY_4:
+		_usar_drone_avancado(ItemData.EFEITO_DRONE_SCANNER, ItemData.ItemTipo.DRONE)
+	# -------------------------------------------------------
+
 	if event.is_action_pressed("usar_chave"):
-		# 1. Onde o player está?
 		var minha_pos = grid_pos
-		
-		# 2. Para onde ele está olhando?
 		var direcao_olhar = Vector2i.ZERO
 		match last_facing:
 			"up": direcao_olhar = Vector2i.UP
@@ -174,7 +159,5 @@ func _unhandled_input(event):
 			"right": direcao_olhar = Vector2i.RIGHT
 		
 		var tile_alvo = minha_pos + direcao_olhar
-		
-		# 3. Manda o Main tentar ABRIR A PORTA naquele tile
 		print("Player: Tentando usar chave em ", tile_alvo)
-		main_script.tentar_abrir_porta(tile_alvo) # Note que o nome da função mudou
+		main_script.tentar_abrir_porta(tile_alvo)

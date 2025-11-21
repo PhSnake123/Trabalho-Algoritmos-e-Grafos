@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3 uid="uid://0qontwq7fugd"]
+
+[ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_kojrh"]
+
+[resource]
+script = ExtResource("1_kojrh")
+nome_item = "Drone Sonar"
+descricao = "Revela uma parte da nevoa no mapa por um certo limite de tempo.
+"
+tipo_item = 5
+efeito = "DRONE_SCANNER"
+valor_efeito = 5.0
+alcance_maximo = 15
+metadata/_custom_type_script = "uid://d01dm40km4s0s"

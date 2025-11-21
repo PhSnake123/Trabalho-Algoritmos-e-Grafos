@@ -16,8 +16,6 @@ const SAVE_POINT_TILE = preload("res://assets/tileinfo/savepoint.tres")
 @onready var player = $Player
 
 # 3. IDs dos Tiles (Atlas Coordinates ou Source IDs)
-# NOTA: Isso assume que você adicionou um NOVO item no TileSet com ID 6.
-# Se for um único Atlas e o terminal for o 6º ícone, a lógica de set_cell muda.
 const ID_PAREDE = 0
 const ID_CHAO = 1
 const ID_SAIDA = 2
@@ -44,6 +42,9 @@ var camera_zoom_Y = 2
 var astar: AStar
 var caminhos_ativos: Dictionary = {} 
 var _proximo_id_caminho: int = 0 
+
+# Lista de scanners rodando visualmente no momento
+var scanners_ativos: Array[Dictionary] = [] 
 
 # Variável de controle do Modo MST
 var terminais_pos: Array[Vector2i] = [] 
@@ -132,15 +133,6 @@ func _ready():
 		
 		print("Terminais Ativos: ", terminais_pos.size())
 		print("Tempo PAR Ajustado (MST + Saída): ", custo_mst)
-		
-		# --- DESENHA A MST NO MAPA ---
-		#_desenhar_mst(resultado_mst["arestas"])
-		
-		# --- CORREÇÃO CRÍTICA 1: RESET DO DIJKSTRA ---
-		# Como rodamos o Dijkstra várias vezes acima (para os terminais), 
-		# precisamos rodar uma última vez do INÍCIO para garantir que
-		# a reconstrução do caminho do Save Point funcione.
-		#dijkstra.calcular_caminho_minimo(vertice_inicio)
 
 	# 5. LÓGICA DO SAVE POINT
 	var caminho_minimo = dijkstra.reconstruir_caminho(vertice_inicio, vertice_fim)
@@ -162,7 +154,7 @@ func _ready():
 	_draw_map()
 	_setup_camera()
 	
-	fog_logic = FogOfWar.new(MapGenerator.LARGURA, MapGenerator.ALTURA, 10)
+	fog_logic = FogOfWar.new(MapGenerator.LARGURA, MapGenerator.ALTURA, 5)
 	if not fog_enabled:
 		tile_map_fog.hide()
 	
@@ -175,8 +167,53 @@ func _ready():
 
 	update_fog(vertice_inicio)
 	SaveManager.save_auto_game()
-	#executar_teste_bfs()
 	print("Ready concluído.")
+
+# --- [ALTERADO] LÓGICA DO DRONE SCANNER PERMANENTE ---
+func _process(delta):
+	# Se não tiver scanners, não gasta processamento
+	if scanners_ativos.is_empty():
+		return
+		
+	# Itera de trás para frente para poder remover itens da lista com segurança
+	for i in range(scanners_ativos.size() - 1, -1, -1):
+		var scanner = scanners_ativos[i]
+		
+		# Atualiza o timer de "passo" (velocidade da onda)
+		scanner["timer_onda"] -= delta
+		
+		if scanner["timer_onda"] <= 0:
+			scanner["timer_onda"] = 0.05 # Velocidade da onda (0.05s por tile)
+			
+			# --- FASE ÚNICA: EXPANDINDO ---
+			# Como o efeito agora é permanente, só precisamos da lógica de expansão.
+			if scanner["estado"] == "EXPANDINDO":
+				var idx = scanner["index_atual"]
+				var tiles = scanner["tiles_ordenados"]
+				
+				# Revela em blocos (batch) para ser mais fluido e performático
+				var batch_size = 2 
+				for _k in range(batch_size):
+					if idx < tiles.size():
+						var pos = tiles[idx]
+						
+						# Simplesmente revela permanentemente (False = Visível)
+						# Não precisamos mais guardar quem estava visível antes
+						fog_logic.fog_data[pos.y][pos.x] = false 
+						
+						idx += 1
+					else:
+						break
+				
+				scanner["index_atual"] = idx
+				_draw_fog() # Atualiza visual
+				
+				# Se terminou de percorrer todos os tiles do raio BFS:
+				if idx >= tiles.size():
+					# O trabalho acabou. Removemos da lista.
+					# Não há mais fases de "AGUARDANDO" ou "RECOLHENDO".
+					scanners_ativos.remove_at(i)
+# ---------------------------------------------------
 
 func _draw_map():
 	tile_map.clear()
@@ -382,6 +419,24 @@ func _remover_caminho_visual(id: int):
 		if is_instance_valid(node): node.queue_free()
 		caminhos_ativos.erase(id)
 
+# --- ATIVAÇÃO DO DRONE (Ajustada para ignorar duração) ---
+func ativar_drone_scanner(origem: Vector2i, alcance: int, _duracao: float):
+	# 1. Usa o BFS para pegar os tiles ordenados por distância (camadas)
+	var area_tiles = bfs.obter_area_alcance(origem, alcance) #
+	
+	print("Main: Drone Scanner ativado. Tiles encontrados: ", area_tiles.size())
+	
+	# 2. Cria o objeto de controle da animação
+	# Simplificado: removemos listas de 'afetados' pois não vamos reverter
+	var novo_scanner = {
+		"tiles_ordenados": area_tiles,
+		"index_atual": 0,
+		"timer_onda": 0.0,
+		"estado": "EXPANDINDO" 
+	}
+	
+	scanners_ativos.push_back(novo_scanner)
+
 func usar_item(item: ItemData):
 	print("Main: Processando item ", item.nome_item)
 	var algoritmo_para_usar = null
@@ -394,6 +449,13 @@ func usar_item(item: ItemData):
 		ItemData.EFEITO_DRONE_PATH_DIJKSTRA:
 			algoritmo_para_usar = dijkstra
 			cor_caminho = Color.GREEN 
+		
+		# --- DRONE SCANNER (Permanente) ---
+		ItemData.EFEITO_DRONE_SCANNER:
+			# Executa a lógica visual
+			ativar_drone_scanner(player.grid_pos, item.alcance_maximo, item.valor_efeito)
+			# O 'return' aqui garante que a função pare e não tente rodar o código de caminhos abaixo
+			return 
 	
 	if algoritmo_para_usar:
 		var caminho = algoritmo_para_usar.calcular_caminho(player.grid_pos, vertice_fim)
