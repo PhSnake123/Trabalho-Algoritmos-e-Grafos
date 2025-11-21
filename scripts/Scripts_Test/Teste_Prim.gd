@@ -28,7 +28,7 @@ func _ready():
 	# Custo Total Esperado da Árvore (MST) = 10 + 5 + 20 = 35.0
 	
 	# 2. Roda o Prim
-	var custo_calculado = Prim.calcular_mst_custo(grafo_abstrato)
+	var custo_calculado = Prim.calcular_mst(grafo_abstrato)
 	
 	print("Custo MST Calculado: ", custo_calculado)
 	

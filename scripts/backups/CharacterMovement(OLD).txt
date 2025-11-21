@@ -6,10 +6,6 @@ var sfx_teste = preload("res://Audio/sounds/hurt.wav") # SFX para o passo do jog
 const TILE_SIZE := 16   # Tamanho de 1 tile
 const SPEED := 80.0    # Velocidade (pixels por segundo)
 
-# --- CONFIGURAÇÃO POKÉMON (Turn Delay) ---
-const TURN_DELAY_TIME: float = 0.08 # Atraso leve para virar parado
-var turn_timer: float = 0.0
-
 var grid_pos := Vector2i(1, 1)
 
 var moving := false
@@ -21,60 +17,49 @@ var target_pos := Vector2.ZERO # Alvo em pixels
 
 func _ready():
 	global_position = (Vector2(grid_pos) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
-	target_pos = global_position 
-	SaveManager.register_player(self) 
+	target_pos = global_position # Define o alvo inicial
+	SaveManager.register_player(self) # Chama o save manager
+
 
 func _physics_process(delta):
-	# Timer do "Turn Delay" (só afeta se estiver parado)
-	if turn_timer > 0:
-		turn_timer -= delta
-
+	# Se não estamos nos movendo, cheque por input
 	if not moving:
 		handle_input()
+	# Senão (se estamos nos movendo), continue o movimento
 	else:
 		move_towards_target(delta)
 
-# Função auxiliar para ler input (Evita repetir código)
-func _get_input_direction() -> Vector2:
-	if Input.is_action_pressed("ui_right"): return Vector2.RIGHT
-	if Input.is_action_pressed("ui_left"): return Vector2.LEFT
-	if Input.is_action_pressed("ui_down"): return Vector2.DOWN
-	if Input.is_action_pressed("ui_up"): return Vector2.UP
-	return Vector2.ZERO
-
-# Função auxiliar para converter vetor em string de direção
-func _get_facing_from_dir(dir: Vector2) -> String:
-	if dir == Vector2.RIGHT: return "right"
-	if dir == Vector2.LEFT: return "left"
-	if dir == Vector2.DOWN: return "down"
-	if dir == Vector2.UP: return "up"
-	return last_facing
 
 func handle_input():
-	var input_dir = _get_input_direction()
-	
+	var input_dir := Vector2.ZERO
+	if Input.is_action_pressed("ui_right"):
+		input_dir = Vector2.RIGHT
+		last_facing = "right"
+	elif Input.is_action_pressed("ui_left"):
+		input_dir = Vector2.LEFT
+		last_facing = "left"
+	elif Input.is_action_pressed("ui_down"):
+		input_dir = Vector2.DOWN
+		last_facing = "down"
+	elif Input.is_action_pressed("ui_up"):
+		input_dir = Vector2.UP
+		last_facing = "up"
+
 	if input_dir != Vector2.ZERO:
-		var desired_facing = _get_facing_from_dir(input_dir)
-		
-		# 1. Se estamos parados e mudamos de direção -> Aplica Delay (Giro no lugar)
-		if desired_facing != last_facing:
-			last_facing = desired_facing
-			anim.play("idle_" + last_facing)
-			turn_timer = TURN_DELAY_TIME # Inicia o atraso
-		else:
-			# 2. Se já estamos olhando ou o delay acabou -> Anda
-			if turn_timer <= 0:
-				start_moving(input_dir)
+		start_moving(input_dir)
 	else:
 		anim.play("idle_" + last_facing)
+
 
 func start_moving(dir: Vector2):
 	var target_grid_pos = grid_pos + Vector2i(dir)
 
 	if main_script.is_tile_passable(target_grid_pos):
-		AudioManager.play_sfx(sfx_teste)
+		AudioManager.play_sfx(sfx_teste) #Chama o audio manager para executar o som do passo od jogador
 		
-		# Salva snapshot para Undo
+		# --- LOG DE AÇÃO (PARA ITEM DE DESFAZER AÇÕES) ---
+		# Salva o estado do jogador antes de se mover.
+		# O 'duplicate(true)' é essencial para copiar o inventário.
 		var player_snapshot = {
 			"pos": grid_pos,
 			"hp": Game_State.vida_jogador,
@@ -87,64 +72,62 @@ func start_moving(dir: Vector2):
 		move_dir = dir
 		moving = true
 		target_pos = (Vector2(grid_pos) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
-		
-		# Garante a animação correta (útil para o Continuous Movement)
-		last_facing = _get_facing_from_dir(dir)
 		anim.play("walk_" + last_facing)
 	else:
-		# Se bateu na parede
 		anim.play("idle_" + last_facing)
+
 
 func move_towards_target(delta):
 	var step = SPEED * delta
 	var dist = target_pos - global_position
 
 	if dist.length() <= step:
-		# Chegou no destino!
+		# O jogador chegou ao destino
 		global_position = target_pos
+		moving = false
+		anim.play("idle_" + last_facing)
 		
-		# --- Lógica de chegada no tile ---
+		# --- LOG DE POSIÇÃO (PARA MAPA FINAL) ---
+		# Registra a posição no GameState *após* chegar.
 		Game_State.log_player_position(grid_pos)
 		
+		# 1. Pega os dados do tile onde chegamos
 		var tile_data: MapTileData = main_script.get_tile_data(grid_pos)
+		
 		if tile_data:
+			#2. Adiciona o custo de tempo ao GameState (e printa)
 			Game_State.tempo_jogador += tile_data.custo_tempo
 			print("Tempo Acumulado: ", Game_State.tempo_jogador)
+
+			# 3. Aplica dano (e printa)
 			if tile_data.dano_hp > 0:
 				Game_State.vida_jogador -= tile_data.dano_hp
-				print("DANO: %s! Vida: %s" % [tile_data.dano_hp, Game_State.vida_jogador])
+				print("DANO: %s! Você pisou em '%s'." % [tile_data.dano_hp, tile_data.tipo])
+				print("Vida restante: ", Game_State.vida_jogador)
 			
+		# --- Atualiza a névoa ---
+		# Avisa o Main que chegamos em um novo tile
 		main_script.update_fog(grid_pos)
-		
-		# --- CONTINUOUS MOVEMENT (O Segredo da Curva Suave) ---
-		# Antes de parar, checamos se o jogador quer continuar andando
-		var next_input = _get_input_direction()
-		
-		if next_input != Vector2.ZERO:
-			# Se tem input, emenda o próximo movimento IMEDIATAMENTE!
-			# Isso pula o 'handle_input' e o 'turn_timer', criando a curva suave.
-			start_moving(next_input)
-		else:
-			# Só para se não tiver input nenhum
-			moving = false
-			anim.play("idle_" + last_facing)
-			
 	else:
 		global_position += move_dir * step
 
+# Chamada pelo SaveManager para forçar o reset da máquina de estado do jogador
 func reset_state_on_load():
 	moving = false
 	target_pos = global_position
 	move_dir = Vector2.ZERO
-	turn_timer = 0.0
+	
+	# Garante que 'anim' (AnimatedSprite2D) esteja pronto antes de usá-lo
 	if is_node_ready() and anim:
 		anim.play("idle_" + last_facing)
 
 func _usar_drone_avancado(efeito: String, tipo: ItemData.ItemTipo):
 	var item = Game_State.inventario_jogador.get_item_especifico(efeito, tipo)
+	
 	if item:
 		print("Player: Usando item '%s'..." % item.nome_item)
 		main_script.usar_item(item)
+		
 		if item.durabilidade > 0:
 			item.durabilidade -= 1
 			if item.durabilidade <= 0:
@@ -153,9 +136,21 @@ func _usar_drone_avancado(efeito: String, tipo: ItemData.ItemTipo):
 		print("Player: Item (Efeito: %s | Tipo: %s) não encontrado." % [efeito, tipo])
 		
 func _unhandled_input(event):
+	# Mantemos os inputs de movimento no _physics_process ou handle_input
+	# Mas ações pontuais (como apertar um botão uma vez) ficam ótimas aqui.
+	
+	# Tecla '1' -> Tenta usar o Drone A* (Vanguarda)
 	if event is InputEventKey and event.pressed and event.keycode == KEY_1:
+		# ERRO COMUM: Estar chamando _usar_drone_especifico(...)
+		# CORREÇÃO: Chamar _usar_drone_avancado(...)
 		_usar_drone_avancado(ItemData.EFEITO_DRONE_PATH_ASTAR, ItemData.ItemTipo.DRONE_TEMPORARIO)
+	
+	# Tecla '2' -> Drone Dijkstra (Permanente / Seguro)
 	if event is InputEventKey and event.pressed and event.keycode == KEY_2:
 		_usar_drone_avancado(ItemData.EFEITO_DRONE_PATH_DIJKSTRA, ItemData.ItemTipo.DRONE)
+	
+	# 3. Drone A* (Estratégico/Permanente) <--- NOVO
 	if event is InputEventKey and event.pressed and event.keycode == KEY_3:
 		_usar_drone_avancado(ItemData.EFEITO_DRONE_PATH_ASTAR, ItemData.ItemTipo.DRONE)
+	# if event.keycode == KEY_2:
+	#     _usar_drone_especifico(ItemData.EFEITO_DRONE_PATH_DIJKSTRA)
