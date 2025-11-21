@@ -76,3 +76,23 @@ func get_item_por_tipo(tipo: ItemData.ItemTipo) -> ItemData:
 		if item.tipo_item == tipo:
 			return item # Retorna o Resource ItemData
 	return null # Não encontrou
+
+"""
+Retorna o primeiro item que possui um efeito específico.
+Ex: get_item_por_efeito(ItemData.EFEITO_DRONE_PATH_ASTAR)
+"""
+func get_item_por_efeito(efeito_desejado: String) -> ItemData:
+	for item in items:
+		if item.efeito == efeito_desejado:
+			return item # Retorna o Resource correto
+	return null # Não encontrou item com esse efeito	
+
+"""
+Retorna item filtrando por Efeito E Tipo.
+Útil para distinguir Drone A* (Temporário) de Drone A* 	(Permanente).
+"""
+func get_item_especifico(efeito: String, tipo: ItemData.ItemTipo) -> ItemData:
+	for item in items:
+		if item.efeito == efeito and item.tipo_item == tipo:
+			return item
+	return null

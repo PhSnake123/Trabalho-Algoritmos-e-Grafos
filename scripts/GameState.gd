@@ -69,6 +69,24 @@ func reset_run_state():
 	
 	# Adiciona o item de save ao inventário
 	inventario_jogador.adicionar_item(SAVE_TERMINAL_ITEM)
+	
+	#teste de chave
+	var chave_teste = load("res://assets/iteminfo/chave.tres") # Verifique se o caminho está certo!
+	if chave_teste:
+		inventario_jogador.adicionar_item(chave_teste)
+		print("GameState: Chave de teste adicionada.")
+		
+	#(Teste) Adiciona drone de astar temporário.
+	var drone_teste = load("res://assets/iteminfo/DroneAStar.tres")
+	inventario_jogador.adicionar_item(drone_teste)
+	
+	#(teste) Adiciona Drone permanente
+	var drone_dijkstra = load("res://assets/iteminfo/DroneDJKISTRA.tres")
+	inventario_jogador.adicionar_item(drone_dijkstra.duplicate())
+	# Drone A* Permanente (Teste Tecla 3)
+	var drone_astar_perm = load("res://assets/iteminfo/DroneAStarPerm.tres")
+	inventario_jogador.adicionar_item(drone_astar_perm.duplicate())
+
 	print("GameState: Estado da run resetado.")
 
 """
@@ -115,7 +133,7 @@ func adicionar_tempo_penalidade(segundos: float):
 (Placeholder) Atualiza o "calor" em uma posição específica.
 Será chamada pelo Player a cada movimento.
 """
-func update_heat_map(pos: Vector2i, amount: float):
+func update_heat_map(_pos: Vector2i, _amount: float):
 	# A lógica real precisará que o heat_map seja um array 2D
 	# e que os limites sejam checados.
 	# Implementação virá junto com o NerfedStalker (Fase 4).

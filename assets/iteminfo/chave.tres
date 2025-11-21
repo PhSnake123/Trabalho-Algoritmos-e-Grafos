@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3 uid="uid://wglql1osnai6"]
+
+[ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_hboxe"]
+
+[resource]
+script = ExtResource("1_hboxe")
+nome_item = "Cartão de Acesso"
+descricao = "Abre uma porta trancada."
+tipo_item = 1
+efeito = "ABRE_PORTA"
+metadata/_custom_type_script = "uid://d01dm40km4s0s"

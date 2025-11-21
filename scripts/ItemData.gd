@@ -9,7 +9,8 @@ enum ItemTipo {
 	POTION, 
 	EQUIP, 
 	OBJETIVO, 
-	DRONE
+	DRONE,
+	DRONE_TEMPORARIO
 }
 
 # (Fase 1.1) Strings para definir o que um item faz
@@ -40,6 +41,10 @@ const EFEITO_SAVE_GAME = "SAVE_GAME"
 
 # Um valor numérico para o efeito (ex: 20.0 para CURA_HP, ou 5.0 para raio do drone)
 @export var valor_efeito: float = 0.0 
+
+#Define o comprimento do caminho desenhado (em tiles).
+# -1 = Caminho inteiro até o destino.
+@export var alcance_maximo: int
 
 # Quantas vezes pode ser usado. -1 = infinito (equipamento), 1 = consumível
 @export var durabilidade: int = 1 
