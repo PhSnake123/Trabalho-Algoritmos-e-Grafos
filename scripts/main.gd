@@ -1,7 +1,7 @@
 # res://scripts/Main.gd
 extends Node2D
 
-@export var fog_enabled := true
+@export var fog_enabled := false
 var musica_teste = preload("res://Audio/music/Erik_Satie_Gymnopédie_No.1.ogg") 
 
 # 1. Carrega o script de lógica
@@ -771,13 +771,52 @@ func _spawnar_npc_aleatorio():
 		spawnou = true
 		print("NPC spawnado e fixado em: ", pos)
 
+# 1. Coleta dados de todos os NPCs vivos
+func get_npcs_state_data() -> Array:
+	var npc_data_list = []
+	var npcs_vivos = get_tree().get_nodes_in_group("npcs")
+	
+	for npc in npcs_vivos:
+		if is_instance_valid(npc) and npc.has_method("get_save_data"):
+			npc_data_list.push_back(npc.get_save_data())
+			
+	print("Main: Estado de %d NPCs capturado." % npc_data_list.size())
+	return npc_data_list
+
+# 2. Recria os NPCs a partir do Save
+func load_npcs_state_data(loaded_data: Array):
+	print("Main: Recarregando NPCs...")
+	
+	# A. Limpa NPCs existentes da cena atual
+	var npcs_atuais = get_tree().get_nodes_in_group("npcs")
+	for n in npcs_atuais:
+		n.queue_free()
+	
+	# B. Recria um por um
+	for data in loaded_data:
+		var scene_path = data.get("filename")
+		# Se não salvou o path, usa o padrão da variável exportada
+		var cena_para_instanciar = load(scene_path) if scene_path else cena_npc
+		
+		if cena_para_instanciar:
+			var novo_npc = cena_para_instanciar.instantiate()
+			
+			# Injeção de Dependência
+			novo_npc.main_ref = self
+			
+			add_child(novo_npc)
+			
+			# Aplica os dados salvos
+			novo_npc.load_save_data(data)
+		else:
+			print("ERRO: Não foi possível carregar a cena do NPC: ", scene_path)
+
 # --- NOVA FUNÇÃO DE DETECÇÃO ---
 func get_npc_at_position(pos: Vector2i) -> Node2D:
 	var npcs = get_tree().get_nodes_in_group("npcs")
 	
 	# Debug: Se a lista estiver vazia, sabemos que o problema é o Grupo
 	if npcs.is_empty():
-		print_debug("ERRO CRÍTICO: Nenhum NPC encontrado no grupo 'npcs'!")
 		return null
 		
 	for n in npcs:
@@ -795,7 +834,6 @@ func get_npc_at_position(pos: Vector2i) -> Node2D:
 		# print("Checando NPC em ", n.grid_pos, " contra alvo ", pos)
 		
 		if n.grid_pos == pos:
-			# ACHOU!
 			return n
 			
 	# Se chegou aqui, percorreu a lista e ninguém estava na posição 'pos'
@@ -809,6 +847,10 @@ func is_tile_occupied_by_npc(pos: Vector2i) -> bool:
 func tentar_ativar_terminal(pos: Vector2i):
 	if pos in terminais_pos: 
 		terminais_pos.erase(pos)
+		
+		# 1. Atualiza os dados LÓGICOS para que o SaveManager saiba que isso mudou
+		var tile_data: MapTileData = map_data[pos.y][pos.x]
+		tile_data.tipo = "Chao" # Deixa de ser Terminal logicamente
 		
 		Game_State.terminais_ativos += 1
 		var restantes = Game_State.terminais_necessarios - Game_State.terminais_ativos
@@ -825,6 +867,33 @@ func tentar_ativar_terminal(pos: Vector2i):
 			_draw_map()
 	else:
 		print("Este terminal já foi ativado ou é inválido.")
+
+# Adicione no Main.gd
+
+# --- FIX DO LOAD (Modo MST) ---
+func reconstruir_dados_logicos_do_mapa():
+	print("Main: Reconstruindo lógica de Terminais e Objetivos...")
+	
+	# 1. Limpa a lista atual (que pode estar suja/desatualizada)
+	terminais_pos.clear()
+	
+	# 2. Varre o mapa carregado procurando por tiles do tipo "Terminal"
+	for y in range(MapGenerator.ALTURA):
+		for x in range(MapGenerator.LARGURA):
+			var tile = map_data[y][x]
+			
+			# Se o tile é um terminal, significa que ele AINDA NÃO foi ativado
+			# (Pois quando ativamos, transformamos ele em "Chao" na linha 81 do Main)
+			if tile.tipo == "Terminal":
+				terminais_pos.push_back(Vector2i(x, y))
+	
+	# 2. Recalcula os "ativos" baseado na realidade física do mapa
+	# Se precisamos de 3 e achamos 2 no mapa, então 1 está ativo. Matemática pura.
+	var encontrados = terminais_pos.size()
+	Game_State.terminais_ativos = Game_State.terminais_necessarios - encontrados
+	
+	print("Main: Lista de Terminais reconstruída. Restantes: ", terminais_pos.size())
+	
 # --- TESTE TEMPORÁRIO BFS ---
 """func executar_teste_bfs():
 	print("--- INICIANDO TESTE VISUAL DO BFS ---")

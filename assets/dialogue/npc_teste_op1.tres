@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="DialogueData" load_steps=2 format=3 uid="uid://c3w545efveydl"]
+
+[ext_resource type="Script" uid="uid://bl6aav0wcfwrm" path="res://scripts/DialogueData.gd" id="1_ilwqi"]
+
+[resource]
+script = ExtResource("1_ilwqi")
+nome_npc = "Shovel Knight"
+falas = Array[String](["É, que bom pra mim..."])
+metadata/_custom_type_script = "uid://bl6aav0wcfwrm"

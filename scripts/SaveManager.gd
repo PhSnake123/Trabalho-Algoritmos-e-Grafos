@@ -107,11 +107,12 @@ func _get_current_game_state_dict() -> Dictionary:
 	data["world"] = {
 		"vertice_fim_x": main_ref.vertice_fim.x,
 		"vertice_fim_y": main_ref.vertice_fim.y,
+		"saida_destrancada": main_ref.saida_destrancada,
 		"map_data": _serialize_map(main_ref.map_data),
 		"fog_data": main_ref.fog_logic.fog_data,
 		"active_paths": main_ref.get_paths_save_data(),
-		# --- NOVO: SALVA OS INIMIGOS ---
-		"enemies_data": main_ref.get_enemies_state_data() 
+		"enemies_data": main_ref.get_enemies_state_data(),
+		"npcs_data": main_ref.get_npcs_state_data()
 	}
 	
 	return data
@@ -147,6 +148,12 @@ func _apply_game_state_dict(data: Dictionary):
 	var w_data = data["world"]
 	main_ref.vertice_fim = Vector2i(w_data["vertice_fim_x"], w_data["vertice_fim_y"])
 	
+	if w_data.has("saida_destrancada"):
+		main_ref.saida_destrancada = w_data["saida_destrancada"]
+	else:
+		# Fallback para saves antigos (assume fechada por segurança)
+		main_ref.saida_destrancada = false
+	
 	# 1. Mapa e Fog
 	main_ref.map_data = _deserialize_map(w_data["map_data"])
 	main_ref.fog_logic.fog_data = w_data["fog_data"]
@@ -158,6 +165,9 @@ func _apply_game_state_dict(data: Dictionary):
 	main_ref.astar = AStar.new(main_ref.grafo)
 	main_ref.bfs = BFS.new(main_ref.grafo)
 	
+	# Reconstrói a lista 'terminais_pos' baseada nos tiles que acabamos de carregar
+	main_ref.reconstruir_dados_logicos_do_mapa()
+	
 	# 3. Caminhos (Drones)
 	if w_data.has("active_paths"):
 		main_ref.load_paths_save_data(w_data["active_paths"])
@@ -165,13 +175,19 @@ func _apply_game_state_dict(data: Dictionary):
 		main_ref.caminhos_ativos.clear()
 		main_ref.tile_map_path.clear()
 		
-	# --- NOVO: CARREGA OS INIMIGOS ---
+	# --- CARREGA OS INIMIGOS ---
 	# Verifica se existe a chave para compatibilidade com saves antigos
 	if w_data.has("enemies_data"):
 		main_ref.load_enemies_state_data(w_data["enemies_data"])
 	else:
 		print("SaveManager: Save antigo detectado. Inimigos resetados pelo spawn padrão.")
-	# ---------------------------------
+	
+	# ---CARREGA OS NPCS ---	
+	if w_data.has("npcs_data"):
+		main_ref.load_npcs_state_data(w_data["npcs_data"])
+	else:
+		# Se for um save antigo ou novo jogo sem dados, spawna um aleatório (fallback)
+		main_ref._spawnar_npc_aleatorio()
 	
 	main_ref._draw_map()
 	main_ref.update_fog(player_ref.grid_pos)

@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="DialogueData" load_steps=2 format=3 uid="uid://dbahrlojmy70y"]
+
+[ext_resource type="Script" uid="uid://bl6aav0wcfwrm" path="res://scripts/DialogueData.gd" id="1_1o5r3"]
+
+[resource]
+script = ExtResource("1_1o5r3")
+nome_npc = "Shovel Knight"
+falas = Array[String](["NÃÃÃÃÃÃÃÃÃOOOOO!!!!!", "AAAARRRGGHH!!"])
+metadata/_custom_type_script = "uid://bl6aav0wcfwrm"
