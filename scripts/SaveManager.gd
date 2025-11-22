@@ -82,6 +82,7 @@ func _get_current_game_state_dict() -> Dictionary:
 
 	var data = {}
 	
+	# Dados gerais do GameState
 	data["gamestate"] = {
 		"tempo_jogador": Game_State.tempo_jogador,
 		"tempo_par_level": Game_State.tempo_par_level,
@@ -95,22 +96,89 @@ func _get_current_game_state_dict() -> Dictionary:
 		"inventory": _serialize_inventory(Game_State.inventario_jogador.items)
 	}
 	
+	# Dados do Player
 	data["player"] = {
 		"grid_pos_x": player_ref.grid_pos.x,
 		"grid_pos_y": player_ref.grid_pos.y,
 		"last_facing": player_ref.last_facing
 	}
 	
+	# Dados do Mundo + INIMIGOS
 	data["world"] = {
 		"vertice_fim_x": main_ref.vertice_fim.x,
 		"vertice_fim_y": main_ref.vertice_fim.y,
 		"map_data": _serialize_map(main_ref.map_data),
 		"fog_data": main_ref.fog_logic.fog_data,
-		"active_paths": main_ref.get_paths_save_data()
+		"active_paths": main_ref.get_paths_save_data(),
+		# --- NOVO: SALVA OS INIMIGOS ---
+		"enemies_data": main_ref.get_enemies_state_data() 
 	}
 	
 	return data
 
+func _apply_game_state_dict(data: Dictionary):
+	if not main_ref or not player_ref:
+		print("ERROR - SaveManager: Falha ao carregar.")
+		return
+	
+	var gs_data = data["gamestate"]
+	# ... (Carregamento do GameState, Inventário e Player permanece igual) ...
+	Game_State.tempo_jogador = gs_data["tempo_jogador"]
+	Game_State.tempo_par_level = gs_data["tempo_par_level"]
+	Game_State.vida_jogador = gs_data["vida_jogador"]
+	Game_State.optional_objectives = gs_data["optional_objectives"]
+	Game_State.terminais_ativos = gs_data["terminais_ativos"]
+	Game_State.terminais_necessarios = gs_data["terminais_necessarios"]
+	Game_State.enemy_states = gs_data["enemy_states"]
+	Game_State.npc_states = gs_data["npc_states"]
+	Game_State.interactable_states = gs_data["interactable_states"]
+	
+	Game_State.inventario_jogador.items.assign(_deserialize_inventory(gs_data["inventory"]))
+	
+	var p_data = data["player"]
+	var new_grid_pos = Vector2i(p_data["grid_pos_x"], p_data["grid_pos_y"])
+	player_ref.grid_pos = new_grid_pos
+	player_ref.last_facing = p_data["last_facing"]
+	
+	player_ref.global_position = (Vector2(new_grid_pos) * main_ref.TILE_SIZE) + (Vector2.ONE * main_ref.TILE_SIZE / 2.0)
+	player_ref.reset_state_on_load()
+	
+	# --- CARREGAMENTO DO MUNDO ---
+	var w_data = data["world"]
+	main_ref.vertice_fim = Vector2i(w_data["vertice_fim_x"], w_data["vertice_fim_y"])
+	
+	# 1. Mapa e Fog
+	main_ref.map_data = _deserialize_map(w_data["map_data"])
+	main_ref.fog_logic.fog_data = w_data["fog_data"]
+	
+	# 2. Reconstrução do Grafo
+	print("SaveManager: Reconstruindo grafo e algoritmos baseados no save...")
+	main_ref.grafo = Graph.new(main_ref.map_data)
+	main_ref.dijkstra = Dijkstra.new(main_ref.grafo)
+	main_ref.astar = AStar.new(main_ref.grafo)
+	main_ref.bfs = BFS.new(main_ref.grafo)
+	
+	# 3. Caminhos (Drones)
+	if w_data.has("active_paths"):
+		main_ref.load_paths_save_data(w_data["active_paths"])
+	else:
+		main_ref.caminhos_ativos.clear()
+		main_ref.tile_map_path.clear()
+		
+	# --- NOVO: CARREGA OS INIMIGOS ---
+	# Verifica se existe a chave para compatibilidade com saves antigos
+	if w_data.has("enemies_data"):
+		main_ref.load_enemies_state_data(w_data["enemies_data"])
+	else:
+		print("SaveManager: Save antigo detectado. Inimigos resetados pelo spawn padrão.")
+	# ---------------------------------
+	
+	main_ref._draw_map()
+	main_ref.update_fog(player_ref.grid_pos)
+	
+	Game_State.caminho_jogador.clear()
+	Game_State.player_action_history.clear()
+	Game_State.log_player_position(player_ref.grid_pos)
 
 # ===============================================
 # 2. FUNÇÕES DE "DESEMPACOTAR" (DESERIALIZAÇÃO)
@@ -153,66 +221,6 @@ func _deserialize_inventory(serialized_items: Array) -> Array:
 			
 		items.push_back(new_item)
 	return items
-
-func _apply_game_state_dict(data: Dictionary):
-	if not main_ref or not player_ref:
-		print("ERROR - SaveManager: Falha ao carregar.")
-		return
-	
-	var gs_data = data["gamestate"]
-	Game_State.tempo_jogador = gs_data["tempo_jogador"]
-	Game_State.tempo_par_level = gs_data["tempo_par_level"]
-	Game_State.vida_jogador = gs_data["vida_jogador"]
-	Game_State.optional_objectives = gs_data["optional_objectives"]
-	Game_State.terminais_ativos = gs_data["terminais_ativos"]
-	Game_State.terminais_necessarios = gs_data["terminais_necessarios"]
-	Game_State.enemy_states = gs_data["enemy_states"]
-	Game_State.npc_states = gs_data["npc_states"]
-	Game_State.interactable_states = gs_data["interactable_states"]
-	
-	# AQUI O INVENTÁRIO É RECRIADO
-	# Se o alcance vier 0, o drone quebra. Agora virá certo.
-	Game_State.inventario_jogador.items.assign(_deserialize_inventory(gs_data["inventory"]))
-	
-	var p_data = data["player"]
-	var new_grid_pos = Vector2i(p_data["grid_pos_x"], p_data["grid_pos_y"])
-	player_ref.grid_pos = new_grid_pos
-	player_ref.last_facing = p_data["last_facing"]
-	
-	player_ref.global_position = (Vector2(new_grid_pos) * main_ref.TILE_SIZE) + (Vector2.ONE * main_ref.TILE_SIZE / 2.0)
-	player_ref.reset_state_on_load()
-	
-	var w_data = data["world"]
-	main_ref.vertice_fim = Vector2i(w_data["vertice_fim_x"], w_data["vertice_fim_y"])
-	
-	# 1. Carrega os dados brutos do grid (onde portas podem estar fechadas)
-	main_ref.map_data = _deserialize_map(w_data["map_data"])
-	main_ref.fog_logic.fog_data = w_data["fog_data"]
-	
-	# --- FIX: RECONSTRUÇÃO DO GRAFO E ALGORITMOS ---
-	# Como substituímos o map_data acima, o grafo antigo ainda "lembrava" do mapa anterior.
-	# Precisamos criar novas instâncias apontando para o novo map_data carregado.
-	print("SaveManager: Reconstruindo grafo e algoritmos baseados no save...")
-	main_ref.grafo = Graph.new(main_ref.map_data)
-	
-	# Reinicializa os algoritmos com o novo grafo
-	main_ref.dijkstra = Dijkstra.new(main_ref.grafo)
-	main_ref.astar = AStar.new(main_ref.grafo)
-	main_ref.bfs = BFS.new(main_ref.grafo)
-	# -------------------------------------------------
-	
-	if w_data.has("active_paths"):
-		main_ref.load_paths_save_data(w_data["active_paths"])
-	else:
-		main_ref.caminhos_ativos.clear()
-		main_ref.tile_map_path.clear()
-	
-	main_ref._draw_map()
-	main_ref.update_fog(player_ref.grid_pos)
-	
-	Game_State.caminho_jogador.clear()
-	Game_State.player_action_history.clear()
-	Game_State.log_player_position(player_ref.grid_pos)
 
 # --- Funções Padrão de IO (Inalteradas) ---
 func _save_game_to_path(path: String):

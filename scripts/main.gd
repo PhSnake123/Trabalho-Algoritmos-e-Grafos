@@ -1,7 +1,7 @@
 # res://scripts/Main.gd
 extends Node2D
 
-@export var fog_enabled := false
+@export var fog_enabled := true
 var musica_teste = preload("res://Audio/music/Erik_Satie_Gymnopédie_No.1.ogg") 
 
 # 1. Carrega o script de lógica
@@ -50,6 +50,13 @@ var scanners_ativos: Array[Dictionary] = []
 var terminais_pos: Array[Vector2i] = [] 
 var saida_destrancada: bool = false # Controla se a saída está acessível
 
+# --- CONFIGURAÇÃO DE INIMIGOS ---
+@export_group("Configuração de Spawn")
+@export var cena_inimigo: PackedScene = preload("res://scenes/Enemy.tscn") # <--- ARRASTE SUA CENA AQUI
+@export var qtd_inimigos_spawn: int = 3         # Quantos inimigos criar
+@export var raio_minimo_spawn: int = 15         # Distância mínima em TILES do jogador
+@export var tentativas_spawn: int = 100         # Segurança para não travar o loop
+
 func _ready():
 	var vertice_inicio = Vector2i(1, 1) 
 	
@@ -63,7 +70,7 @@ func _ready():
 	map_generator.quebrar_paredes_internas(map_data, 0.3)
 
 	# 2. CONFIGURAÇÃO DO MODO DE JOGO
-	var modo_jogo = "NORMAL" 
+	var modo_jogo = "MST" 
 	print("--- MODO DE JOGO ATUAL: ", modo_jogo, " ---")
 	
 	# Reseta estado da saída
@@ -133,6 +140,7 @@ func _ready():
 		
 		print("Terminais Ativos: ", terminais_pos.size())
 		print("Tempo PAR Ajustado (MST + Saída): ", custo_mst)
+		dijkstra.calcular_caminho_minimo(vertice_inicio)
 
 	# 5. LÓGICA DO SAVE POINT
 	var caminho_minimo = dijkstra.reconstruir_caminho(vertice_inicio, vertice_fim)
@@ -166,6 +174,7 @@ func _ready():
 			fog_logic.fog_data[t.y][t.x] = false
 
 	update_fog(vertice_inicio)
+	_spawnar_inimigos()
 	SaveManager.save_auto_game()
 	print("Ready concluído.")
 
@@ -655,6 +664,113 @@ func _abrir_porta(pos: Vector2i):
 		grafo.atualizar_aresta_dinamica(pos)
 	
 	print("Main: Porta aberta em ", pos)
+
+# --- FUNÇÃO DE SPAWN ---
+func _spawnar_inimigos():
+	if not cena_inimigo:
+		print("ERRO: Cena do inimigo não definida no Main.")
+		return
+
+	var inimigos_criados = 0
+	var tentativas = 0
+	
+	print("Iniciando spawn de %d inimigos (Raio min: %d)..." % [qtd_inimigos_spawn, raio_minimo_spawn])
+	
+	while inimigos_criados < qtd_inimigos_spawn and tentativas < tentativas_spawn:
+		tentativas += 1
+		
+		# 1. Escolhe uma posição aleatória no grid
+		var x = randi_range(1, MapGenerator.LARGURA - 2)
+		var y = randi_range(1, MapGenerator.ALTURA - 2)
+		var pos_candidata = Vector2i(x, y)
+		
+		# 2. Verificação de validade do tile
+		var tile = get_tile_data(pos_candidata)
+		if not tile or not tile.passavel or tile.tipo == "Dano":
+			continue # Não spawna em parede ou lava
+			
+		# 3. Verificação de distância do Player (Usando distância Manhattan ou Euclidiana)
+		# Como estamos em grid, Manhattan (abs(dx) + abs(dy)) é adequada, 
+		# mas distance_to do Vector2i serve bem.
+		var dist_player = pos_candidata.distance_to(player.grid_pos)
+		
+		if dist_player < raio_minimo_spawn:
+			continue # Está muito perto do jogador, tenta outro
+			
+		# 4. Verificação de distância da Saída (Opcional, para não spawnar campando a saída)
+		if pos_candidata.distance_to(vertice_fim) < 5:
+			continue
+			
+		# --- SUCESSO: INSTANCIA O INIMIGO ---
+		var novo_inimigo = cena_inimigo.instantiate()
+		
+		# Define a posição global baseada no grid
+		# (Assume que o inimigo tem a função _grid_to_world ou calculamos aqui)
+		novo_inimigo.global_position = (Vector2(pos_candidata) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
+		
+		# Injeta as dependências (Independência garantida aqui!)
+		# Ao definir as variáveis na instância, elas pertencem SÓ a esse inimigo.
+		novo_inimigo.main_ref = self
+		novo_inimigo.player_ref = player
+		
+		# Adiciona à cena
+		add_child(novo_inimigo)
+		inimigos_criados += 1
+		print("Inimigo %d spawnado em %s" % [inimigos_criados, pos_candidata])
+	
+	if inimigos_criados < qtd_inimigos_spawn:
+		print("AVISO: Não foi possível spawnar todos os inimigos (Falta de espaço?). Criados: ", inimigos_criados)
+		
+func is_tile_occupied_by_enemy(target_pos: Vector2i) -> bool:
+	var inimigos = get_tree().get_nodes_in_group("inimigos")
+	for ini in inimigos:
+		# Ignora inimigos mortos ou que ainda não inicializaram
+		if is_instance_valid(ini) and ini.has_method("tomar_turno"):
+			if ini.grid_pos == target_pos:
+				return true
+	return false
+
+# --- SISTEMA DE SAVE/LOAD DE INIMIGOS ---
+
+# 1. Coleta dados de todos os inimigos vivos
+func get_enemies_state_data() -> Array:
+	var enemies_data = []
+	var inimigos_vivos = get_tree().get_nodes_in_group("inimigos")
+	
+	for inimigo in inimigos_vivos:
+		# Verifica se o nó é válido e tem a função de save
+		if is_instance_valid(inimigo) and inimigo.has_method("get_save_data"):
+			# O inimigo.gd já tem essa função pronta (fizemos na etapa anterior)
+			enemies_data.push_back(inimigo.get_save_data())
+			
+	print("Main: Estado de %d inimigos capturado para save." % enemies_data.size())
+	return enemies_data
+
+# 2. Recebe uma lista de dados e recria os inimigos exatamente onde estavam
+func load_enemies_state_data(loaded_data: Array):
+	print("Main: Recarregando %d inimigos do save..." % loaded_data.size())
+	
+	# A. Limpa inimigos existentes (do spawn automático ou da sessão anterior)
+	var inimigos_atuais = get_tree().get_nodes_in_group("inimigos")
+	for inimigo in inimigos_atuais:
+		inimigo.queue_free()
+	
+	# B. Recria inimigos a partir dos dados
+	for data in loaded_data:
+		if cena_inimigo:
+			var novo_inimigo = cena_inimigo.instantiate()
+			
+			# Configura referências ANTES de adicionar à árvore
+			novo_inimigo.main_ref = self
+			novo_inimigo.player_ref = player
+			
+			# Adiciona à cena
+			add_child(novo_inimigo)
+			
+			# Carrega os dados específicos (HP, Posição)
+			# Nota: O _ready do inimigo roda ao adicionar child, mas o load_save_data
+			# vai sobrescrever a posição logo em seguida, o que é o comportamento desejado.
+			novo_inimigo.load_save_data(data)
 
 # --- TESTE TEMPORÁRIO BFS ---
 """func executar_teste_bfs():

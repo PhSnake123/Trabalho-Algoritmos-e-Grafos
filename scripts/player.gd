@@ -2,14 +2,17 @@
 extends CharacterBody2D
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
-var sfx_teste = preload("res://Audio/sounds/hurt.wav") 
+#var sfx_teste = preload("res://Audio/sounds/hurt.wav") 
 
 const TILE_SIZE := 16   
 const SPEED := 80.0    
 
-# --- CONFIGURAÇÃO POKÉMON (Turn Delay) ---
+# --- CONFIGURAÇÃO DE TURNOS E COOLDOWN ---
 const TURN_DELAY_TIME: float = 0.08 
+const ATTACK_COOLDOWN: float = 0.25 # Tempo que o ataque "trava" o input (Ritmo de combate)
+
 var turn_timer: float = 0.0
+var input_cooldown: float = 0.0 # NOVO: Impede spam de ações de combate
 
 var grid_pos := Vector2i(1, 1)
 
@@ -17,6 +20,12 @@ var moving := false
 var move_dir := Vector2.ZERO
 var last_facing := "down"
 var target_pos := Vector2.ZERO 
+var stats = {
+		"atk": 15,
+		"def": 5,
+		"poise": 10,
+		"knockback": 5
+	}
 
 @onready var main_script = get_parent()
 
@@ -26,8 +35,9 @@ func _ready():
 	SaveManager.register_player(self) 
 
 func _physics_process(delta):
-	if turn_timer > 0:
-		turn_timer -= delta
+	# Decrementa timers
+	if turn_timer > 0: turn_timer -= delta
+	if input_cooldown > 0: input_cooldown -= delta # NOVO
 
 	if not moving:
 		handle_input()
@@ -49,6 +59,9 @@ func _get_facing_from_dir(dir: Vector2) -> String:
 	return last_facing
 
 func handle_input():
+	# Se estiver em cooldown de combate, ignora inputs
+	if input_cooldown > 0: return
+
 	var input_dir = _get_input_direction()
 	
 	if input_dir != Vector2.ZERO:
@@ -65,9 +78,22 @@ func handle_input():
 
 func start_moving(dir: Vector2):
 	var target_grid_pos = grid_pos + Vector2i(dir)
-
+		
+	# 1. Checa Combate PRIMEIRO
+	if main_script.is_tile_occupied_by_enemy(target_grid_pos):
+		# ATAQUE!
+		_atacar_inimigo_no_tile(target_grid_pos)
+		
+		# Aplica Cooldown para impedir que segurar a tecla rode 10 ataques seguidos
+		input_cooldown = ATTACK_COOLDOWN
+		
+		# O turno passa mesmo atacando parado
+		get_tree().call_group("inimigos", "tomar_turno")
+		return # Retorna para não andar
+		
+	# 2. Se livre, anda normal
 	if main_script.is_tile_passable(target_grid_pos):
-		AudioManager.play_sfx(sfx_teste)
+		#AudioManager.play_sfx(sfx_teste)
 		
 		var player_snapshot = {
 			"pos": grid_pos,
@@ -84,6 +110,9 @@ func start_moving(dir: Vector2):
 		
 		last_facing = _get_facing_from_dir(dir)
 		anim.play("walk_" + last_facing)
+		
+		# "Ei sistema, avise todo mundo no grupo 'inimigos' para tomar seu turno agora!"
+		get_tree().call_group("inimigos", "tomar_turno")
 	else:
 		anim.play("idle_" + last_facing)
 		moving = false
@@ -100,10 +129,10 @@ func move_towards_target(delta):
 		var tile_data: MapTileData = main_script.get_tile_data(grid_pos)
 		if tile_data:
 			Game_State.tempo_jogador += tile_data.custo_tempo
-			print("Tempo Acumulado: ", Game_State.tempo_jogador)
+			# Removido print excessivo de tempo
 			if tile_data.dano_hp > 0:
 				Game_State.vida_jogador -= tile_data.dano_hp
-				print("DANO: %s! Vida: %s" % [tile_data.dano_hp, Game_State.vida_jogador])
+				print("DANO AMBIENTAL: %s! Vida: %s" % [tile_data.dano_hp, Game_State.vida_jogador])
 			
 		main_script.update_fog(grid_pos)
 		
@@ -163,3 +192,24 @@ func _unhandled_input(event):
 		var tile_alvo = minha_pos + direcao_olhar
 		print("Player: Tentando usar chave em ", tile_alvo)
 		main_script.tentar_abrir_porta(tile_alvo)
+
+func receber_dano(atk_inimigo: int, kb_power: int, pos_atacante: Vector2i):
+		var dano = max(0, atk_inimigo - stats.def)
+		Game_State.vida_jogador -= dano
+		print("Player tomou %d de dano!" % dano)
+		
+		# Lógica de KB no player
+		var forca_empurrao = kb_power - stats.poise
+		if forca_empurrao > 0:
+			 # ... (Mesma lógica de calcular tile livre para trás) ...
+			 # Lembre de checar is_tile_passable no Main
+			pass
+
+func _atacar_inimigo_no_tile(pos: Vector2i):
+	# Encontra quem está lá e chama receber_dano nele
+	var inimigos = get_tree().get_nodes_in_group("inimigos")
+	for ini in inimigos:
+		if ini.grid_pos == pos:
+			ini.receber_dano(stats.atk, stats.knockback, grid_pos)
+				 # Animação de ataque do player aqui
+			break
