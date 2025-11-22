@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="DialogueData" load_steps=2 format=3 uid="uid://rrmx1k5ov74n"]
+
+[ext_resource type="Script" uid="uid://bl6aav0wcfwrm" path="res://scripts/DialogueData.gd" id="1_dcw6r"]
+
+[resource]
+script = ExtResource("1_dcw6r")
+nome_npc = "Shovel Knight"
+falas = Array[String](["Eu sou o Hollow Knight.", "Desculpa, quis dizer Shovel Knight. Eu não mordo.", "Não ocupo mais a tela inteira! Aprendi humildade."])
+metadata/_custom_type_script = "uid://bl6aav0wcfwrm"

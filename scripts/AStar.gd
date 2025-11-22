@@ -3,12 +3,6 @@ class_name AStar
 
 var grafo: Graph
 
-# --- CONFIGURAÇÃO DO COMPORTAMENTO ---
-# Quanto vale 1 ponto de Vida em relação ao Tempo?
-# Se for 10.0: O drone prefere perder 9 segundos dando a volta do que perder 1 de Vida.
-# Se for 0.5: O drone aceita perder 1 de vida para economizar 0.5 segundos (agressivo).
-var peso_dano: float = 1.0 
-
 func _init(p_grafo: Graph):
 	self.grafo = p_grafo
 
@@ -32,7 +26,10 @@ func _encontrar_menor_f_score(open_set: Array, f_score: Dictionary) -> Vector2i:
 	return melhor_node
 
 # 3. O Algoritmo A* Principal
-func calcular_caminho(inicio: Vector2i, fim: Vector2i) -> Array[Vector2i]:
+# Quanto vale 1 ponto de Vida em relação ao Tempo?
+# Se peso_dano for 10.0: O drone prefere perder 9 segundos dando a volta do que perder 1 de Vida.
+# Se for 0.5: O drone aceita perder 1 de vida para economizar 0.5 segundos (agressivo).
+func calcular_caminho(inicio: Vector2i, fim: Vector2i, peso_dano: float = 1.0) -> Array[Vector2i]:
 	# Inicialização
 	var open_set: Array[Vector2i] = [inicio] # Nós para visitar
 	var came_from = {} # Para reconstruir o caminho depois
@@ -59,7 +56,7 @@ func calcular_caminho(inicio: Vector2i, fim: Vector2i) -> Array[Vector2i]:
 		# Checa vizinhos
 		if grafo.adjacencias.has(atual):
 			for aresta in grafo.adjacencias[atual]:
-				var vizinho: Vector2i = aresta[0]
+				var vizinho: Vector2i = aresta[0]				
 				var custo_tempo_vizinho: float = aresta[1]
 				
 				# --- AQUI ESTÁ O SEGREDO DO "CAMINHO ÓTIMO" ---

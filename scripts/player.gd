@@ -23,7 +23,7 @@ var target_pos := Vector2.ZERO
 var stats = {
 		"atk": 15,
 		"def": 5,
-		"poise": 10,
+		"poise": 3,
 		"knockback": 5
 	}
 
@@ -178,8 +178,8 @@ func _unhandled_input(event):
 		_usar_drone_avancado(ItemData.EFEITO_DRONE_SCANNER, ItemData.ItemTipo.DRONE)
 	if event is InputEventKey and event.pressed and event.keycode == KEY_5:
 		_usar_drone_avancado(ItemData.EFEITO_DRONE_TERRAFORMER, ItemData.ItemTipo.DRONE)
-	# -------------------------------------------------------
 
+	# Lógica da Chave
 	if event.is_action_pressed("usar_chave"):
 		var minha_pos = grid_pos
 		var direcao_olhar = Vector2i.ZERO
@@ -193,23 +193,118 @@ func _unhandled_input(event):
 		print("Player: Tentando usar chave em ", tile_alvo)
 		main_script.tentar_abrir_porta(tile_alvo)
 
-func receber_dano(atk_inimigo: int, kb_power: int, pos_atacante: Vector2i):
-		var dano = max(0, atk_inimigo - stats.def)
-		Game_State.vida_jogador -= dano
-		print("Player tomou %d de dano!" % dano)
+	# Lógica de Interação Unificada
+	if event.is_action_pressed("interagir"):
 		
-		# Lógica de KB no player
-		var forca_empurrao = kb_power - stats.poise
-		if forca_empurrao > 0:
-			 # ... (Mesma lógica de calcular tile livre para trás) ...
-			 # Lembre de checar is_tile_passable no Main
-			pass
+		# 1. Calcula onde o jogador está olhando
+		var direcao_olhar = Vector2i.ZERO
+		match last_facing:
+			"up": direcao_olhar = Vector2i.UP
+			"down": direcao_olhar = Vector2i.DOWN
+			"left": direcao_olhar = Vector2i.LEFT
+			"right": direcao_olhar = Vector2i.RIGHT
+		
+		var tile_frente = grid_pos + direcao_olhar
+		
+		# 2. Prioridade: NPC à frente
+		# Usa a função auxiliar que criamos no Main
+		if main_script.has_method("get_npc_at_position"):
+			var npc = main_script.get_npc_at_position(tile_frente)
+			if npc:
+				print("Player: NPC encontrado. Conversando...")
+				npc.interagir()
+				return # Sai da função, não interage com chão
+		
+		# 3. Se não tem NPC, interage com o chão (Save/Terminal)
+		# Checa vitória primeiro
+		if grid_pos == main_script.vertice_fim and main_script.saida_destrancada:
+			print(">>> PARABÉNS! VOCÊ VENCEU O JOGO! <<<")
+			return
+			
+		var current_tile: MapTileData = main_script.get_tile_data(grid_pos)
+		if current_tile:
+			if current_tile.tipo == "SavePoint":
+				SaveManager.save_player_game()
+				print("JOGO SALVO (Save Point)!")
+			
+			elif current_tile.tipo == "Terminal":
+				# Chama a nova função pública do Main
+				main_script.tentar_ativar_terminal(grid_pos)
+
+# --- SISTEMA DE DANO E KNOCKBACK DO PLAYER ---
+
+func receber_dano(atk_inimigo: int, kb_power: int, pos_atacante: Vector2i):
+	var dano = max(0, atk_inimigo - stats.def)
+	Game_State.vida_jogador -= dano
+	print("Player tomou %d de dano! Vida restante: %d" % [dano, Game_State.vida_jogador])
+	
+	# Feedback Visual de Dano
+	var t = create_tween()
+	t.tween_property(self, "modulate", Color.RED, 0.1)
+	t.tween_property(self, "modulate", Color.WHITE, 0.1)
+	
+	# Lógica de Knockback
+	var forca_empurrao = kb_power - stats.poise
+	if forca_empurrao > 0:
+		print("Player sofreu knockback de força %d!" % forca_empurrao)
+		_aplicar_knockback_player(pos_atacante, forca_empurrao)
+
+func _aplicar_knockback_player(origem_impacto: Vector2i, forca: int):
+	# 1. Calcula direção oposta ao impacto
+	var diff = grid_pos - origem_impacto
+	var dir = Vector2i(clamp(diff.x, -1, 1), clamp(diff.y, -1, 1))
+	
+	if dir == Vector2i.ZERO: return
+	
+	var dest = grid_pos
+	var bateu_obstaculo = false
+	
+	# 2. Verifica se o destino é válido (Lógica simplificada: empurra X tiles ou para se bater)
+	for i in range(forca):
+		var proximo_teste = dest + dir
+		
+		# Checa Parede
+		if not main_script.is_tile_passable(proximo_teste):
+			bateu_obstaculo = true
+			break
+			
+		# Checa se vai cair em cima de outro inimigo
+		if main_script.is_tile_occupied_by_enemy(proximo_teste):
+			bateu_obstaculo = true
+			break
+		dest = proximo_teste
+	
+	# 3. Aplica o movimento se mudou de lugar
+	if dest != grid_pos:
+		# Interrompe movimento normal de caminhada para forçar o empurrão
+		moving = false 
+		
+		# Stun breve para dar peso ao golpe
+		input_cooldown = 0.2 
+		
+		grid_pos = dest
+		target_pos = (Vector2(grid_pos) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
+		
+		# Usa Tween para o movimento rápido de impacto
+		var t = create_tween()
+		t.tween_property(self, "global_position", target_pos, 0.15).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		
+		print("Player empurrado para: ", grid_pos)
+	
+	# 4. Wall Slam (Se foi bloqueado)
+	if bateu_obstaculo:
+		print("Player bateu contra obstáculo! Dano extra.")
+		Game_State.vida_jogador -= 5 # Dano de impacto
+		
+		# Shake visual no sprite (não no corpo todo para não desalinhar)
+		var t = create_tween()
+		t.tween_property(anim, "position", Vector2(dir) * 4, 0.05)
+		t.tween_property(anim, "position", Vector2.ZERO, 0.05)
 
 func _atacar_inimigo_no_tile(pos: Vector2i):
-	# Encontra quem está lá e chama receber_dano nele
 	var inimigos = get_tree().get_nodes_in_group("inimigos")
 	for ini in inimigos:
 		if ini.grid_pos == pos:
+			print(">>> Player atacou Inimigo!")
 			ini.receber_dano(stats.atk, stats.knockback, grid_pos)
-				 # Animação de ataque do player aqui
 			break

@@ -50,9 +50,10 @@ var scanners_ativos: Array[Dictionary] = []
 var terminais_pos: Array[Vector2i] = [] 
 var saida_destrancada: bool = false # Controla se a saída está acessível
 
-# --- CONFIGURAÇÃO DE INIMIGOS ---
+# --- CONFIGURAÇÃO DE SPAWN ---
 @export_group("Configuração de Spawn")
 @export var cena_inimigo: PackedScene = preload("res://scenes/Enemy.tscn") # <--- ARRASTE SUA CENA AQUI
+@export var cena_npc: PackedScene = preload("res://scenes/NPC.tscn")
 @export var qtd_inimigos_spawn: int = 3         # Quantos inimigos criar
 @export var raio_minimo_spawn: int = 15         # Distância mínima em TILES do jogador
 @export var tentativas_spawn: int = 100         # Segurança para não travar o loop
@@ -175,6 +176,7 @@ func _ready():
 
 	update_fog(vertice_inicio)
 	_spawnar_inimigos()
+	_spawnar_npc_aleatorio()
 	SaveManager.save_auto_game()
 	print("Ready concluído.")
 
@@ -307,56 +309,17 @@ func update_fog(player_grid_pos: Vector2i):
 
 # --- INPUTS DE AÇÃO ---
 func _unhandled_input(event):
+	# Atalhos de Sistema (Debug/Menu)
 	if event.is_action_pressed("save"): SaveManager.save_player_game()
 	if event.is_action_pressed("load"): SaveManager.load_player_game()
 	if event.is_action_pressed("load_start"): SaveManager.load_auto_game()
 
+	# Atalho do Item Save Terminal
 	if event.is_action_pressed("save_terminal"):
 		var item_para_usar = Game_State.inventario_jogador.get_item_por_efeito(ItemData.EFEITO_SAVE_GAME)
 		if item_para_usar:
 			Game_State.inventario_jogador.remover_item(item_para_usar)
 			SaveManager.save_player_game()
-	
-	# --- LÓGICA DE INTERAÇÃO (Terminais e Save Points) ---
-	if event.is_action_pressed("interagir"):
-		var player_pos = player.grid_pos
-		var current_tile: MapTileData = get_tile_data(player_pos)
-		
-		if player_pos == vertice_fim and saida_destrancada:
-			print(">>> PARABÉNS! VOCÊ VENCEU O JOGO! <<<")
-			# Opcional: Pausar o jogo para ele curtir o momento
-			# get_tree().paused = true
-			return # Encerra aqui para não tentar interagir com mais nada
-		
-		if current_tile:
-			# A. Interação com Save Point
-			
-			
-			if current_tile.tipo == "SavePoint":
-				SaveManager.save_player_game()
-				print("JOGO SALVO (Save Point)!")
-			
-			# B. Interação com Terminal (Fase 3)
-			elif current_tile.tipo == "Terminal":
-				if player_pos in terminais_pos: 
-					# Remove da lista de pendentes
-					terminais_pos.erase(player_pos)
-					
-					Game_State.terminais_ativos += 1
-					var restantes = Game_State.terminais_necessarios - Game_State.terminais_ativos
-					print("TERMINAL ATIVADO! Restam: %d" % restantes)
-					
-					# Muda visualmente para chão (ou terminal inativo)
-					tile_map.set_cell(0, player_pos, ID_CHAO, Vector2i(0, 0))
-					
-					# Checa se liberou a saída
-					if restantes <= 0:
-						saida_destrancada = true
-						print(">>> TODOS TERMINAIS ATIVOS! SAÍDA DESTRANCADA! <<<")
-						# Redesenha o mapa para mostrar a saída aberta (Verde)
-						_draw_map()
-				else:
-					print("Este terminal já foi ativado.")
 
 # --- FUNÇÕES DE UTILIDADE E DRONES ---
 
@@ -772,6 +735,96 @@ func load_enemies_state_data(loaded_data: Array):
 			# vai sobrescrever a posição logo em seguida, o que é o comportamento desejado.
 			novo_inimigo.load_save_data(data)
 
+# --- NOVA FUNÇÃO DE SPAWN NPC ---
+func _spawnar_npc_aleatorio():
+	if not cena_npc: return
+	
+	var tentativas = 0
+	var spawnou = false
+	
+	while not spawnou and tentativas < 100:
+		tentativas += 1
+		var x = randi_range(1, MapGenerator.LARGURA - 2)
+		var y = randi_range(1, MapGenerator.ALTURA - 2)
+		var pos = Vector2i(x, y)
+		
+		var tile = get_tile_data(pos)
+		if not tile or not tile.passavel or tile.tipo == "Dano": continue
+		if pos.distance_to(player.grid_pos) < 5: continue
+		if pos == vertice_fim: continue
+		if is_tile_occupied_by_enemy(pos): continue
+		
+		var npc = cena_npc.instantiate()
+		
+		# 1. Adiciona primeiro à cena para garantir que _ready rode
+		add_child(npc)
+		
+		# 2. Define a posição global
+		npc.global_position = (Vector2(pos) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
+		npc.main_ref = self
+		
+		# 3. FORÇA o NPC a atualizar o grid_pos agora que a posição está certa
+		# (Como o _ready já rodou no add_child com posição 0,0, precisamos corrigir)
+		npc.grid_pos = pos 
+		# Ou se preferir recalculando: npc.grid_pos = npc._world_to_grid(npc.global_position)
+		
+		spawnou = true
+		print("NPC spawnado e fixado em: ", pos)
+
+# --- NOVA FUNÇÃO DE DETECÇÃO ---
+func get_npc_at_position(pos: Vector2i) -> Node2D:
+	var npcs = get_tree().get_nodes_in_group("npcs")
+	
+	# Debug: Se a lista estiver vazia, sabemos que o problema é o Grupo
+	if npcs.is_empty():
+		print_debug("ERRO CRÍTICO: Nenhum NPC encontrado no grupo 'npcs'!")
+		return null
+		
+	for n in npcs:
+		# Verifica se o nó é válido
+		if not is_instance_valid(n):
+			continue
+			
+		# Verifica se tem a variável grid_pos
+		if not "grid_pos" in n:
+			print("AVISO: Objeto no grupo 'npcs' sem variável grid_pos: ", n.name)
+			continue
+			
+		# Debug: Mostra onde o sistema está procurando vs onde o NPC diz estar
+		# Descomente a linha abaixo se quiser ver o flood no console
+		# print("Checando NPC em ", n.grid_pos, " contra alvo ", pos)
+		
+		if n.grid_pos == pos:
+			# ACHOU!
+			return n
+			
+	# Se chegou aqui, percorreu a lista e ninguém estava na posição 'pos'
+	# print("Falha: Nenhum NPC na posição ", pos)
+	return null
+
+func is_tile_occupied_by_npc(pos: Vector2i) -> bool:
+	return get_npc_at_position(pos) != null
+
+# --- NOVA FUNÇÃO PÚBLICA (Chamada pelo Player.gd) ---
+func tentar_ativar_terminal(pos: Vector2i):
+	if pos in terminais_pos: 
+		terminais_pos.erase(pos)
+		
+		Game_State.terminais_ativos += 1
+		var restantes = Game_State.terminais_necessarios - Game_State.terminais_ativos
+		print("TERMINAL ATIVADO! Restam: %d" % restantes)
+		
+		# Muda visualmente para chão (ou terminal inativo)
+		tile_map.set_cell(0, pos, ID_CHAO, Vector2i(0, 0))
+		
+		# Checa se liberou a saída
+		if restantes <= 0:
+			saida_destrancada = true
+			print(">>> TODOS TERMINAIS ATIVOS! SAÍDA DESTRANCADA! <<<")
+			# Redesenha o mapa para mostrar a saída aberta (Verde)
+			_draw_map()
+	else:
+		print("Este terminal já foi ativado ou é inválido.")
 # --- TESTE TEMPORÁRIO BFS ---
 """func executar_teste_bfs():
 	print("--- INICIANDO TESTE VISUAL DO BFS ---")

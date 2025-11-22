@@ -1,7 +1,7 @@
-[gd_scene load_steps=13 format=3 uid="uid://dxblkua4qxpep"]
+[gd_scene load_steps=14 format=3 uid="uid://bnaq07rewb3r7"]
 
-[ext_resource type="Script" uid="uid://b7s2lrd5fmvun" path="res://scripts/NPC.gd" id="1_6xvi5"]
-[ext_resource type="Resource" uid="uid://bpyoq2xkrjnky" path="res://assets/dialogue/DialogoTeste.tres" id="2_jnjht"]
+[ext_resource type="Script" uid="uid://cttuljl330y7j" path="res://scripts/NPC.gd" id="1_6xvi5"]
+[ext_resource type="Resource" uid="uid://rrmx1k5ov74n" path="res://assets/dialogue/npc_teste.tres" id="2_jnjht"]
 [ext_resource type="Texture2D" uid="uid://bdpad3yq8t3lc" path="res://assets/sprites/Green Knight idle Sprite-sheet 16x16.png" id="2_ktgr7"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_jnjht"]
@@ -68,12 +68,22 @@ animations = [{
 "speed": 10.0
 }]
 
-[node name="NPC" type="Node2D"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_6xvi5"]
+size = Vector2(8, 15)
+
+[node name="NPC" type="CharacterBody2D"]
+collision_layer = 8
 script = ExtResource("1_6xvi5")
 dialogo_data = ExtResource("2_jnjht")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+z_index = 6
 sprite_frames = SubResource("SpriteFrames_5t8s8")
 autoplay = "default"
 frame = 5
 frame_progress = 0.7883857
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+z_index = 1
+position = Vector2(0, 0.5)
+shape = SubResource("RectangleShape2D_6xvi5")
