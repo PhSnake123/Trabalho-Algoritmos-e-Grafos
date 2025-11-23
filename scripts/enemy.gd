@@ -19,6 +19,7 @@ enum EnemyAI {
 @export var def: int = 2
 @export var poise: int = 5      
 @export var knockback_power: int = 3
+@onready var health_bar: ProgressBar = $HealthBar
 
 # --- REFERÊNCIAS ---
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
@@ -46,6 +47,10 @@ func _ready():
 		main_ref = get_parent()
 	if not player_ref and main_ref:
 		player_ref = main_ref.get_node("Player")
+	if health_bar:
+		health_bar.max_value = max_hp
+		health_bar.value = current_hp
+		health_bar.hide()
 
 # --- SISTEMA DE TURNO ---
 func tomar_turno():
@@ -120,6 +125,7 @@ func receber_dano(atk_atacante: int, kb_power: int, pos_atacante: Vector2i):
 	var dano_final = max(0, atk_atacante - def)
 	current_hp -= dano_final
 	print("Inimigo recebeu %d de dano. HP: %d/%d" % [dano_final, current_hp, max_hp])
+	_atualizar_feedback_dano(dano_final)
 	
 	if sprite:
 		var t = create_tween()
@@ -133,6 +139,18 @@ func receber_dano(atk_atacante: int, kb_power: int, pos_atacante: Vector2i):
 	var forca_empurrão = kb_power - poise
 	if forca_empurrão > 0:
 		_aplicar_knockback(pos_atacante, forca_empurrão)
+
+func _atualizar_feedback_dano(dano_valor: int):
+	# 1. Atualiza Barra
+	if health_bar:
+		health_bar.value = current_hp
+		health_bar.show()
+	
+	# 2. Texto Flutuante
+	if main_ref and main_ref.has_method("spawn_floating_text"):
+		# Cor Amarela para dano em inimigos
+		var pos_visual = global_position + Vector2(0, -16)
+		main_ref.spawn_floating_text(pos_visual, str(dano_valor), Color.YELLOW)
 
 # --- KNOCKBACK REFATORADO (Cursor Temporário) ---
 func _aplicar_knockback(origem_impacto: Vector2i, forca_total: int):
@@ -184,9 +202,11 @@ func _aplicar_knockback(origem_impacto: Vector2i, forca_total: int):
 
 func receber_dano_direto(qtd: int):
 	current_hp -= qtd
+	health_bar.value = current_hp
+	health_bar.show()
 	print(">> Dano Direto: %d. HP: %d" % [qtd, current_hp])
 	if sprite:
-		sprite.modulate = Color.ORANGE 
+		sprite.modulate = Color.RED
 		var t = create_tween()
 		t.tween_property(sprite, "modulate", Color.WHITE, 0.2)
 	if current_hp <= 0: _morrer()

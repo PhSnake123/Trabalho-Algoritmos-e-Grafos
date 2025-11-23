@@ -1,7 +1,10 @@
-[gd_scene load_steps=9 format=3 uid="uid://wy711p61hc6f"]
+[gd_scene load_steps=10 format=3 uid="uid://wy711p61hc6f"]
 
 [ext_resource type="Texture2D" uid="uid://cyt1cjxe1x42i" path="res://assets/sprites/slime_green.png" id="1_3gvst"]
 [ext_resource type="Script" uid="uid://bdh138ekbaa42" path="res://scripts/enemy.gd" id="1_55jtl"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_55jtl"]
+bg_color = Color(0, 0.5411765, 0.019607844, 0.43137255)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mpr68"]
 size = Vector2(10, 11)
@@ -44,6 +47,17 @@ animations = [{
 
 [node name="CharacterBody2D" type="CharacterBody2D"]
 script = ExtResource("1_55jtl")
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+z_index = 90
+offset_left = -16.0
+offset_top = -24.0
+offset_right = 16.0
+offset_bottom = -8.0
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 8
+theme_override_styles/fill = SubResource("StyleBoxFlat_55jtl")
+value = 50.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 z_index = 1

@@ -134,13 +134,28 @@ func move_towards_target(delta):
 		var tile_data: MapTileData = main_script.get_tile_data(grid_pos)
 		if tile_data:
 			Game_State.tempo_jogador += tile_data.custo_tempo
-			# Removido print excessivo de tempo
+			
+			if tile_data.custo_tempo > 0:
+				var txt = "-%d" % tile_data.custo_tempo
+				# Offset (0, -16) para aparecer acima da cabeça do player
+				main_script.spawn_floating_text(global_position + Vector2(0, -24), txt, Color.CYAN)
+			
 			if tile_data.dano_hp > 0:
 				Game_State.vida_jogador -= tile_data.dano_hp
+				main_script.spawn_floating_text(global_position + Vector2(-16, -8), "-%d" % tile_data.dano_hp, Color.RED)
 				print("DANO AMBIENTAL: %s! Vida: %s" % [tile_data.dano_hp, Game_State.vida_jogador])
 				if Game_State.vida_jogador <= 0:
 					_morrer()
 			
+				
+				# Cria um tween rápido para piscar vermelho
+				var t = create_tween()
+				t.tween_property(self, "modulate", Color.RED, 0.1)
+				t.tween_property(self, "modulate", Color.WHITE, 0.1)
+				
+				# (Opcional) Som de dano (ainda não temos)
+				# AudioManager.play_sfx(preload("res://Audio/sounds/hurt.wav"))
+		
 		main_script.update_fog(grid_pos)
 		
 		var next_input = _get_input_direction()
@@ -270,6 +285,14 @@ func receber_dano(atk_inimigo: int, kb_power: int, pos_atacante: Vector2i):
 	Game_State.vida_jogador -= dano
 	print("Player tomou %d de dano! Vida restante: %d" % [dano, Game_State.vida_jogador])
 	
+	if dano > 0:
+		# Vermelho Sangue para dano sofrido
+		var pos_visual = global_position + Vector2(-16, -16)
+		main_script.spawn_floating_text(pos_visual, "-%d" % dano, Color(1, 0.2, 0.2))
+	else:
+		# Se a defesa for muito alta
+		var pos_visual = global_position + Vector2(-16, -16)
+		main_script.spawn_floating_text(pos_visual, "BLOCK", Color.GRAY)
 	# Feedback Visual de Dano
 	var t = create_tween()
 	t.tween_property(self, "modulate", Color.RED, 0.1)
