@@ -4,7 +4,7 @@ extends Node2D
 @export var fog_enabled := false
 var musica_teste = preload("res://Audio/music/Erik_Satie_Gymnopédie_No.1.ogg")
 const HUD_SCENE = preload("res://scenes/HUD.tscn") #NOVO Declarando o HUD 
-
+const FLOATING_LABEL_SCENE = preload("res://scenes/FloatingLabel.tscn")
 
 # 1. Carrega o script de lógica
 const TILE_SIZE := 16
@@ -943,7 +943,14 @@ func reconstruir_dados_logicos_do_mapa():
 	Game_State.terminais_ativos = Game_State.terminais_necessarios - encontrados
 	
 	print("Main: Lista de Terminais reconstruída. Restantes: ", terminais_pos.size())
-	
+
+# Função para criar feedback visual (Dano/Cura/Tempo)
+func spawn_floating_text(world_pos: Vector2, valor: String, cor: Color):
+	var label_inst = FLOATING_LABEL_SCENE.instantiate()
+	add_child(label_inst)
+	label_inst.global_position = world_pos
+	label_inst.set_text(valor, cor)	
+
 # --- TESTE TEMPORÁRIO BFS ---
 """func executar_teste_bfs():
 	print("--- INICIANDO TESTE VISUAL DO BFS ---")
