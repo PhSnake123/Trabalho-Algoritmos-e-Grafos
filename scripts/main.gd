@@ -64,129 +64,159 @@ var saida_destrancada: bool = false # Controla se a saída está acessível
 func _ready():
 	var vertice_inicio = Vector2i(1, 1) 
 	
+	# 1. Configurações Básicas (Sempre rodam)
 	SaveManager.register_main(self)
 	AudioManager.play_music(musica_teste)
 	
-	# Adicionar HUD
+	# Instancia o HUD (Da Tarefa de UI)
 	var hud = HUD_SCENE.instantiate()
 	add_child(hud)
 
-	# 1. GERAÇÃO DO MAPA BASE
-	var map_generator = MapGenerator.new()
-	map_data = map_generator.gerar_grid()
-	map_generator.gerar_labirinto_dfs(map_data, 1, 1)
-	#map_generator.criar_salas_no_labirinto(map_data, 2, 2, 4)
-	map_generator.quebrar_paredes_internas(map_data, 0.12)
-	
-
-	# 2. CONFIGURAÇÃO DO MODO DE JOGO
-	var modo_jogo = "NORMAL" 
-	print("--- MODO DE JOGO ATUAL: ", modo_jogo, " ---")
-	
-	# Reseta estado da saída
-	saida_destrancada = false
-	if modo_jogo == "NORMAL":
-		saida_destrancada = true # No modo normal já começa aberta
-
-	# Definimos os terrenos especiais
-	if modo_jogo == "NORMAL":
-		map_generator.adicionar_terrenos_especiais(map_data, 50, 25, vertice_inicio)
-	else:
-		# Modo MST: Menos portas para facilitar navegação entre terminais
-		map_generator.adicionar_terrenos_especiais(map_data, 40, 20, vertice_inicio)
+	# 2. DECISÃO: CARREGAR SAVE OU GERAR NOVO?
+# 2. DECISÃO: CARREGAR SAVE OU GERAR NOVO?
+	if Game_State.carregar_save_ao_iniciar:
+		print("Main: Bandeira de LOAD detectada. Carregando save...")
 		
-		# GERA OS TERMINAIS LÓGICOS
-		terminais_pos = map_generator.adicionar_terminais(map_data, 3, vertice_inicio)
-		Game_State.terminais_necessarios = terminais_pos.size()
-		Game_State.terminais_ativos = 0
-
-	# 3. CRIA O GRAFO E ALGORITMOS
-	grafo = Graph.new(map_data)
-	dijkstra = Dijkstra.new(grafo)
-	astar = AStar.new(grafo)
-	bfs = BFS.new(grafo)
-	
-	# 4. CÁLCULO DE OBJETIVOS E TEMPO PAR
-	
-	if modo_jogo == "NORMAL":
-		# --- LÓGICA FASE 1/2 (Dijkstra Simples) ---
-		vertice_fim = dijkstra.encontrar_vertice_final(vertice_inicio)
-		print("Vértice final definido em: ", vertice_fim)
+		# Pequeno delay para garantir que a árvore de cenas esteja estável
+		await get_tree().process_frame
 		
-		if dijkstra.distancias.has(vertice_fim):
-			Game_State.tempo_par_level = dijkstra.distancias[vertice_fim]
-			print("Tempo PAR (Dijkstra): ", Game_State.tempo_par_level)
+		# --- CORREÇÃO: Inicializa a Névoa ANTES de carregar os dados ---
+		fog_logic = FogOfWar.new(MapGenerator.LARGURA, MapGenerator.ALTURA, 5)
+		
+		# Garante que o TileMap da névoa respeite a configuração exportada
+		if not fog_enabled:
+			tile_map_fog.hide()
 		else:
-			print("ERRO: Saída inalcançável no modo Normal.")
-			
-	elif modo_jogo == "MST":
-		# --- LÓGICA FASE 3 (Prim / Terminais) ---
+			tile_map_fog.show()
+		# ---------------------------------------------------------------
 		
-		# 1. Primeiro definimos onde é a SAÍDA (longe do início)
-		vertice_fim = dijkstra.encontrar_vertice_final(vertice_inicio)
-		print("Modo MST: Saída definida em ", vertice_fim)
+		# SaveManager tem onde jogar os dados
+		SaveManager.load_player_game()
 		
-		# 2. Calculamos a MST incluindo TUDO (Início + Terminais + Fim)
-		print("Calculando MST (Start -> Terminais -> Exit)...")
+		_setup_camera()
 		
-		var pontos_interesse = [vertice_inicio] + terminais_pos + [vertice_fim]
-		var grafo_abstrato = {}
+		# Desliga a bandeira para a próxima vez
+		Game_State.carregar_save_ao_iniciar = false
 		
-		for origem in pontos_interesse:
-			grafo_abstrato[origem] = {}
-			var resultado = dijkstra.calcular_caminho_minimo(origem)
-			var dists = resultado["distancias"]
-			
-			for destino in pontos_interesse:
-				if origem == destino: continue
-				if dists.has(destino) and dists[destino] != INF:
-					grafo_abstrato[origem][destino] = dists[destino]
-		
-		# Roda o Prim no grafo completo
-		var resultado_mst = Prim.calcular_mst(grafo_abstrato) # Nova função
-		var custo_mst = resultado_mst["custo"]
-		
-		Game_State.tempo_par_level = custo_mst
-		
-		print("Terminais Ativos: ", terminais_pos.size())
-		print("Tempo PAR Ajustado (MST + Saída): ", custo_mst)
-		dijkstra.calcular_caminho_minimo(vertice_inicio)
-
-	# 5. LÓGICA DO SAVE POINT
-	var caminho_minimo = dijkstra.reconstruir_caminho(vertice_inicio, vertice_fim)
-	save_point_pos = null
-	
-	# Checagem de segurança extra para caminho válido
-	if not caminho_minimo.is_empty() and caminho_minimo.size() > 2:
-		var mid_index = (caminho_minimo.size() / 2) as int
-		save_point_pos = caminho_minimo[mid_index]
-		
-		# Só cria se não conflitar com terminais
-		if not (save_point_pos in terminais_pos):
-			map_data[save_point_pos.y][save_point_pos.x] = SAVE_POINT_TILE
-			print("Save Point gerado em: ", save_point_pos)
 	else:
-		print("AVISO: Não foi possível gerar Save Point (Caminho inválido ou curto demais).")
-	
-	# 6. FINALIZAÇÃO VISUAL
-	_draw_map()
-	_setup_camera()
-	
-	fog_logic = FogOfWar.new(MapGenerator.LARGURA, MapGenerator.ALTURA, 5)
-	if not fog_enabled:
-		tile_map_fog.hide()
-	
-	# Revela Save Point e Terminais na fog (facilita teste)
-	if fog_enabled:
-		if save_point_pos != null:
-			fog_logic.fog_data[save_point_pos.y][save_point_pos.x] = false
-		for t in terminais_pos:
-			fog_logic.fog_data[t.y][t.x] = false
+		print("Main: Iniciando NOVO JOGO (Geração Procedural)...")
+		
+		# --- GERAÇÃO DO MAPA BASE ---
+		var map_generator = MapGenerator.new()
+		map_data = map_generator.gerar_grid()
+		map_generator.gerar_labirinto_dfs(map_data, 1, 1)
+		#map_generator.criar_salas_no_labirinto(map_data, 2, 2, 4)
+		map_generator.quebrar_paredes_internas(map_data, 0.12)
+		
 
-	update_fog(vertice_inicio)
-	_spawnar_inimigos()
-	_spawnar_npc_aleatorio()
-	SaveManager.save_auto_game()
+		# --- CONFIGURAÇÃO DO MODO DE JOGO ---
+		var modo_jogo = "MST" 
+		print("--- MODO DE JOGO ATUAL: ", modo_jogo, " ---")
+		
+		# Reseta estado da saída
+		saida_destrancada = false
+		if modo_jogo == "NORMAL":
+			saida_destrancada = true # No modo normal já começa aberta
+
+		# Definimos os terrenos especiais
+		if modo_jogo == "NORMAL":
+			map_generator.adicionar_terrenos_especiais(map_data, 50, 25, vertice_inicio)
+		else:
+			# Modo MST: Menos portas para facilitar navegação entre terminais
+			map_generator.adicionar_terrenos_especiais(map_data, 40, 20, vertice_inicio)
+			
+			# GERA OS TERMINAIS LÓGICOS
+			terminais_pos = map_generator.adicionar_terminais(map_data, 3, vertice_inicio)
+			Game_State.terminais_necessarios = terminais_pos.size()
+			Game_State.terminais_ativos = 0
+
+		# --- CRIA O GRAFO E ALGORITMOS ---
+		grafo = Graph.new(map_data)
+		dijkstra = Dijkstra.new(grafo)
+		astar = AStar.new(grafo)
+		bfs = BFS.new(grafo)
+		
+		# --- CÁLCULO DE OBJETIVOS E TEMPO PAR ---
+		if modo_jogo == "NORMAL":
+			# LÓGICA FASE 1/2 (Dijkstra Simples)
+			vertice_fim = dijkstra.encontrar_vertice_final(vertice_inicio)
+			print("Vértice final definido em: ", vertice_fim)
+			
+			if dijkstra.distancias.has(vertice_fim):
+				Game_State.tempo_par_level = dijkstra.distancias[vertice_fim]
+				print("Tempo PAR (Dijkstra): ", Game_State.tempo_par_level)
+			else:
+				print("ERRO: Saída inalcançável no modo Normal.")
+				
+		elif modo_jogo == "MST":
+			# LÓGICA FASE 3 (Prim / Terminais)
+			
+			# 1. Primeiro definimos onde é a SAÍDA (longe do início)
+			vertice_fim = dijkstra.encontrar_vertice_final(vertice_inicio)
+			print("Modo MST: Saída definida em ", vertice_fim)
+			
+			# 2. Calculamos a MST incluindo TUDO (Início + Terminais + Fim)
+			print("Calculando MST (Start -> Terminais -> Exit)...")
+			
+			var pontos_interesse = [vertice_inicio] + terminais_pos + [vertice_fim]
+			var grafo_abstrato = {}
+			
+			for origem in pontos_interesse:
+				grafo_abstrato[origem] = {}
+				var resultado = dijkstra.calcular_caminho_minimo(origem)
+				var dists = resultado["distancias"]
+				
+				for destino in pontos_interesse:
+					if origem == destino: continue
+					if dists.has(destino) and dists[destino] != INF:
+						grafo_abstrato[origem][destino] = dists[destino]
+			
+			# Roda o Prim no grafo completo
+			var resultado_mst = Prim.calcular_mst(grafo_abstrato) 
+			var custo_mst = resultado_mst["custo"]
+			
+			Game_State.tempo_par_level = custo_mst
+			
+			print("Terminais Ativos: ", terminais_pos.size())
+			print("Tempo PAR Ajustado (MST + Saída): ", custo_mst)
+			dijkstra.calcular_caminho_minimo(vertice_inicio)
+
+		# --- LÓGICA DO SAVE POINT ---
+		var caminho_minimo = dijkstra.reconstruir_caminho(vertice_inicio, vertice_fim)
+		save_point_pos = null
+		
+		# Checagem de segurança extra para caminho válido
+		if not caminho_minimo.is_empty() and caminho_minimo.size() > 2:
+			var mid_index = (caminho_minimo.size() / 2) as int
+			save_point_pos = caminho_minimo[mid_index]
+			
+			# Só cria se não conflitar com terminais
+			if not (save_point_pos in terminais_pos):
+				map_data[save_point_pos.y][save_point_pos.x] = SAVE_POINT_TILE
+				print("Save Point gerado em: ", save_point_pos)
+		else:
+			print("AVISO: Não foi possível gerar Save Point (Caminho inválido ou curto demais).")
+		
+		# --- FINALIZAÇÃO VISUAL (Somente Novo Jogo) ---
+		_draw_map()
+		_setup_camera()
+		
+		fog_logic = FogOfWar.new(MapGenerator.LARGURA, MapGenerator.ALTURA, 5)
+		if not fog_enabled:
+			tile_map_fog.hide()
+		
+		# Revela Save Point e Terminais na fog (facilita teste)
+		if fog_enabled:
+			if save_point_pos != null:
+				fog_logic.fog_data[save_point_pos.y][save_point_pos.x] = false
+			for t in terminais_pos:
+				fog_logic.fog_data[t.y][t.x] = false
+
+		update_fog(vertice_inicio)
+		_spawnar_inimigos()
+		_spawnar_npc_aleatorio()
+		SaveManager.save_auto_game()
+
 	print("Ready concluído.")
 
 # --- [ALTERADO] LÓGICA DO DRONE SCANNER PERMANENTE ---
@@ -733,6 +763,11 @@ func _spawnar_inimigos():
 		print("AVISO: Não foi possível spawnar todos os inimigos (Falta de espaço?). Criados: ", inimigos_criados)
 		
 func is_tile_occupied_by_enemy(target_pos: Vector2i) -> bool:
+	# FIX DE SEGURANÇA 
+	# Se a cena estiver sendo trocada ou deletada, paramos aqui para evitar crash.
+	if not is_inside_tree():
+		return false
+
 	var inimigos = get_tree().get_nodes_in_group("inimigos")
 	for ini in inimigos:
 		# Ignora inimigos mortos ou que ainda não inicializaram

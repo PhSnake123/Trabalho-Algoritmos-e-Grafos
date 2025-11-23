@@ -3,6 +3,7 @@ extends Node
 class_name GameState
 
 # --- Responsabilidade (Estado da Run) - Fase 1.3 ---
+var carregar_save_ao_iniciar: bool = false #NOVO
 var tempo_jogador: float = 0.0
 var tempo_par_level: float = 0.0 
 var vida_jogador: int = 100       

@@ -77,6 +77,11 @@ func handle_input():
 		anim.play("idle_" + last_facing)
 
 func start_moving(dir: Vector2):
+	
+	# Segurança: Se o Main não existe mais (troca de cena), não faz nada
+	if not is_instance_valid(main_script) or not main_script.is_inside_tree():
+		return
+	
 	var target_grid_pos = grid_pos + Vector2i(dir)
 		
 	# 1. Checa Combate PRIMEIRO
@@ -133,6 +138,8 @@ func move_towards_target(delta):
 			if tile_data.dano_hp > 0:
 				Game_State.vida_jogador -= tile_data.dano_hp
 				print("DANO AMBIENTAL: %s! Vida: %s" % [tile_data.dano_hp, Game_State.vida_jogador])
+				if Game_State.vida_jogador <= 0:
+					_morrer()
 			
 		main_script.update_fog(grid_pos)
 		
@@ -273,6 +280,26 @@ func receber_dano(atk_inimigo: int, kb_power: int, pos_atacante: Vector2i):
 	if forca_empurrao > 0:
 		print("Player sofreu knockback de força %d!" % forca_empurrao)
 		_aplicar_knockback_player(pos_atacante, forca_empurrao)
+	
+	# --- NOVO: CHECAGEM DE MORTE ---
+	if Game_State.vida_jogador <= 0:
+		_morrer()
+
+func _morrer():
+	print("Player: Vida zerou. Game Over.")
+	
+	# Desativa processamento do player para ele não andar morto
+	set_physics_process(false)
+	set_process_unhandled_input(false)
+	
+	# Carrega a cena de Game Over
+	# Opção A: carregar como uma cena nova (substitui o jogo):
+	get_tree().change_scene_to_file("res://scenes/GameOver.tscn")
+	
+	# Opção B: Instancia a tela por cima de tudo sem fechar o Main
+	# var game_over_screen = load("res://scenes/ui/GameOver.tscn").instantiate()
+	# get_tree().root.add_child(game_over_screen)
+
 
 func _aplicar_knockback_player(origem_impacto: Vector2i, forca: int):
 	# 1. Calcula direção oposta ao impacto
