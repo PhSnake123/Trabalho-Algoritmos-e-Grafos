@@ -68,7 +68,8 @@ func _ready():
 	var map_generator = MapGenerator.new()
 	map_data = map_generator.gerar_grid()
 	map_generator.gerar_labirinto_dfs(map_data, 1, 1)
-	map_generator.quebrar_paredes_internas(map_data, 0.3)
+	map_generator.criar_salas_no_labirinto(map_data, 1, 2, 2)
+	map_generator.quebrar_paredes_internas(map_data, 0.15)
 
 	# 2. CONFIGURAÇÃO DO MODO DE JOGO
 	var modo_jogo = "MST" 

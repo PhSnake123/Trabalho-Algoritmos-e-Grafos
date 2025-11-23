@@ -9,7 +9,7 @@ const BLOCK: MapTileData = preload("res://assets/tileinfo/bloco.tres")
 const TERMINAL_TILE: MapTileData = preload("res://assets/tileinfo/terminal.tres")
 
 # Constantes de Tamanho (ajuste conforme necessário)
-const LARGURA = 23 
+const LARGURA = 23
 const ALTURA = 13 
 
 # --- GERAÇÃO BASE ---
@@ -191,3 +191,31 @@ func _pode_colocar_porta(grid, x, y) -> bool:
 		if grid[y-1][x] != PAREDE or grid[y+1][x] != PAREDE: return false 
 			
 	return true
+
+# Cria espaços abertos (salas) em cima do labirinto já gerado
+func criar_salas_no_labirinto(grid, quantidade_salas: int, tamanho_min: int, tamanho_max: int):
+	var salas_criadas = 0
+	var tentativas = 0
+	var max_tentativas = quantidade_salas * 5
+	
+	while salas_criadas < quantidade_salas and tentativas < max_tentativas:
+		tentativas += 1
+		
+		# Escolhe largura e altura aleatórias para a sala
+		var w = randi_range(tamanho_min, tamanho_max)
+		var h = randi_range(tamanho_min, tamanho_max)
+		
+		# Escolhe posição aleatória (garantindo margem das bordas)
+		var x = randi_range(2, LARGURA - w - 2)
+		var y = randi_range(2, ALTURA - h - 2)
+		
+		# Opcional: Verificar se não sobrepõe muito outra sala (para não virar um salão gigante)
+		# Mas para o MVP, deixar sobrepor cria formatos interessantes.
+		
+		# "Esculpe" a sala: Transforma tudo naquele retângulo em CHAO
+		for i in range(y, y + h):
+			for j in range(x, x + w):
+				grid[i][j] = CHAO
+		
+		salas_criadas += 1
+		print("Sala %d criada em (%d, %d) com tamanho %dx%d" % [salas_criadas, x, y, w, h])
