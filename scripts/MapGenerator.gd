@@ -107,7 +107,7 @@ func adicionar_terminais(grid, quantidade: int, inicio_pos: Vector2i) -> Array[V
 			
 			if not muito_perto:
 				# SUCESSO: Define o tile lógico como TERMINAL
-				grid[y][x] = TERMINAL_TILE 
+				grid[y][x] = TERMINAL_TILE.duplicate()
 				terminais.push_back(pos)
 		
 		tentativas += 1

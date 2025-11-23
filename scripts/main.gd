@@ -847,27 +847,29 @@ func is_tile_occupied_by_npc(pos: Vector2i) -> bool:
 func tentar_ativar_terminal(pos: Vector2i):
 	if pos in terminais_pos: 
 		terminais_pos.erase(pos)
+
+		# 1. Pega a referência do tile atual (que pode estar compartilhada)
+		var tile_original = map_data[pos.y][pos.x]
+		tile_original.tipo = "Chao" 
+		# (Opcional) tile_unico.custo_tempo = 1.0
+		# substitui o tile no Grid Lógico
+		map_data[pos.y][pos.x] = tile_original
 		
-		# 1. Atualiza os dados LÓGICOS para que o SaveManager saiba que isso mudou
-		var tile_data: MapTileData = map_data[pos.y][pos.x]
-		tile_data.tipo = "Chao" # Deixa de ser Terminal logicamente
-		
+		# ---------------------------------------------------
+
 		Game_State.terminais_ativos += 1
 		var restantes = Game_State.terminais_necessarios - Game_State.terminais_ativos
 		print("TERMINAL ATIVADO! Restam: %d" % restantes)
 		
-		# Muda visualmente para chão (ou terminal inativo)
+		# Atualiza o visual (TileMap)
 		tile_map.set_cell(0, pos, ID_CHAO, Vector2i(0, 0))
 		
-		# Checa se liberou a saída
 		if restantes <= 0:
 			saida_destrancada = true
 			print(">>> TODOS TERMINAIS ATIVOS! SAÍDA DESTRANCADA! <<<")
-			# Redesenha o mapa para mostrar a saída aberta (Verde)
 			_draw_map()
 	else:
 		print("Este terminal já foi ativado ou é inválido.")
-
 # Adicione no Main.gd
 
 # --- FIX DO LOAD (Modo MST) ---
