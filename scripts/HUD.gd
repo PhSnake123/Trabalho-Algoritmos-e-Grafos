@@ -84,3 +84,17 @@ func _on_item_equipado_mudou(item: ItemData):
 			ItemData.ItemTipo.DRONE: icone_ativo.modulate = Color.CYAN
 			ItemData.ItemTipo.POTION: icone_ativo.modulate = Color.RED
 			_: icone_ativo.modulate = Color.GRAY
+
+# Adicione no final do script HUD.gd
+
+func forcar_atualizacao_total():
+	# 1. Atualiza o Slot do Item Equipado (garante que mostre o item real ou vazio)
+	_on_item_equipado_mudou(Game_State.item_equipado)
+	
+	# 2. Força o Inventário a se reconstruir com a lista nova
+	# Acessamos o nó InventoryUI e chamamos o método de atualizar grid
+	var inventory_ui = $Control/ContainerInventario/InventoryUI
+	if inventory_ui:
+		inventory_ui._atualizar_grid()
+		
+	print("HUD: Visual atualizado após Load.")

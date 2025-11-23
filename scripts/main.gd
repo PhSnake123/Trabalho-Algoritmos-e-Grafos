@@ -95,6 +95,8 @@ func _ready():
 		
 		_setup_camera()
 		
+		hud.forcar_atualizacao_total()
+		
 		# Desliga a bandeira para a próxima vez
 		Game_State.carregar_save_ao_iniciar = false
 		

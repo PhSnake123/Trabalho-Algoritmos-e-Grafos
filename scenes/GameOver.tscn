@@ -37,10 +37,18 @@ label_settings = SubResource("LabelSettings_6bcno")
 [node name="HSeparator" type="HSeparator" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
 
+[node name="BtnCarregar" type="Button" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "Carregar Ultimo Save"
+
 [node name="BtnTentar" type="Button" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
-text = "Tentar Novamente?"
+text = "Reiniciar Fase"
+
+[node name="BtnMenu" type="Button" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "Voltar ao Menu Principal"
 
 [node name="BtnSair" type="Button" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
-text = "Desistir"
+text = "Sair do Jogo"
