@@ -1,0 +1,25 @@
+[gd_scene load_steps=3 format=3 uid="uid://craup1anij1ry"]
+
+[ext_resource type="Script" uid="uid://dgau4xscxrnhy" path="res://scripts/InventorySlot.gd" id="1_14any"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_14any"]
+font_size = 12
+outline_size = 2
+outline_color = Color(0, 0, 0, 1)
+
+[node name="InventorySlot" type="PanelContainer"]
+script = ExtResource("1_14any")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+
+[node name="Icon" type="TextureRect" parent="MarginContainer"]
+layout_mode = 2
+stretch_mode = 5
+
+[node name="Quantity" type="Label" parent="MarginContainer"]
+layout_mode = 2
+size_flags_vertical = 1
+label_settings = SubResource("LabelSettings_14any")
+horizontal_alignment = 2
+vertical_alignment = 2

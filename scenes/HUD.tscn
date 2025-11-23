@@ -1,0 +1,70 @@
+[gd_scene load_steps=4 format=3 uid="uid://cbmsdr2d8wxe7"]
+
+[ext_resource type="Script" uid="uid://damlo86x86421" path="res://scripts/HUD.gd" id="1_fls4u"]
+[ext_resource type="PackedScene" uid="uid://dppnl5j80bqm0" path="res://scenes/InventoryUI.tscn" id="1_qpvh6"]
+[ext_resource type="PackedScene" uid="uid://cbjr3lv1y21tc" path="res://scenes/CustomCursor.tscn" id="3_1etfg"]
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_fls4u")
+
+[node name="Control" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BarraSuperior" type="PanelContainer" parent="Control"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 30.0
+grow_horizontal = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Control/BarraSuperior"]
+layout_mode = 2
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="LabelHP" type="Label" parent="Control/BarraSuperior/HBoxContainer"]
+layout_mode = 2
+horizontal_alignment = 2
+
+[node name="LabelTimer" type="Label" parent="Control/BarraSuperior/HBoxContainer"]
+layout_mode = 2
+horizontal_alignment = 2
+
+[node name="LabelTerminais" type="Label" parent="Control/BarraSuperior/HBoxContainer"]
+layout_mode = 2
+horizontal_alignment = 2
+
+[node name="ItemEquipado" type="PanelContainer" parent="Control"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -86.0
+offset_top = 49.0
+offset_right = -22.0
+offset_bottom = 113.0
+grow_horizontal = 0
+
+[node name="IconeAtivo" type="TextureRect" parent="Control/ItemEquipado"]
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ContainerInventario" type="CenterContainer" parent="Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="InventoryUI" parent="Control/ContainerInventario" instance=ExtResource("1_qpvh6")]
+layout_mode = 2
+
+[node name="CustomCursor" parent="." instance=ExtResource("3_1etfg")]

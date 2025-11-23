@@ -10,7 +10,7 @@ const TERMINAL_TILE: MapTileData = preload("res://assets/tileinfo/terminal.tres"
 
 # Constantes de Tamanho (ajuste conforme necessário)
 const LARGURA = 23
-const ALTURA = 13 
+const ALTURA = 23 
 
 # --- GERAÇÃO BASE ---
 

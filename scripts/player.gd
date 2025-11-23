@@ -164,6 +164,11 @@ func _usar_drone_avancado(efeito: String, tipo: ItemData.ItemTipo):
 			item.durabilidade -= 1
 			if item.durabilidade <= 0:
 				Game_State.inventario_jogador.remover_item(item)
+				
+				# Verificamos se o item que acabou de quebrar é EXATAMENTE o mesmo
+				# que está na mão do jogador (comparação de objeto/instância).
+				if Game_State.item_equipado == item:
+					Game_State.equipar_item(null)
 	else:
 		print("Player: Item (Efeito: %s | Tipo: %s) não encontrado." % [efeito, tipo])
 		
@@ -178,6 +183,7 @@ func _unhandled_input(event):
 		_usar_drone_avancado(ItemData.EFEITO_DRONE_SCANNER, ItemData.ItemTipo.DRONE)
 	if event is InputEventKey and event.pressed and event.keycode == KEY_5:
 		_usar_drone_avancado(ItemData.EFEITO_DRONE_TERRAFORMER, ItemData.ItemTipo.DRONE)
+		
 
 	# Lógica da Chave
 	if event.is_action_pressed("usar_chave"):
@@ -230,6 +236,25 @@ func _unhandled_input(event):
 			elif current_tile.tipo == "Terminal":
 				# Chama a nova função pública do Main
 				main_script.tentar_ativar_terminal(grid_pos)
+		
+# NOVO: Usar Item Equipado
+	if event.is_action_pressed("usar_item_equipado"):
+		var item = Game_State.item_equipado
+		if item:
+			print("Player: Usando item equipado -> ", item.nome_item)
+			# Chama a função de usar item do Main
+			# (Assumindo que main_script é o Main.gd)
+			main_script.usar_item(item)
+			
+			# Lógica de Consumo (Durabilidade)
+			if item.durabilidade > 0: # Se não for infinito (-1)
+				item.durabilidade -= 1
+				if item.durabilidade <= 0:
+					Game_State.inventario_jogador.remover_item(item)
+					Game_State.equipar_item(null) # Tira da mão
+			# Opcional: Tocar animação ou som
+		else:
+			print("Player: Nenhum item equipado!")
 
 # --- SISTEMA DE DANO E KNOCKBACK DO PLAYER ---
 

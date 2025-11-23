@@ -9,6 +9,8 @@ var vida_jogador: int = 100
 const SAVE_TERMINAL_ITEM = preload("res://assets/iteminfo/save_terminal.tres") 
 
 var inventario_jogador: Inventory
+var item_equipado: ItemData = null #NOVO Variável para item equipado
+signal item_equipado_alterado(novo_item: ItemData)#NOVO VAR PARA ALTERAR ITEM EQUIPADO
 
 var caminho_jogador: Array[Vector2i] = []
 var caminho_ideal_level: Array[Vector2i] = [] 
@@ -98,6 +100,16 @@ func adicionar_tempo_penalidade(segundos: float):
 		return
 	tempo_jogador += segundos
 	print("GameState: Penalidade de ", segundos, "s aplicada. Tempo total: ", tempo_jogador)
+
+#Função para equipar item
+func equipar_item(item: ItemData):
+	item_equipado = item
+	emit_signal("item_equipado_alterado", item)
+	
+	if item:
+		print("GameState: Item equipado -> ", item.nome_item)
+	else:
+		print("GameState: Item desequipado (Mãos vazias).")
 
 func update_heat_map(_pos: Vector2i, _amount: float):
 	pass

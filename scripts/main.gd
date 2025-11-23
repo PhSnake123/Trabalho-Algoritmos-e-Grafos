@@ -2,7 +2,9 @@
 extends Node2D
 
 @export var fog_enabled := false
-var musica_teste = preload("res://Audio/music/Erik_Satie_Gymnopédie_No.1.ogg") 
+var musica_teste = preload("res://Audio/music/Erik_Satie_Gymnopédie_No.1.ogg")
+const HUD_SCENE = preload("res://scenes/HUD.tscn") #NOVO Declarando o HUD 
+
 
 # 1. Carrega o script de lógica
 const TILE_SIZE := 16
@@ -14,6 +16,7 @@ const SAVE_POINT_TILE = preload("res://assets/tileinfo/savepoint.tres")
 @onready var tile_map_path = $TileMap_Path
 @onready var camera: Camera2D = $Player/Camera2D
 @onready var player = $Player
+
 
 # 3. IDs dos Tiles (Atlas Coordinates ou Source IDs)
 const ID_PAREDE = 0
@@ -63,16 +66,21 @@ func _ready():
 	
 	SaveManager.register_main(self)
 	AudioManager.play_music(musica_teste)
+	
+	# Adicionar HUD
+	var hud = HUD_SCENE.instantiate()
+	add_child(hud)
 
 	# 1. GERAÇÃO DO MAPA BASE
 	var map_generator = MapGenerator.new()
 	map_data = map_generator.gerar_grid()
 	map_generator.gerar_labirinto_dfs(map_data, 1, 1)
-	map_generator.criar_salas_no_labirinto(map_data, 1, 2, 2)
-	map_generator.quebrar_paredes_internas(map_data, 0.15)
+	#map_generator.criar_salas_no_labirinto(map_data, 2, 2, 4)
+	map_generator.quebrar_paredes_internas(map_data, 0.12)
+	
 
 	# 2. CONFIGURAÇÃO DO MODO DE JOGO
-	var modo_jogo = "MST" 
+	var modo_jogo = "NORMAL" 
 	print("--- MODO DE JOGO ATUAL: ", modo_jogo, " ---")
 	
 	# Reseta estado da saída
@@ -481,7 +489,45 @@ func usar_item(item: ItemData):
 			# O valor_efeito aqui é ignorado, pois a mudança é instantânea/permanente
 			ativar_drone_terraformer(player.grid_pos, item.alcance_maximo)
 			return
-	
+		
+		ItemData.EFEITO_ABRE_PORTA:
+			var minha_pos = player.grid_pos
+			var direcao_olhar = Vector2i.ZERO
+			match player.last_facing:
+				"up": direcao_olhar = Vector2i.UP
+				"down": direcao_olhar = Vector2i.DOWN
+				"left": direcao_olhar = Vector2i.LEFT
+				"right": direcao_olhar = Vector2i.RIGHT
+			
+			var tile_alvo = minha_pos + direcao_olhar
+			var tile_data = get_tile_data(tile_alvo)
+			
+			# Só abrimos se for porta E não for passável (trancada)
+			# Não gastamos o item aqui, deixamos o Player.gd gastar
+			if tile_data and tile_data.eh_porta and not tile_data.passavel:
+				_abrir_porta(tile_alvo)
+				print("Main: Porta destrancada com item equipado.")
+			else:
+				print("Main: Nenhuma porta trancada à frente.")
+			
+			return
+		
+		# --- IMPLEMENTAÇÃO DO SAVE TERMINAL ---
+		ItemData.EFEITO_SAVE_GAME:
+			print("Main: Salvando jogo via Terminal Portátil...")
+			SaveManager.save_player_game()
+			
+			# Feedback visual simples (opcional)
+			#var label_feedback = preload("res://scenes/ui/FloatingLabel.tscn").instantiate()
+			# Se você não tiver o FloatingLabel pronto, pode comentar as linhas abaixo
+			#if label_feedback:
+			#	label_feedback.position = player.global_position + Vector2(0, -20)
+			#	label_feedback.set_text("JOGO SALVO!")
+			#	label_feedback.set_color(Color.GREEN)
+			#	add_child(label_feedback)
+			
+			return
+			
 	if algoritmo_para_usar:
 		var caminho = algoritmo_para_usar.calcular_caminho(player.grid_pos, vertice_fim)
 		if caminho.is_empty(): return
@@ -593,6 +639,7 @@ func tentar_abrir_porta(grid_pos: Vector2i):
 				
 				if item_chave.durabilidade <= 0:
 					Game_State.inventario_jogador.remover_item(item_chave)
+					Game_State.equipar_item(null)
 					print("Main: Chave quebrou/foi consumida.")
 			
 			# Abre a porta de fato
