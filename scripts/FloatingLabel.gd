@@ -9,7 +9,6 @@ func set_text(text: String, color: Color):
 
 func _ready():
 	z_index = 100 # Garante que desenha na frente de tudo
-	
 	var tween = create_tween()
 	
 	# CORREÇÃO AQUI:

@@ -12,7 +12,7 @@ extends CharacterBody2D
 var current_hp: int
 var grid_pos: Vector2i = Vector2i.ZERO
 var main_ref = null
-static var escolhas = 0
+var escolhas = 0
 
 func _ready():
 	current_hp = max_hp

@@ -1,7 +1,10 @@
 extends CanvasLayer
-
+var menu_music = preload("res://Audio/music/Title.mp3")
+	
 func _ready():
 	# Conecta os botões
+	if AudioManager:
+		AudioManager.play_music(menu_music)
 	var vbox = $CenterContainer/VBoxContainer
 	vbox.get_node("BtnNovoJogo").pressed.connect(_on_novo_jogo_pressed)
 	vbox.get_node("BtnCarregar").pressed.connect(_on_carregar_pressed)

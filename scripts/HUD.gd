@@ -55,7 +55,7 @@ func _input(event):
 		if inventory_container.visible:
 			inventory_container.hide()
 			# Opcional: Despausar o jogo
-			get_tree().paused = false
+			# get_tree().paused = false
 		else:
 			inventory_container.show()
 			# Opcional: Pausar o jogo enquanto escolhe item

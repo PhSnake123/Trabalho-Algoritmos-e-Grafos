@@ -12,16 +12,17 @@ signal escolha_feita(indice: int) # NOVO: Retorna 0 para opção 1, 1 para opç�
 @onready var btn_2 = $DialogBox/MarginContainer/VBoxContainer/ButtonsContainer/Button2
 
 var falas_atuais: Array[String] = []
-var opcoes_atuais: Array[String] = [] # NOVO
+var opcoes_atuais: Array[String] = []
 var indice_atual: int = 0
 var esta_ativo: bool = false
 var pode_avancar: bool = false
-var aguardando_escolha: bool = false # NOVO
+var aguardando_escolha: bool = false
+var tween_typewriter: Tween = null
 
 func _ready():
 	hide()
 	buttons_container.hide()
-	process_mode = Node.PROCESS_MODE_ALWAYS
+	#process_mode = Node.PROCESS_MODE_ALWAYS
 	
 	# Conectar sinais dos botões via código para garantir
 	btn_1.pressed.connect(func(): _on_botao_pressionado(0))
@@ -42,7 +43,8 @@ func iniciar_dialogo(dados: DialogueData):
 	
 	show()
 	emit_signal("dialogo_iniciado")
-	get_tree().paused = true 
+	Game_State.is_dialogue_active = true
+	# get_tree().paused = true 
 	
 	_mostrar_proxima_fala()
 
@@ -62,10 +64,13 @@ func _mostrar_proxima_fala():
 	text_label.visible_characters = 0
 	pode_avancar = false
 	
-	var tween = create_tween()
+	if tween_typewriter and tween_typewriter.is_valid():
+		tween_typewriter.kill()
+		
+	tween_typewriter = create_tween()
 	var tempo_total = texto.length() * 0.03
-	tween.tween_property(text_label, "visible_characters", texto.length(), tempo_total)
-	tween.finished.connect(func(): pode_avancar = true)
+	tween_typewriter.tween_property(text_label, "visible_characters", texto.length(), tempo_total)
+	tween_typewriter.finished.connect(func(): pode_avancar = true)
 	
 	indice_atual += 1
 
@@ -99,7 +104,8 @@ func _on_botao_pressionado(index: int):
 func _encerrar_dialogo():
 	esta_ativo = false
 	hide()
-	get_tree().paused = false
+	#get_tree().paused = false
+	Game_State.is_dialogue_active = false
 	emit_signal("dialogo_finalizado")
 
 func _input(event):
@@ -111,7 +117,7 @@ func _input(event):
 		if pode_avancar:
 			_mostrar_proxima_fala()
 		else:
-			var tweens = get_tree().get_processed_tweens()
-			for t in tweens: t.kill()
+			if tween_typewriter and tween_typewriter.is_valid():
+				tween_typewriter.kill()
 			text_label.visible_characters = -1
 			pode_avancar = true

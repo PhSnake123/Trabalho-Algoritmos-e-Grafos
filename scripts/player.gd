@@ -60,6 +60,8 @@ func _get_facing_from_dir(dir: Vector2) -> String:
 
 func handle_input():
 	# Se estiver em cooldown de combate, ignora inputs
+	if Game_State.is_dialogue_active:
+		return
 	if input_cooldown > 0: return
 
 	var input_dir = _get_input_direction()
@@ -195,6 +197,8 @@ func _usar_drone_avancado(efeito: String, tipo: ItemData.ItemTipo):
 		print("Player: Item (Efeito: %s | Tipo: %s) não encontrado." % [efeito, tipo])
 		
 func _unhandled_input(event):
+	if Game_State.is_dialogue_active:
+		return
 	if event is InputEventKey and event.pressed and event.keycode == KEY_1:
 		_usar_drone_avancado(ItemData.EFEITO_DRONE_PATH_ASTAR, ItemData.ItemTipo.DRONE_TEMPORARIO)
 	if event is InputEventKey and event.pressed and event.keycode == KEY_2:

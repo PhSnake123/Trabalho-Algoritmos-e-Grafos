@@ -17,6 +17,7 @@ var caminho_jogador: Array[Vector2i] = []
 var caminho_ideal_level: Array[Vector2i] = [] 
 var player_action_history: Array[Dictionary] = [] 
 var MAX_ACTION_HISTORY = 20 
+var is_dialogue_active: bool = false
 
 #(Finais Múltiplos)
 var optional_objectives: Dictionary = {} 

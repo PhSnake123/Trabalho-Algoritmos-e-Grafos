@@ -547,7 +547,12 @@ func usar_item(item: ItemData):
 		# --- IMPLEMENTAÇÃO DO SAVE TERMINAL ---
 		ItemData.EFEITO_SAVE_GAME:
 			print("Main: Salvando jogo via Terminal Portátil...")
-			SaveManager.save_player_game()
+			if item.durabilidade > 0: # Se não for infinito (-1)
+				item.durabilidade -= 1
+				if item.durabilidade <= 0:
+					Game_State.inventario_jogador.remover_item(item)
+					Game_State.equipar_item(null)
+				SaveManager.save_player_game()
 			
 			# Feedback visual simples (opcional)
 			#var label_feedback = preload("res://scenes/ui/FloatingLabel.tscn").instantiate()
@@ -671,7 +676,8 @@ func tentar_abrir_porta(grid_pos: Vector2i):
 				
 				if item_chave.durabilidade <= 0:
 					Game_State.inventario_jogador.remover_item(item_chave)
-					Game_State.equipar_item(null)
+					if Game_State.item_equipado == item_chave:
+						Game_State.equipar_item(null)
 					print("Main: Chave quebrou/foi consumida.")
 			
 			# Abre a porta de fato
