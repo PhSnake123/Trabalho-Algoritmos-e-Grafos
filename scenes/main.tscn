@@ -69,7 +69,7 @@ sources/6 = SubResource("TileSetAtlasSource_trceg")
 script = ExtResource("1_jyhfs")
 
 [node name="TileMap_Fog" type="TileMap" parent="."]
-z_index = 10
+z_index = 100
 position = Vector2(0, -1)
 tile_set = SubResource("TileSet_o6xl0")
 format = 2

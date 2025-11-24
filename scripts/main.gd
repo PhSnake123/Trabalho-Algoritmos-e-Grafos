@@ -1,7 +1,7 @@
 # res://scripts/Main.gd
 extends Node2D
 
-@export var fog_enabled := false
+@export var fog_enabled := true
 var musica_teste = preload("res://Audio/music/Erik_Satie_Gymnopédie_No.1.ogg")
 const HUD_SCENE = preload("res://scenes/HUD.tscn") #NOVO Declarando o HUD 
 const FLOATING_LABEL_SCENE = preload("res://scenes/FloatingLabel.tscn")

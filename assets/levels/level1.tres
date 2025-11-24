@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="LevelDefinition" load_steps=4 format=3 uid="uid://q51cb1cil4og"]
+
+[ext_resource type="Script" uid="uid://d34551vbrdkqx" path="res://scripts/LevelDefinition.gd" id="1_obbn4"]
+[ext_resource type="Script" uid="uid://ci6dlknyw5xas" path="res://scripts/EnemySpawnData.gd" id="1_vgqkp"]
+[ext_resource type="Script" uid="uid://c6yn1hesl0qc7" path="res://scripts/NpcSpawnData.gd" id="2_6r273"]
+
+[resource]
+script = ExtResource("1_obbn4")
+metadata/_custom_type_script = "uid://d34551vbrdkqx"

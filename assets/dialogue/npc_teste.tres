@@ -5,6 +5,6 @@
 [resource]
 script = ExtResource("1_dcw6r")
 nome_npc = "Shovel Knight"
-falas = Array[String](["Eu sou o Hollow Knight.", "Desculpa, quis dizer Shovel Knight. Eu não mordo.", "Não ocupo mais a tela inteira! Aprendi humildade."])
+falas = Array[String](["Olá, eu sou o Hollow Knight.", "Desculpa, quis dizer Shovel Knight. Eu não mordo.", "Não ocupo mais a tela inteira! Aprendi humildade."])
 opcoes = Array[String](["Que bom pra você.", "Morra!"])
 metadata/_custom_type_script = "uid://bl6aav0wcfwrm"
