@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dw4sv8qvaphou"]
+
+[ext_resource type="Script" uid="uid://dgmpgbjiptykk" path="res://scripts/Scripts_Test/Teste_Bellman.gd" id="1_0y61v"]
+
+[node name="TesteBellman" type="Node"]
+script = ExtResource("1_0y61v")

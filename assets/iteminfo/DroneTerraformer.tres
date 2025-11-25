@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3 uid="uid://q6se5t1b7lf0"]
+
+[ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_63yxu"]
+
+[resource]
+script = ExtResource("1_63yxu")
+nome_item = "Drone de Limpeza"
+descricao = "Remove tiles de dano e com custo de tempo maior que 1(Lama).
+"
+tipo_item = 5
+efeito = "DRONE_TERRAFORMER"
+alcance_maximo = 10
+metadata/_custom_type_script = "uid://d01dm40km4s0s"

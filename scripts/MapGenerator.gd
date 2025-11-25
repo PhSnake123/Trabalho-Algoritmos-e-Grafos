@@ -1,63 +1,135 @@
-# Em res://scripts/MapGenerator.gd
 class_name MapGenerator
 
-# Carrega nossos novos modelos de tile
+# Carrega nossos modelos de tile
 const PAREDE: MapTileData = preload("res://assets/tileinfo/parede.tres")
 const CHAO: MapTileData = preload("res://assets/tileinfo/chao.tres")
 const DANO: MapTileData = preload("res://assets/tileinfo/dano.tres")
 const BLOCK: MapTileData = preload("res://assets/tileinfo/bloco.tres")
+# NOVO: Tile específico para terminais
+const TERMINAL_TILE: MapTileData = preload("res://assets/tileinfo/terminal.tres")
 
-# 2. Constantes do 'world_map.py'
-const LARGURA = 51
-const ALTURA = 31
+# Constantes de Tamanho (ajuste conforme necessário)
+var largura = 23
+var altura = 23 
 
-# 3. Tradução do 'gerar_grid()'
+# --- GERAÇÃO BASE ---
+
 # Retorna um Array 2D preenchido com PAREDE
-func gerar_grid():
+func gerar_grid(p_largura: int, p_altura: int):
+	self.largura = p_largura
+	self.altura = p_altura
+	
 	var grid = []
-	for y in range(ALTURA):
+	for y in range(self.altura):
 		var linha: Array[MapTileData] = []
-		for x in range(LARGURA):
-			linha.push_back(PAREDE)
+		for x in range(self.largura):
+			linha.push_back(PAREDE) # Começa tudo parede
 		grid.push_back(linha)
 	return grid
 
-# 4. Tradução do 'gerar_labirinto_dfs()'
-# Esta é a sua lógica de Randomized DFS, traduzida 1-para-1
+# Lógica de Randomized DFS para criar o labirinto
 func gerar_labirinto_dfs(grid, x, y):
 	var pilha = []
-	pilha.push_back(Vector2i(x, y)) # Vector2i é como uma tupla (x, y) de inteiros
+	pilha.push_back(Vector2i(x, y)) 
 	grid[y][x] = CHAO
 
 	while not pilha.is_empty():
-		var pos_atual = pilha.back() # .back() é o mesmo que pilha[-1] em Python
+		var pos_atual = pilha.back() 
 		var vizinhos = _obter_vizinhos_validos(grid, pos_atual.x, pos_atual.y)
 
 		if not vizinhos.is_empty():
-			var proxima_pos = vizinhos.pick_random() # .pick_random() é o random.choice()
+			var proxima_pos = vizinhos.pick_random() 
 			_cavar_caminho(grid, pos_atual, proxima_pos)
 			pilha.push_back(proxima_pos)
 		else:
-			pilha.pop_back() # .pop_back() é o pilha.pop()
+			pilha.pop_back() 
 
-# --- Funções Auxiliares (Helpers) ---
+# Quebra paredes para criar ciclos e deixar o mapa menos linear
+func quebrar_paredes_internas(grid, porcentagem_quebra = 0.15):
+	for y in range(1, self.altura - 1):
+		for x in range(1, self.largura - 1):
+			if grid[y][x] == PAREDE:
+				if grid[y-1][x] == CHAO and grid[y+1][x] == CHAO:
+					if randf() < porcentagem_quebra: 
+						grid[y][x] = CHAO
+				elif grid[y][x-1] == CHAO and grid[y][x+1] == CHAO:
+					if randf() < porcentagem_quebra:
+						grid[y][x] = CHAO
 
-# Nota: Funções que começam com '_' são consideradas "privadas"
+# --- POSICIONAMENTO DE OBJETOS ---
+
+func adicionar_terrenos_especiais(grid, total_lava: int, total_portas: int, inicio_pos: Vector2i):
+	var tentativas_max = self.largura * self.altura 
+	
+	# 1. LAVA
+	var lava_colocada = 0
+	var tentativas = 0
+	while lava_colocada < total_lava and tentativas < tentativas_max:
+		var x = randi_range(1, self.largura - 2)
+		var y = randi_range(1, self.altura - 2)
+		if _pode_colocar_lava(grid, x, y, inicio_pos):
+			grid[y][x] = DANO
+			lava_colocada += 1
+		tentativas += 1
+	
+	# 2. PORTAS
+	var portas_colocadas = 0
+	tentativas = 0 
+	while portas_colocadas < total_portas and tentativas < tentativas_max:
+		var x = randi_range(1, self.largura - 2)
+		var y = randi_range(1, self.altura - 2)
+		if _pode_colocar_porta(grid, x, y):
+			grid[y][x] = BLOCK
+			portas_colocadas += 1
+		tentativas += 1
+
+# [NOVO] Função para posicionar Terminais (Fase 3)
+func adicionar_terminais(grid, quantidade: int, inicio_pos: Vector2i) -> Array[Vector2i]:
+	var terminais: Array[Vector2i] = []
+	var tentativas_max = 1000
+	var tentativas = 0
+	
+	print("MapGenerator: Tentando posicionar %d terminais..." % quantidade)
+	
+	while terminais.size() < quantidade and tentativas < tentativas_max:
+		var x = randi_range(1, self.largura - 2)
+		var y = randi_range(1, self.altura - 2)
+		var pos = Vector2i(x, y)
+		
+		var tile_atual = grid[y][x]
+		
+		# Regras: Deve ser CHÃO, não ser o início, e não estar na lista ainda
+		if tile_atual == CHAO and pos != inicio_pos and not (pos in terminais):
+			
+			# Verifica espalhamento (distância mínima 10 entre terminais)
+			var muito_perto = false
+			for t in terminais:
+				if (abs(pos.x - t.x) + abs(pos.y - t.y)) < 10:
+					muito_perto = true
+					break
+			
+			if not muito_perto:
+				# SUCESSO: Define o tile lógico como TERMINAL
+				grid[y][x] = TERMINAL_TILE.duplicate()
+				terminais.push_back(pos)
+		
+		tentativas += 1
+	
+	print("MapGenerator: Terminais posicionados em: ", terminais)
+	return terminais
+
+# --- FUNÇÕES AUXILIARES E VALIDAÇÕES ---
+
 func _direcoes_dfs():
 	return [Vector2i(0, -2), Vector2i(0, 2), Vector2i(-2, 0), Vector2i(2, 0)]
 
 func _coordenada_valida(x, y):
-	return (x >= 0 and x < LARGURA and y >= 0 and y < ALTURA)
+	return (x >= 0 and x < self.largura and y >= 0 and y < self.altura)
 
 func _celula_eh_parede(grid, x, y):
 	var tile = grid[y][x] as MapTileData
-	# Se o 'as' funcionar, 'tile' será um MapTileData.
-	# Se falhar (ex: o tile for nulo), 'tile' será 'null'.
 	if tile:
 		return not tile.passavel
-
-	# Se o tile for nulo por algum motivo, é mais seguro
-	# tratá-lo como uma parede (não passável).
 	return true
 
 func _obter_vizinhos_validos(grid, x, y):
@@ -80,116 +152,31 @@ func _cavar_caminho(grid, pos1, pos2):
 	grid[meio_y][meio_x] = CHAO
 	_marcar_como_chao(grid, pos2.x, pos2.y)
 
-# Esta função cria atalhos e loops, quebrando paredes internas.
-func quebrar_paredes_internas(grid, porcentagem_quebra = 0.15):
-	# Itera pelo grid, mas evita as bordas externas (range 1 até -1)
-	for y in range(1, ALTURA - 1):
-		for x in range(1, LARGURA - 1):
-			
-			# Se este tile for uma parede, veja se é uma "parede interna"
-			if grid[y][x] == PAREDE:
-				
-				# Checa se é uma parede "horizontal" (chão em cima e embaixo)
-				if grid[y-1][x] == CHAO and grid[y+1][x] == CHAO:
-					if randf() < porcentagem_quebra: # randf() = float aleatório 0.0 a 1.0
-						grid[y][x] = CHAO
-				
-				# Checa se é uma parede "vertical" (chão à esquerda e à direita)
-				elif grid[y][x-1] == CHAO and grid[y][x+1] == CHAO:
-					if randf() < porcentagem_quebra:
-						grid[y][x] = CHAO
-
-# Em res://scripts/MapGenerator.gd
-# SUBSTITUA a função 'adicionar_terrenos_especiais' inteira por esta:
-
-func adicionar_terrenos_especiais(grid, total_lava: int, total_portas: int, inicio_pos: Vector2i):
-	
-	var tentativas_max = LARGURA * ALTURA # Safety break para evitar loops infinitos
-	
-	# --- 1. LÓGICA DE COLOCAÇÃO DE LAVA ---
-	var lava_colocada = 0
-	var tentativas = 0
-	while lava_colocada < total_lava and tentativas < tentativas_max:
-		# Pega um local aleatório
-		var x = randi_range(1, LARGURA - 2)
-		var y = randi_range(1, ALTURA - 2)
-		
-		# Pergunta se é um local "bom"
-		if _pode_colocar_lava(grid, x, y, inicio_pos):
-			grid[y][x] = DANO
-			lava_colocada += 1
-		
-		tentativas += 1
-	
-	# --- 2. LÓGICA DE COLOCAÇÃO DE PORTA ---
-	var portas_colocadas = 0
-	tentativas = 0 # Reseta as tentativas
-	while portas_colocadas < total_portas and tentativas < tentativas_max:
-		var x = randi_range(1, LARGURA - 2)
-		var y = randi_range(1, ALTURA - 2)
-		
-		# Pergunta se é um local "bom"
-		if _pode_colocar_porta(grid, x, y):
-			grid[y][x] = BLOCK
-			portas_colocadas += 1
-		
-		tentativas += 1
-
-# Conta quantos dos 8 vizinhos de (x, y) são do tipo 'tile_alvo'
 func _contar_vizinhos(grid, x, y, tile_alvo: MapTileData) -> int:
 	var contagem = 0
 	for dy in [-1, 0, 1]:
 		for dx in [-1, 0, 1]:
-			# Pula o próprio tile
-			if dx == 0 and dy == 0:
-				continue
+			if dx == 0 and dy == 0: continue
 			
 			var nx = x + dx
 			var ny = y + dy
 			
-			# Checa se é válido e se é o tile que procuramos
 			if _coordenada_valida(nx, ny) and grid[ny][nx] == tile_alvo:
 				contagem += 1
 	return contagem
-	
-	# Em res://scripts/MapGenerator.gd (adicione no final)
 
-# --- NOVA FUNÇÃO DE VALIDAÇÃO (LAVA) ---
 func _pode_colocar_lava(grid, x, y, inicio_pos: Vector2i) -> bool:
 	var pos = Vector2i(x, y)
-	
-	# Regra 1: Só pode ser colocado sobre o CHAO
-	if grid[y][x] != CHAO:
-		return false
-		
-	# Regra 2: Não pode ser no início do jogador
-	if pos == inicio_pos:
-		return false
-		
-	# Regra 3: Deve estar a uma distância mínima do início
-	# (Usamos distância de Manhattan por ser mais simples)
+	if grid[y][x] != CHAO: return false
+	if pos == inicio_pos: return false
 	var distancia = abs(pos.x - inicio_pos.x) + abs(pos.y - inicio_pos.y)
-	if distancia < 10: # Distância mínima de 10 tiles
-		return false
-		
-	return true # Passou em todas as regras!
-
-# --- VALIDAÇÃO (PORTA) ---
-
-# Em res://scripts/MapGenerator.gd
-# SUBSTITUA a função inteira por esta:
+	if distancia < 10: return false
+	return true 
 
 func _pode_colocar_porta(grid, x, y) -> bool:
+	if grid[y][x] != PAREDE: return false
+	if _contar_vizinhos(grid, x, y, BLOCK) > 0: return false
 	
-	# Regra 1: Só pode ser colocado sobre uma PAREDE
-	if grid[y][x] != PAREDE:
-		return false
-		
-	# Regra 2: Não pode ter outra PORTA por perto (evita agrupamento)
-	if _contar_vizinhos(grid, x, y, BLOCK) > 0:
-		return false
-		
-	# Regra 3: Validar se é uma "parede divisória"
 	var chao_acima = (grid[y-1][x] == CHAO)
 	var chao_abaixo = (grid[y+1][x] == CHAO)
 	var chao_esquerda = (grid[y][x-1] == CHAO)
@@ -198,22 +185,126 @@ func _pode_colocar_porta(grid, x, y) -> bool:
 	var eh_parede_vertical = chao_acima and chao_abaixo
 	var eh_parede_horizontal = chao_esquerda and chao_direita
 	
-	# Regra 4: Deve ser vertical OU horizontal, mas NÃO AMBAS (XOR).
-	# Se (ambos true) ou (ambos false), é inválido.
-	# (ambos true) == pilar isolado
-	# (ambos false) == parede sólida (não-interna)
-	if eh_parede_vertical == eh_parede_horizontal:
-		return false
+	if eh_parede_vertical == eh_parede_horizontal: return false
 	
-	# Regra 5: Evitar "pontas"
 	if eh_parede_vertical:
-		# Se é uma parede vertical, deve ter paredes dos lados para se "apoiar"
-		if grid[y][x-1] != PAREDE or grid[y][x+1] != PAREDE:
-			return false # É uma "ponta" de parede vertical, rejeita.
+		if grid[y][x-1] != PAREDE or grid[y][x+1] != PAREDE: return false 
 	
 	if eh_parede_horizontal:
-		# Se é uma parede horizontal, deve ter paredes em cima/embaixo
-		if grid[y-1][x] != PAREDE or grid[y+1][x] != PAREDE:
-			return false # É uma "ponta" de parede horizontal, rejeita.
+		if grid[y-1][x] != PAREDE or grid[y+1][x] != PAREDE: return false 
 			
-	return true # Passou em todas as regras!
+	return true
+
+# Cria espaços abertos (salas) em cima do labirinto já gerado
+func criar_salas_no_labirinto(grid, quantidade_salas: int, tamanho_min: int, tamanho_max: int):
+	var salas_criadas = 0
+	var tentativas = 0
+	var max_tentativas = quantidade_salas * 5
+	
+	while salas_criadas < quantidade_salas and tentativas < max_tentativas:
+		tentativas += 1
+		
+		# Escolhe largura e altura aleatórias para a sala
+		var w = randi_range(tamanho_min, tamanho_max)
+		var h = randi_range(tamanho_min, tamanho_max)
+		
+		# Escolhe posição aleatória (garantindo margem das bordas)
+		var x = randi_range(2, self.largura - w - 2)
+		var y = randi_range(2, self.altura - h - 2)
+		
+		# Opcional: Verificar se não sobrepõe muito outra sala (para não virar um salão gigante)
+		# Mas para o MVP, deixar sobrepor cria formatos interessantes.
+		
+		# "Esculpe" a sala: Transforma tudo naquele retângulo em CHAO
+		for i in range(y, y + h):
+			for j in range(x, x + w):
+				grid[i][j] = CHAO
+		
+		salas_criadas += 1
+		print("Sala %d criada em (%d, %d) com tamanho %dx%d" % [salas_criadas, x, y, w, h])
+
+# Adicione/Substitua no MapGenerator.gd
+
+func _eh_chao_valido(grid, x, y):
+	if not _coordenada_valida(x, y): return false
+	return grid[y][x].passavel and grid[y][x].tipo != "FakeWall"
+
+"""
+Mecânica deletada por introduzir muitos bugs. Talves se tivéssemos mais tempo...
+
+func criar_sala_secreta(grid) -> Vector2i:
+	print("MapGenerator: Forçando criação de Sala Secreta...")
+	
+	# Dimensões da sala
+	var w = 3
+	var h = 3
+	
+	# Tenta encontrar um lugar válido perto das bordas
+	# Tentamos 4 cantos ou bordas aleatórias
+	var tentativas = 0
+	while tentativas < 20:
+		tentativas += 1
+		
+		# Escolhe uma posição encostada em uma das bordas (com margem de 1 para parede externa)
+		var x = randi_range(1, self.largura - w - 2)
+		var y = randi_range(1, self.altura - h - 2)
+		
+		# Vamos forçar ser numa borda? 
+		# 50% chance de grudar no X, 50% no Y para garantir "Outer Walls"
+		if randf() > 0.5:
+			x = 1 if randf() > 0.5 else self.largura - w - 1
+		else:
+			y = 1 if randf() > 0.5 else self.altura - h - 1
+			
+		# Centro da sala
+		var centro = Vector2i(x + 1, y + 1)
+		
+		# 1. ESCAVAÇÃO E ISOLAMENTO
+		# Preenche a área + borda de segurança com PAREDES primeiro (reset local)
+		for i in range(y - 1, y + h + 1):
+			for j in range(x - 1, x + w + 1):
+				if _coordenada_valida(j, i):
+					grid[i][j] = PAREDE
+					
+		# Agora escava o miolo com CHÃO (A sala em si)
+		for i in range(y, y + h):
+			for j in range(x, x + w):
+				if _coordenada_valida(j, i):
+					# Cria um novo tile de chão para garantir propriedades limpas
+					grid[i][j] = CHAO.duplicate()
+		
+		# 2. CRIAR A ENTRADA FALSA
+		# Procura um vizinho que seja CHÃO do labirinto principal para conectar
+		var possiveis_entradas = []
+		
+		# Verifica o perímetro da sala
+		for i in range(y, y + h):
+			# Esquerda e Direita
+			if _eh_chao_valido(grid, x - 2, i): possiveis_entradas.push_back(Vector2i(x - 1, i)) # Parede da esquerda
+			if _eh_chao_valido(grid, x + w + 1, i): possiveis_entradas.push_back(Vector2i(x + w, i)) # Parede da direita
+			
+		for j in range(x, x + w):
+			# Cima e Baixo
+			if _eh_chao_valido(grid, j, y - 2): possiveis_entradas.push_back(Vector2i(j, y - 1))
+			if _eh_chao_valido(grid, j, y + h + 1): possiveis_entradas.push_back(Vector2i(j, y + h))
+			
+		if possiveis_entradas.size() > 0:
+			var pos_entrada = possiveis_entradas.pick_random()
+			
+			# Cria a Parede Falsa
+			# Duplicamos a PAREDE visualmente, mas mudamos a lógica
+			var fake_wall = PAREDE.duplicate()
+			fake_wall.tipo = "FakeWall"
+			fake_wall.passavel = true # O segredo!
+			fake_wall.custo_tempo = 1.0 # Sem custo extra (ou 0 se preferir)
+			
+			grid[pos_entrada.y][pos_entrada.x] = fake_wall
+			
+			print("MapGenerator: Sala Secreta criada em ", centro, " Entrada em: ", pos_entrada)
+			
+			# Coloca algo no meio da sala? (Ex: Chão diferente ou vazio por enquanto)
+			return centro
+	
+	print("MapGenerator: Falha crítica ao posicionar sala secreta.")
+	return Vector2i.ZERO
+	"""

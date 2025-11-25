@@ -1,0 +1,55 @@
+class_name Prim
+
+# O "grafo" aqui não será o Grid do mapa, mas sim um dicionário de distâncias
+# Ex: { 
+#   Vector2i(1,1): { Vector2i(10,5): 15.0, Vector2i(20,20): 40.0 },
+#   ...
+# }
+static func calcular_mst_custo(grafo_abstrato: Dictionary) -> float:
+	if grafo_abstrato.is_empty():
+		return 0.0
+	
+	# Pega um vértice inicial qualquer (chaves do dicionário)
+	var vertices = grafo_abstrato.keys()
+	var inicio = vertices[0]
+	
+	var custo_total: float = 0.0
+	var visitados = {} # Set de visitados
+	var min_dists = {} # Menor custo para conectar o vértice à árvore
+	
+	# Inicialização
+	for v in vertices:
+		min_dists[v] = INF
+		visitados[v] = false
+	
+	min_dists[inicio] = 0.0
+	
+	# Loop principal (V vezes)
+	for _i in range(vertices.size()):
+		var u = null
+		
+		# 1. Encontrar o vértice 'u' não visitado com menor min_dist (Get Min)
+		var menor_dist = INF
+		for v in vertices:
+			if not visitados[v] and min_dists[v] < menor_dist:
+				menor_dist = min_dists[v]
+				u = v
+		
+		# Se não achou ou é inalcançável (grafo desconexo), pare
+		if u == null or min_dists[u] == INF:
+			break
+			
+		# 2. Marca como visitado e soma ao custo (exceto o primeiro que é 0)
+		visitados[u] = true
+		custo_total += menor_dist
+		
+		# 3. Relaxar vizinhos (Atualizar distâncias dos vértices adjacentes)
+		# No grafo abstrato, os vizinhos são os outros terminais
+		var vizinhos_dict = grafo_abstrato[u] # Ex: {Vector2i(10,10): 30.0, ...}
+		
+		for v in vizinhos_dict.keys():
+			var peso_aresta = vizinhos_dict[v]
+			if not visitados[v] and peso_aresta < min_dists[v]:
+				min_dists[v] = peso_aresta
+
+	return custo_total

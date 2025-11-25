@@ -503,6 +503,7 @@ z_index = 6
 script = ExtResource("1_qhqgy")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+z_index = 7
 sprite_frames = SubResource("SpriteFrames_8f1cb")
 animation = &"idle_up"
 autoplay = "idle_down"

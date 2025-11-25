@@ -1,14 +1,20 @@
 # res://scripts/Graph.gd
 class_name Graph
 
-var largura: int = MapGenerator.LARGURA
-var altura: int = MapGenerator.ALTURA
+var largura: int
+var altura: int
 var grid_logico: Array
 var adjacencias = {} # Nosso dicionário de adjacências
 
 # Construtor (como o __init__ do Python)
 func _init(p_grid_logico: Array):
 	self.grid_logico = p_grid_logico
+	# Detecta o tamanho automaticamente baseado no array que recebeu
+	self.altura = grid_logico.size()
+	if self.altura > 0:
+		self.largura = grid_logico[0].size()
+	else:
+		self.largura = 0
 	_construir_grafo()
 
 # Constrói a lista de adjacências
@@ -64,3 +70,36 @@ func _obter_vizinhos(pos: Vector2i) -> Array[Vector2i]:
 			nova_pos.y >= 0 and nova_pos.y < altura):
 			vizinhos_validos.push_back(nova_pos)
 	return vizinhos_validos
+
+# ATUALIZAÇÃO DINÂMICA
+"""
+Chame esta função sempre que um tile mudar de propriedade (ex: porta abriu, parede quebrou).
+Ela refaz as conexões do tile alvo e dos seus 4 vizinhos.
+"""
+func atualizar_aresta_dinamica(pos_centro: Vector2i):
+	# Lista de tiles para atualizar: O próprio centro + vizinhos
+	# Precisamos atualizar os vizinhos também, pois eles precisam "descobrir" que agora podem entrar no centro.
+	var tiles_para_atualizar = _obter_vizinhos(pos_centro)
+	tiles_para_atualizar.push_back(pos_centro)
+	
+	for p in tiles_para_atualizar:
+		# 1. Limpa as adjacências antigas desse ponto
+		adjacencias.erase(p)
+		
+		# 2. Se o tile for passável agora, recalculamos quem ele alcança
+		# (A lógica é idêntica à do _init / _construir_grafo)
+		if _e_passavel(p):
+			var novas_arestas = []
+			var vizinhos = _obter_vizinhos(p)
+			
+			for viz in vizinhos:
+				if _e_passavel(viz):
+					# Pega o custo do vizinho
+					var custo = grid_logico[viz.y][viz.x].custo_tempo
+					novas_arestas.push_back([viz, custo])
+			
+			# Só adiciona ao dicionário se tiver conexões
+			if not novas_arestas.is_empty():
+				adjacencias[p] = novas_arestas
+	
+	print("Graph: Conexões atualizadas ao redor de ", pos_centro)

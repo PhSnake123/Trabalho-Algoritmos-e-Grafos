@@ -1,0 +1,65 @@
+[gd_scene load_steps=2 format=3 uid="uid://cjt0skq1bn241"]
+
+[ext_resource type="Script" uid="uid://b7ispk76lp5lf" path="res://scripts/DialogueManager.gd" id="1_m70fm"]
+
+[node name="DialogueManager" type="CanvasLayer"]
+layer = 10
+visible = false
+script = ExtResource("1_m70fm")
+
+[node name="Background" type="ColorRect" parent="."]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+color = Color(0, 0, 0, 0.39215687)
+
+[node name="DialogBox" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(0, 150)
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -150.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="DialogBox"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="DialogBox/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="NameLabel" type="Label" parent="DialogBox/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+
+[node name="TextLabel" type="RichTextLabel" parent="DialogBox/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/bold_font_size = 20
+theme_override_font_sizes/bold_italics_font_size = 20
+theme_override_font_sizes/italics_font_size = 20
+theme_override_font_sizes/mono_font_size = 20
+scroll_active = false
+
+[node name="ButtonsContainer" type="HBoxContainer" parent="DialogBox/MarginContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+
+[node name="Button" type="Button" parent="DialogBox/MarginContainer/VBoxContainer/ButtonsContainer"]
+layout_mode = 2
+
+[node name="Button2" type="Button" parent="DialogBox/MarginContainer/VBoxContainer/ButtonsContainer"]
+layout_mode = 2

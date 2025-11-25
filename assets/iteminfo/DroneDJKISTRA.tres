@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3 uid="uid://d0ut6aj4fpf4s"]
+
+[ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_k04wo"]
+
+[resource]
+script = ExtResource("1_k04wo")
+nome_item = "Drone de Caminho Mínimo"
+descricao = "Revela parte do caminho mínimo até a saída."
+tipo_item = 5
+efeito = "DRONE_PATH_DIJKSTRA"
+alcance_maximo = 40
+metadata/_custom_type_script = "uid://d01dm40km4s0s"
