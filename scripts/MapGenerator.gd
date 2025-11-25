@@ -12,6 +12,12 @@ const TERMINAL_TILE: MapTileData = preload("res://assets/tileinfo/terminal.tres"
 var largura = 23
 var altura = 23 
 
+const TILE_REGISTRY = {
+	"Dano": preload("res://assets/tileinfo/dano.tres"),
+	"Lama": preload("res://assets/tileinfo/lama.tres"),
+	# "Veneno": preload("res://assets/tileinfo/veneno.tres") # Exemplo futuro
+}
+
 # --- GERAÇÃO BASE ---
 
 # Retorna um Array 2D preenchido com PAREDE
@@ -58,65 +64,58 @@ func quebrar_paredes_internas(grid, porcentagem_quebra = 0.15):
 
 # --- POSICIONAMENTO DE OBJETOS ---
 
-func adicionar_terrenos_especiais(grid, total_lava: int, total_portas: int, inicio_pos: Vector2i):
-	var tentativas_max = self.largura * self.altura 
+# Função genérica que aceita qualquer tile configurado no Registry
+# (Adaptada para o MapGenerator sem Padding)
+func aplicar_tiles_especiais(grid, config_tiles: Dictionary, total_portas: int, inicio_pos: Vector2i):
 	
-	# 1. LAVA
-	var lava_colocada = 0
-	var tentativas = 0
-	while lava_colocada < total_lava and tentativas < tentativas_max:
-		var x = randi_range(1, self.largura - 2)
-		var y = randi_range(1, self.altura - 2)
-		if _pode_colocar_lava(grid, x, y, inicio_pos):
-			grid[y][x] = DANO
-			lava_colocada += 1
-		tentativas += 1
-	
-	# 2. PORTAS
-	var portas_colocadas = 0
-	tentativas = 0 
-	while portas_colocadas < total_portas and tentativas < tentativas_max:
-		var x = randi_range(1, self.largura - 2)
-		var y = randi_range(1, self.altura - 2)
-		if _pode_colocar_porta(grid, x, y):
-			grid[y][x] = BLOCK
-			portas_colocadas += 1
-		tentativas += 1
+	# 1. LIDA COM O DICIONÁRIO (Lava, Lama, etc)
+	for nome_tile in config_tiles:
+		var quantidade = config_tiles[nome_tile]
+		
+		# Verifica se conhecemos esse tile no TILE_REGISTRY
+		if TILE_REGISTRY.has(nome_tile):
+			var recurso_tile = TILE_REGISTRY[nome_tile]
+			var colocados = 0
+			var tentativas = 0
+			var tentativas_max = self.largura * self.altura
+			
+			# Tenta colocar a quantidade pedida
+			while colocados < quantidade and tentativas < tentativas_max:
+				tentativas += 1
+				
+				# Sorteia posição (USANDO LIMITES DO MAPA ATUAL)
+				var x = randi_range(1, self.largura - 2)
+				var y = randi_range(1, self.altura - 2)
+				
+				# Só coloca se for CHÃO
+				if grid[y][x] == CHAO: 
+					# Verifica proximidade do início (segurança)
+					# (Reutilizamos a lógica que já existia no _pode_colocar_lava para verificar distância)
+					var pos = Vector2i(x, y)
+					if pos == inicio_pos: continue
+					var distancia = abs(pos.x - inicio_pos.x) + abs(pos.y - inicio_pos.y)
+					if distancia < 10: continue
+					
+					# Aplica o tile novo
+					grid[y][x] = recurso_tile.duplicate()
+					colocados += 1
+		else:
+			if quantidade > 0:
+				print("AVISO: Tile '%s' solicitado no LevelDefinition mas não registrado no MapGenerator." % nome_tile)
 
-# [NOVO] Função para posicionar Terminais (Fase 3)
-func adicionar_terminais(grid, quantidade: int, inicio_pos: Vector2i) -> Array[Vector2i]:
-	var terminais: Array[Vector2i] = []
-	var tentativas_max = 1000
-	var tentativas = 0
+	# 2. LIDA COM PORTAS
+	var portas_colocadas = 0
+	var tentativas = 0 
+	var tentativas_max_porta = self.largura * self.altura
 	
-	print("MapGenerator: Tentando posicionar %d terminais..." % quantidade)
-	
-	while terminais.size() < quantidade and tentativas < tentativas_max:
+	while portas_colocadas < total_portas and tentativas < tentativas_max_porta:
+		tentativas += 1
 		var x = randi_range(1, self.largura - 2)
 		var y = randi_range(1, self.altura - 2)
-		var pos = Vector2i(x, y)
 		
-		var tile_atual = grid[y][x]
-		
-		# Regras: Deve ser CHÃO, não ser o início, e não estar na lista ainda
-		if tile_atual == CHAO and pos != inicio_pos and not (pos in terminais):
-			
-			# Verifica espalhamento (distância mínima 10 entre terminais)
-			var muito_perto = false
-			for t in terminais:
-				if (abs(pos.x - t.x) + abs(pos.y - t.y)) < 10:
-					muito_perto = true
-					break
-			
-			if not muito_perto:
-				# SUCESSO: Define o tile lógico como TERMINAL
-				grid[y][x] = TERMINAL_TILE.duplicate()
-				terminais.push_back(pos)
-		
-		tentativas += 1
-	
-	print("MapGenerator: Terminais posicionados em: ", terminais)
-	return terminais
+		if _pode_colocar_porta(grid, x, y):
+			grid[y][x] = BLOCK.duplicate()
+			portas_colocadas += 1
 
 # --- FUNÇÕES AUXILIARES E VALIDAÇÕES ---
 
@@ -223,12 +222,44 @@ func criar_salas_no_labirinto(grid, quantidade_salas: int, tamanho_min: int, tam
 		salas_criadas += 1
 		print("Sala %d criada em (%d, %d) com tamanho %dx%d" % [salas_criadas, x, y, w, h])
 
-# Adicione/Substitua no MapGenerator.gd
-
 func _eh_chao_valido(grid, x, y):
 	if not _coordenada_valida(x, y): return false
 	return grid[y][x].passavel and grid[y][x].tipo != "FakeWall"
 
+func adicionar_terminais(grid, quantidade: int, inicio_pos: Vector2i) -> Array[Vector2i]:
+	var terminais: Array[Vector2i] = []
+	var tentativas_max = 1000
+	var tentativas = 0
+	
+	print("MapGenerator: Tentando posicionar %d terminais..." % quantidade)
+	
+	while terminais.size() < quantidade and tentativas < tentativas_max:
+		var x = randi_range(1, self.largura - 2)
+		var y = randi_range(1, self.altura - 2)
+		var pos = Vector2i(x, y)
+		
+		var tile_atual = grid[y][x]
+		
+		# Regras: Deve ser CHÃO, não ser o início, e não estar na lista ainda
+		if tile_atual == CHAO and pos != inicio_pos and not (pos in terminais):
+			
+			# Verifica espalhamento (distância mínima 10 entre terminais)
+			var muito_perto = false
+			for t in terminais:
+				if (abs(pos.x - t.x) + abs(pos.y - t.y)) < 10:
+					muito_perto = true
+					break
+			
+			if not muito_perto:
+				# SUCESSO: Define o tile lógico como TERMINAL
+				grid[y][x] = TERMINAL_TILE.duplicate()
+				terminais.push_back(pos)
+		
+		tentativas += 1
+	
+	print("MapGenerator: Terminais posicionados em: ", terminais)
+	return terminais
+	
 """
 Mecânica deletada por introduzir muitos bugs. Talves se tivéssemos mais tempo...
 

@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3 uid="uid://dvlda6y5rs1xk"]
+[gd_scene load_steps=27 format=3 uid="uid://dvlda6y5rs1xk"]
 
 [ext_resource type="Texture2D" uid="uid://dfafloj0f4n7q" path="res://assets/tiles/wall.png" id="1_0wfyh"]
 [ext_resource type="Script" uid="uid://cg6sxg3vu5rem" path="res://scripts/main.gd" id="1_jyhfs"]
@@ -11,6 +11,7 @@
 [ext_resource type="Texture2D" uid="uid://cn8q3sqjaovqw" path="res://assets/tiles/poison.png" id="7_85g3d"]
 [ext_resource type="Texture2D" uid="uid://bsqjpjpjo74dl" path="res://assets/tiles/block.png" id="8_choun"]
 [ext_resource type="Texture2D" uid="uid://bupg1asydry0q" path="res://assets/tiles/terminal.png" id="10_ya4ey"]
+[ext_resource type="Texture2D" uid="uid://d0lw48376chfr" path="res://assets/tiles/lama.png" id="11_eb6dy"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_tefeu"]
 texture = ExtResource("2_tbgi4")
@@ -55,6 +56,10 @@ texture = ExtResource("4_choun")
 texture = ExtResource("10_ya4ey")
 0:0/0 = 0
 
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_a8y0u"]
+texture = ExtResource("11_eb6dy")
+0:0/0 = 0
+
 [sub_resource type="TileSet" id="TileSet_tefeu"]
 physics_layer_0/collision_layer = 1
 sources/0 = SubResource("TileSetAtlasSource_jyhfs")
@@ -64,6 +69,7 @@ sources/3 = SubResource("TileSetAtlasSource_ya4ey")
 sources/4 = SubResource("TileSetAtlasSource_eb6dy")
 sources/5 = SubResource("TileSetAtlasSource_choun")
 sources/6 = SubResource("TileSetAtlasSource_trceg")
+sources/7 = SubResource("TileSetAtlasSource_a8y0u")
 
 [sub_resource type="Environment" id="Environment_ya4ey"]
 background_mode = 3

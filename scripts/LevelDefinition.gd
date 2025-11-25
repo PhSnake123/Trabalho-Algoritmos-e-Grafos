@@ -50,9 +50,8 @@ extends Resource
 @export var qtd_paredes_bomba: int = 0
 # Dicionário: Chave (String tipo "Lava") -> Valor (Int quantidade)
 @export var tiles_especiais: Dictionary = {
-	"Lava": 0,
+	"Dano": 0,
 	"Lama": 0,
-	"Veneno": 0
 }
 @export var qtd_moedas: int = 0
 

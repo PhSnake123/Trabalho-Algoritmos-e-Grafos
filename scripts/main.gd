@@ -26,12 +26,24 @@ const ID_SAIDA = 2
 const ID_DANO = 3
 const ID_BLOCK = 4     # Porta/Bloqueio
 const ID_SAVE_POINT = 5
-const ID_TERMINAL = 6  # <--- ID do TileSet Source para o Terminal
+const ID_TERMINAL = 6
 const ID_SAIDA_FECHADA = 4 # Usando visual de 'Block' temporariamente para saída trancada
+const ID_LAMA = 7
 const ID_FOG = 0
 const ID_CAMINHO = 0
 var largura_atual: int = 23
 var altura_atual: int = 23
+
+# REGISTRO VISUAL ---
+# Mapeia o 'tipo' (string) do dado lógico para o 'ID' (int) do TileSet visual
+var visual_registry = {
+	"Chao": ID_CHAO,
+	"Dano": ID_DANO,
+	"Lama": ID_LAMA,
+	"FakeWall": ID_PAREDE, # O truque visual: Logica=Fake, Visual=Parede
+	"SavePoint": ID_SAVE_POINT,
+	"Terminal": ID_TERMINAL
+}
 
 # 4. Dados do mapa
 var map_data = []
@@ -82,23 +94,18 @@ func _ready():
 		# 1. Inicializa Névoa com tamanho padrão TEMPORÁRIO
 		fog_logic = FogOfWar.new(23, 23, 5)
 		
-		# 2. Carrega o jogo (Isso restaura o LevelManager.indice_fase_atual)
+		# 2. Carrega o jogo
 		SaveManager.load_player_game()
 		
 		# --- CORREÇÃO: SINCRONIZAR COM O LEVEL DEFINITION ---
-		# Agora que o SaveManager restaurou o índice, pegamos os dados da fase
 		var level_data = LevelManager.get_dados_fase_atual()
 		
 		if level_data:
-			# Restaura configuração de Fog
 			fog_enabled = level_data.fog_enabled
-			
-			# Restaura a Estética (Cor e Glow)
 			if canvas_modulate:
 				canvas_modulate.color = level_data.cor_ambiente
 			if world_env and world_env.environment:
 				world_env.environment.glow_intensity = level_data.intensidade_glow
-		# ----------------------------------------------------
 		
 		# 3. Atualiza as dimensões do Main baseadas no mapa carregado
 		if map_data.size() > 0:
@@ -108,8 +115,8 @@ func _ready():
 			# Atualiza as dimensões internas do FogOfWar
 			fog_logic.largura = largura_atual
 			fog_logic.altura = altura_atual
-			_draw_fog()
-		# Agora decide se mostra ou esconde (com o valor correto de fog_enabled)
+			_draw_fog() # Força redesenho para cobrir tudo corretamente
+		
 		if not fog_enabled: 
 			tile_map_fog.hide()
 		else: 
@@ -119,7 +126,6 @@ func _ready():
 		hud.forcar_atualizacao_total()
 		Game_State.carregar_save_ao_iniciar = false
 		
-		# Toca música
 		if AudioManager:
 			if Game_State.musica_atual_path != "":
 				var stream = load(Game_State.musica_atual_path)
@@ -133,7 +139,6 @@ func _ready():
 		# 1. PEGAR DADOS DA FASE ATUAL
 		var level_data: LevelDefinition = LevelManager.get_dados_fase_atual()
 		
-		# Fallback de segurança
 		if not level_data:
 			print("Main: Rodando sem LevelDefinition. Usando padrões de teste.")
 			level_data = LevelDefinition.new() 
@@ -154,7 +159,6 @@ func _ready():
 				AudioManager.play_music(level_data.musica_fundo)
 				Game_State.musica_atual_path = level_data.musica_fundo.resource_path
 			else:
-				# Se a fase não tem música, PARA a música anterior (do menu)
 				AudioManager.music_player.stop()
 
 		# --- GERAÇÃO DO MAPA ---
@@ -167,7 +171,6 @@ func _ready():
 		largura_atual = level_data.tamanho.x
 		altura_atual = level_data.tamanho.y
 		
-		# Seed Fixa
 		if level_data.seed_fixa != 0:
 			seed(level_data.seed_fixa)
 		else:
@@ -175,26 +178,25 @@ func _ready():
 			
 		map_generator.gerar_labirinto_dfs(map_data, 1, 1)
 		
-		# Salas Extras
 		if level_data.salas_qtd > 0:
 			map_generator.criar_salas_no_labirinto(map_data, level_data.salas_qtd, level_data.salas_tamanho_min, level_data.salas_tamanho_max)
 			
-		# Quebra Paredes
 		if level_data.chance_quebra_paredes > 0:
 			map_generator.quebrar_paredes_internas(map_data, level_data.chance_quebra_paredes)
 			
-				# --- CONFIGURAÇÃO DO MODO DE JOGO ---
+		# --- CONFIGURAÇÃO DO MODO DE JOGO ---
 		var modo_jogo = level_data.modo_jogo
 		Game_State.terminais_necessarios = 0 
 		
-		# Terrenos Especiais (Lendo do Dicionário)
-		var qtd_lava = level_data.tiles_especiais.get("Lava", 0)
+		# [CORREÇÃO AQUI]: Usamos a nova função genérica 'aplicar_tiles_especiais'
+		var config_tiles = level_data.tiles_especiais
 		var qtd_portas = level_data.qtd_portas
 		
-		# Nota: Se map_generator.adicionar_terrenos_especiais usar largura/altura interna, vai funcionar pois atualizamos no gerar_grid
-		map_generator.adicionar_terrenos_especiais(map_data, qtd_lava, qtd_portas, vertice_inicio)
+		# Passamos o dicionário completo e a posição inicial (para evitar spawn na cabeça do player)
+		map_generator.aplicar_tiles_especiais(map_data, config_tiles, qtd_portas, vertice_inicio)
 		
 		if modo_jogo == "MST":
+			# Chama a função que restauramos no passo 1
 			terminais_pos = map_generator.adicionar_terminais(map_data, level_data.qtd_terminais, vertice_inicio)
 			Game_State.terminais_necessarios = terminais_pos.size()
 			saida_destrancada = false
@@ -206,21 +208,6 @@ func _ready():
 		dijkstra = Dijkstra.new(grafo)
 		astar = AStar.new(grafo)
 		bfs = BFS.new(grafo)
-		
-		# --- LÓGICA DA SALA SECRETA (MECÂNICA DELETADA) ---
-		"""
-		var gerar_secreta = false
-		if level_data.trigger_sala_secreta != "":
-			if Game_State.optional_objectives.get(level_data.trigger_sala_secreta, false) == true:
-				gerar_secreta = true
-		elif level_data.chance_sala_secreta >= 1.0: 
-			gerar_secreta = true
-			
-		if gerar_secreta:
-			print("Main: ROTA SECRETA DISPONÍVEL NESTA FASE.")
-			map_generator.criar_sala_secreta(map_data)
-			AudioManager.play_sfx(preload("res://Audio/sounds/secret.mp3"))
-		"""
 		
 		# --- CÁLCULO DE OBJETIVOS E TEMPO PAR ---
 		if modo_jogo == "NORMAL":
@@ -247,27 +234,19 @@ func _ready():
 			Game_State.tempo_par_level = resultado_mst["custo"]
 			dijkstra.calcular_caminho_minimo(vertice_inicio)
 		
-		#INSERÇÃO DE SAVE POINT
-		
-		# Garante que o Dijkstra calculou do inicio até o fim. Apenas descomentar se der algum problema.
-		# dijkstra.calcular_caminho_minimo(vertice_inicio)
-		
-		# Reconstrói o caminho completo (Array de Vector2i)
+		# INSERÇÃO DE SAVE POINT (Lógica do Meio do Caminho)
+		dijkstra.calcular_caminho_minimo(vertice_inicio)
 		var caminho_otimo = dijkstra.reconstruir_caminho(vertice_inicio, vertice_fim)
 		
 		if caminho_otimo.size() > 2:
-			# Pega o índice do meio do array
 			var meio_index = int(caminho_otimo.size() / 2)
 			var pos_meio = caminho_otimo[meio_index]
 			
 			# Define como Save Point
-			# Importante: Como isso roda DEPOIS do grafo ser criado, o grafo vai achar
-			# que isso ainda é um "Chão" (o que é bom, pois Save Point é passável).
-			# Apenas alteramos o dado visual e lógico do TileMap.
 			map_data[pos_meio.y][pos_meio.x] = SAVE_POINT_TILE.duplicate()
 			save_point_pos = pos_meio
 			
-			# Opcional: Atualizar Fog para revelar o save point se estiver habilitado
+			# Revela Save Point se houver Fog
 			if fog_enabled and fog_logic:
 				fog_logic.fog_data[pos_meio.y][pos_meio.x] = false
 			
@@ -279,8 +258,7 @@ func _ready():
 		_draw_map()
 		_setup_camera()
 		
-		# Inicia Fog com o tamanho correto da fase atual
-		fog_logic = FogOfWar.new(map_generator.largura, map_generator.altura, 5)
+		fog_logic = FogOfWar.new(largura_atual, altura_atual, 5)
 		if not fog_enabled: tile_map_fog.hide()
 		else: tile_map_fog.show()
 		
@@ -299,6 +277,7 @@ func _ready():
 		SaveManager.save_auto_game()
 
 	print("Ready concluído.")
+	
 # --- [ALTERADO] LÓGICA DO DRONE SCANNER PERMANENTE ---
 func _process(delta):
 	# Se não tiver scanners, não gasta processamento
@@ -347,59 +326,49 @@ func _process(delta):
 
 func _draw_map():
 	tile_map.clear()
+	
 	for y in range(map_data.size()):
 		for x in range(map_data[y].size()):
 			var tile: MapTileData = map_data[y][x]
 			var tile_pos = Vector2i(x, y)
 			
-			# 1. DESENHO DA SAÍDA (Prioridade Máxima)
+			# 1. PRIORIDADES ESPECIAIS (Saída e Terminais Ativos)
+			
+			# Saída (Sempre desenha por cima de tudo se for a posição final)
 			if tile_pos == vertice_fim:
-				if saida_destrancada:
-					# Aberta (Verde/Normal)
-					tile_map.set_cell(0, tile_pos, ID_SAIDA, Vector2i(0, 0))
-				else:
-					# Fechada (Vermelha/Bloqueio)
-					tile_map.set_cell(0, tile_pos, ID_SAIDA_FECHADA, Vector2i(0, 0))
+				var visual_saida = ID_SAIDA if saida_destrancada else ID_SAIDA_FECHADA
+				tile_map.set_cell(0, tile_pos, visual_saida, Vector2i(0, 0))
+				continue # Pula o resto, já desenhamos
 			
-			# 2. DESENHO DOS TERMINAIS
-			# IMPORTANTE: Certifique-se que terminal.tres tem 'tipo' = "Terminal"
-			elif tile.tipo == "Terminal":
-				# Se ele ainda está na lista de pendentes, desenha o terminal
+			# Terminais (Lógica de Estado)
+			if tile.tipo == "Terminal":
+				# Se está na lista 'terminais_pos', ainda precisa ser ativado -> Desenha Terminal
 				if tile_pos in terminais_pos:
 					tile_map.set_cell(0, tile_pos, ID_TERMINAL, Vector2i(0, 0))
 				else:
-					# Se já foi ativado, vira chão normal (ou um terminal 'apagado')
+					# Já foi ativado -> Vira chão (ou terminal apagado se tiver sprite pra isso)
 					tile_map.set_cell(0, tile_pos, ID_CHAO, Vector2i(0, 0))
-				
-			# 3. OUTROS TILES
-			elif tile.tipo == "FakeWall":
-				# Usamos o ID_PAREDE para enganar o jogador visualmente
-				tile_map.set_cell(0, tile_pos, ID_PAREDE, Vector2i(0, 0))
+				continue
 			
-			# 2. DESENHO DOS TERMINAIS
-			# IMPORTANTE: Certifique-se que terminal.tres tem 'tipo' = "Terminal"
-			elif tile.tipo == "Terminal":
-				# Se ele ainda está na lista de pendentes, desenha o terminal
-				if tile_pos in terminais_pos:
-					tile_map.set_cell(0, tile_pos, ID_TERMINAL, Vector2i(0, 0))
-				else:
-					# Se já foi ativado, vira chão normal (ou um terminal 'apagado')
-					tile_map.set_cell(0, tile_pos, ID_CHAO, Vector2i(0, 0))
-				
-			# 3. OUTROS TILES
-			elif tile.tipo == "SavePoint":
-				tile_map.set_cell(0, tile_pos, ID_SAVE_POINT, Vector2i(0, 0))
+			# 2. TILES COMUNS (Paredes e Chão Variado)
 			
-			elif not tile.passavel:
+			if not tile.passavel:
+				# Se não passa, é Parede ou Porta Trancada
 				if tile.eh_porta:
 					tile_map.set_cell(0, tile_pos, ID_BLOCK, Vector2i(0, 0))
 				else:
 					tile_map.set_cell(0, tile_pos, ID_PAREDE, Vector2i(0, 0))
 			else:
-				if tile.tipo == "Dano":
-					tile_map.set_cell(0, tile_pos, ID_DANO, Vector2i(0, 0))
+				# Se é passável, consultamos o REGISTRO VISUAL
+				var tipo_string = tile.tipo
+				
+				if visual_registry.has(tipo_string):
+					var id_visual = visual_registry[tipo_string]
+					tile_map.set_cell(0, tile_pos, id_visual, Vector2i(0, 0))
 				else:
+					# Fallback: Se criou um tipo novo e esqueceu de registrar, desenha chão e avisa
 					tile_map.set_cell(0, tile_pos, ID_CHAO, Vector2i(0, 0))
+					
 
 # --- VERIFICAÇÃO DE MOVIMENTO (Atualizada para Saída Trancada) ---
 func is_tile_passable(grid_pos: Vector2i) -> bool:
