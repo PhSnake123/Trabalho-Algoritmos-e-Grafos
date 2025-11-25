@@ -75,7 +75,6 @@ func _ready():
 	add_child(hud)
 
 	# 2. DECISÃO: CARREGAR SAVE OU GERAR NOVO?
-	# 2. DECISÃO: CARREGAR SAVE OU GERAR NOVO?
 	if Game_State.carregar_save_ao_iniciar:
 		print("Main: Bandeira de LOAD detectada. Carregando save...")
 		await get_tree().process_frame
@@ -377,6 +376,17 @@ func _draw_map():
 				# Usamos o ID_PAREDE para enganar o jogador visualmente
 				tile_map.set_cell(0, tile_pos, ID_PAREDE, Vector2i(0, 0))
 			
+			# 2. DESENHO DOS TERMINAIS
+			# IMPORTANTE: Certifique-se que terminal.tres tem 'tipo' = "Terminal"
+			elif tile.tipo == "Terminal":
+				# Se ele ainda está na lista de pendentes, desenha o terminal
+				if tile_pos in terminais_pos:
+					tile_map.set_cell(0, tile_pos, ID_TERMINAL, Vector2i(0, 0))
+				else:
+					# Se já foi ativado, vira chão normal (ou um terminal 'apagado')
+					tile_map.set_cell(0, tile_pos, ID_CHAO, Vector2i(0, 0))
+				
+			# 3. OUTROS TILES
 			elif tile.tipo == "SavePoint":
 				tile_map.set_cell(0, tile_pos, ID_SAVE_POINT, Vector2i(0, 0))
 			
