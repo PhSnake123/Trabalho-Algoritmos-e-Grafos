@@ -21,6 +21,9 @@ extends Resource
 # 1.0 = Padrão.
 @export var intensidade_glow: float = 1.0
 
+# [NOVO] Cor que multiplica apenas os tiles (Paredes/Chão)
+@export var cor_tiles: Color = Color.WHITE
+
 @export_group("Modo de Jogo")
 @export_enum("NORMAL", "MST") var modo_jogo: String = "NORMAL"
 @export var tempo_par_tolerancia: float = 2.0 # Multiplicador para o Good Ending

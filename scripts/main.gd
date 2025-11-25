@@ -106,7 +106,8 @@ func _ready():
 				canvas_modulate.color = level_data.cor_ambiente
 			if world_env and world_env.environment:
 				world_env.environment.glow_intensity = level_data.intensidade_glow
-		
+			if tile_map:
+				tile_map.modulate = level_data.cor_tilemap
 		# 3. Atualiza as dimensões do Main baseadas no mapa carregado
 		if map_data.size() > 0:
 			altura_atual = map_data.size()
@@ -153,7 +154,10 @@ func _ready():
 			
 		if world_env and world_env.environment:
 			world_env.environment.glow_intensity = level_data.intensidade_glow
-			
+		
+		if tile_map:
+			tile_map.modulate = level_data.cor_tilemap	
+		
 		if AudioManager:
 			if level_data.musica_fundo:
 				AudioManager.play_music(level_data.musica_fundo)
