@@ -17,7 +17,7 @@ enum EnemyAI {
 @export var max_hp: int = 50
 @export var atk: int = 10
 @export var def: int = 2
-@export var poise: int = 5      
+@export var poise: int = 5
 @export var knockback_power: int = 3
 @onready var health_bar: ProgressBar = $HealthBar
 
@@ -73,7 +73,7 @@ func tomar_turno():
 func _tentar_mover() -> bool:
 	var caminho = []
 	if ai_type == EnemyAI.STALKER:
-		caminho = main_ref.dijkstra.calcular_caminho(grid_pos, player_ref.grid_pos)
+		caminho = main_ref.dijkstra.calcular_caminho_rapido(grid_pos, player_ref.grid_pos)
 	else:
 		caminho = main_ref.astar.calcular_caminho(grid_pos, player_ref.grid_pos)
 	
@@ -224,20 +224,77 @@ func _world_to_grid(pos: Vector2) -> Vector2i: return Vector2i(pos / 16.0)
 func _grid_to_world(g_pos: Vector2i) -> Vector2: return (Vector2(g_pos) * 16.0) + Vector2(8, 8)
 
 # --- SAVE/LOAD ---
+# Em Enemy.gd
+
+# --- SAVE/LOAD ATUALIZADO ---
+
 func get_save_data() -> Dictionary:
-	return { "pos_x": grid_pos.x, "pos_y": grid_pos.y, "hp": current_hp, "ai_type": ai_type }
+	return {
+		"pos_x": grid_pos.x,
+		"pos_y": grid_pos.y,
+		"hp": current_hp,
+		"ai_type": ai_type,
+		
+		#Salvamos a cor visual (convertendo para Hexadecimal String)
+		"modulate_html": modulate.to_html(),
+		
+		# [NOVO] Salvamos os atributos modificados
+		"stats_override": {
+			"max_hp": max_hp,
+			"atk": atk,
+			"def": def,
+			"poise": poise,
+			"knockback_power": knockback_power,
+			"passos_por_turno": passos_por_turno
+		}
+	}
 
 func load_save_data(data: Dictionary):
+	# 1. Carrega Posição
 	var x = data.get("pos_x")
 	var y = data.get("pos_y")
+	
+	# Fallback para saves antigos que usavam string "grid_pos"
 	if x == null or y == null:
 		if data.has("grid_pos"):
 			var s = str(data["grid_pos"]).replace("(", "").replace(")", "").replace(" ", "")
 			var parts = s.split(",")
-			if parts.size() >= 2: x = int(parts[0]); y = int(parts[1])
-		else: x = grid_pos.x; y = grid_pos.y
+			if parts.size() >= 2: 
+				x = int(parts[0])
+				y = int(parts[1])
+		else: 
+			x = grid_pos.x
+			y = grid_pos.y
 	
 	grid_pos = Vector2i(x, y)
 	position = _grid_to_world(grid_pos)
-	current_hp = int(data["hp"])
-	if data.has("ai_type"): ai_type = int(data["ai_type"]) as EnemyAI
+	
+	# 2. Carrega IA
+	if data.has("ai_type"): 
+		ai_type = int(data["ai_type"]) as EnemyAI
+	
+	# 3. [NOVO] Carrega Cor Visual
+	if data.has("modulate_html"):
+		modulate = Color.html(data["modulate_html"])
+		
+	# 4. [NOVO] Carrega Atributos (Stats)
+	# Importante carregar isso ANTES do HP atual, pois o HP atual depende do Max HP
+	if data.has("stats_override"):
+		var stats = data["stats_override"]
+		max_hp = int(stats.get("max_hp", max_hp))
+		atk = int(stats.get("atk", atk))
+		def = int(stats.get("def", def))
+		poise = int(stats.get("poise", poise))
+		knockback_power = int(stats.get("knockback_power", knockback_power))
+		passos_por_turno = int(stats.get("passos_por_turno", passos_por_turno))
+	
+	# 5. Carrega HP Atual
+	# (Se não tiver no save, assume max_hp atualizado)
+	if data.has("hp"):
+		current_hp = int(data["hp"])
+	else:
+		current_hp = max_hp
+		
+	# Feedback visual se estiver machucado
+	if current_hp < max_hp and sprite:
+		sprite.modulate = Color(1, 0.8, 0.8) # Levemente vermelho se ferido

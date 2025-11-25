@@ -577,8 +577,12 @@ func usar_item(item: ItemData):
 			algoritmo_para_usar = astar
 			cor_caminho = Color.CYAN 
 		ItemData.EFEITO_DRONE_PATH_DIJKSTRA:
-			algoritmo_para_usar = dijkstra
-			cor_caminho = Color.GREEN 
+			var caminho = dijkstra.calcular_caminho_rapido(player.grid_pos, vertice_fim)
+			if not caminho.is_empty():
+				# Registra visualmente (Duração, cor verde, etc)
+				var eh_temporario = (item.tipo_item == ItemData.ItemTipo.DRONE_TEMPORARIO)
+				var duracao = int(item.valor_efeito) if eh_temporario else -1
+				_registrar_novo_caminho(caminho, Color.GREEN, item.alcance_maximo, duracao, eh_temporario)
 		
 		# --- DRONE SCANNER (Permanente) ---
 		ItemData.EFEITO_DRONE_SCANNER:
@@ -830,6 +834,36 @@ func _spawnar_inimigos(level_data: LevelDefinition):
 				# Se o inimigo tiver a variável grid_pos, precisamos definir ela também
 				if "grid_pos" in novo_inimigo:
 					novo_inimigo.grid_pos = pos_candidata
+				
+				# --- 1. APLICA A INTELIGÊNCIA ---
+				novo_inimigo.ai_type = spawn_data.ai_type
+				
+				# --- 2. APLICA A COR (VISUAL) ---
+				# Modulate multiplica a cor. Branco (1,1,1) é neutro.
+				if spawn_data.cor_modulate != Color.WHITE:
+					novo_inimigo.modulate = spawn_data.cor_modulate
+				
+				# --- 3. APLICA OVERRIDES DE ATRIBUTOS ---
+				# Só aplica se o valor for válido (> -1)
+				if spawn_data.hp_maximo > 0:
+					novo_inimigo.max_hp = spawn_data.hp_maximo
+					# IMPORTANTE: Atualizar a vida atual também, senão ele nasce "machucado"
+					novo_inimigo.current_hp = spawn_data.hp_maximo
+					
+				if spawn_data.ataque > -1:
+					novo_inimigo.atk = spawn_data.ataque
+					
+				if spawn_data.defesa > -1:
+					novo_inimigo.def = spawn_data.defesa
+					
+				if spawn_data.poise > -1:
+					novo_inimigo.poise = spawn_data.poise
+					
+				if spawn_data.knockback > -1:
+					novo_inimigo.knockback_power = spawn_data.knockback
+				
+				if spawn_data.passos_por_turno > -1:
+					novo_inimigo.passos_por_turno = spawn_data.passos_por_turno
 				
 				add_child(novo_inimigo)
 				criados += 1

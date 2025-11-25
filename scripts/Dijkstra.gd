@@ -136,3 +136,81 @@ func calcular_caminho(inicio: Vector2i, fim: Vector2i) -> Array[Vector2i]:
 	
 	# 2. Reconstrói e retorna o array do caminho
 	return reconstruir_caminho(inicio, fim)
+
+# --- VERSÃO LIGHT (EARLY EXIT) ---
+# Usada para Stalkers e Drones. Para assim que encontra o destino.
+func calcular_caminho_rapido(inicio: Vector2i, fim: Vector2i) -> Array[Vector2i]:
+	var distancias_local = {}
+	var pais_local = {}
+	var visitados_local = []
+	
+	# Otimização: Inicializamos apenas o início no dicionário
+	# O dicionário cresce dinamicamente, evitando iterar o mapa todo no começo
+	distancias_local[inicio] = 0.0
+	
+	# Conjunto de nós abertos (simples)
+	var nos_para_processar = [inicio]
+	
+	while not nos_para_processar.is_empty():
+		# 1. Encontra o nó com menor distância na lista de processamento
+		var u = Vector2i(-1, -1)
+		var min_dist = INF
+		var index_para_remover = -1
+		
+		for i in range(nos_para_processar.size()):
+			var node = nos_para_processar[i]
+			var d = distancias_local.get(node, INF)
+			if d < min_dist:
+				min_dist = d
+				u = node
+				index_para_remover = i
+		
+		# Se não achou nada ou distância é infinita, parou
+		if u == Vector2i(-1, -1) or min_dist == INF:
+			break
+			
+		# Remove da lista de processamento e marca visitado
+		nos_para_processar.remove_at(index_para_remover)
+		visitados_local.append(u)
+		
+		# --- O PULO DO GATO (EARLY EXIT) ---
+		# Se chegamos no destino, paramos IMEDIATAMENTE.
+		if u == fim:
+			print("DEBUG: Dijkstra Rápido encontrou custo total: ", distancias_local[u])
+			return _reconstruir_caminho_local(pais_local, inicio, fim)
+		# -----------------------------------
+		
+		# Relaxamento dos vizinhos
+		if grafo.adjacencias.has(u):
+			for aresta in grafo.adjacencias[u]:
+				var v = aresta[0]
+				var peso = aresta[1]
+				
+				# Se já visitamos, ignora
+				if v in visitados_local: continue
+				
+				var nova_dist = distancias_local[u] + peso
+				
+				if nova_dist < distancias_local.get(v, INF):
+					distancias_local[v] = nova_dist
+					pais_local[v] = u
+					
+					# Adiciona à lista de processamento se não estiver lá
+					if not v in nos_para_processar:
+						nos_para_processar.push_back(v)
+
+	# Se saiu do loop sem retornar, não achou caminho
+	return []
+
+# Função auxiliar privada para reconstruir sem depender das variáveis globais da classe
+func _reconstruir_caminho_local(pais: Dictionary, inicio: Vector2i, fim: Vector2i) -> Array[Vector2i]:
+	var caminho: Array[Vector2i] = []
+	var atual = fim
+	
+	while atual != inicio:
+		caminho.push_front(atual)
+		if not pais.has(atual): return [] # Caminho quebrado
+		atual = pais[atual]
+	
+	caminho.push_front(inicio)
+	return caminho

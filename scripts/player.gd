@@ -80,6 +80,8 @@ func handle_input():
 
 func start_moving(dir: Vector2):
 	
+	if input_cooldown > 0:
+		return
 	# Segurança: Se o Main não existe mais (troca de cena), não faz nada
 	if not is_instance_valid(main_script) or not main_script.is_inside_tree():
 		return
@@ -87,6 +89,7 @@ func start_moving(dir: Vector2):
 	var target_grid_pos = grid_pos + Vector2i(dir)
 		
 	# 1. Checa Combate PRIMEIRO
+	
 	if main_script.is_tile_occupied_by_enemy(target_grid_pos):
 		# ATAQUE!
 		_atacar_inimigo_no_tile(target_grid_pos)
@@ -163,7 +166,10 @@ func move_towards_target(delta):
 		var next_input = _get_input_direction()
 		
 		if next_input != Vector2.ZERO:
+			moving = false
 			start_moving(next_input)
+			if moving == false: 
+				anim.play("idle_" + last_facing)
 		else:
 			moving = false
 			anim.play("idle_" + last_facing)
