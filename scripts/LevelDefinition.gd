@@ -22,7 +22,7 @@ extends Resource
 @export var intensidade_glow: float = 1.0
 
 # [NOVO] Cor que multiplica apenas os tiles (Paredes/Chão)
-@export var cor_tiles: Color = Color.WHITE
+@export var cor_tilemap: Color = Color.WHITE
 
 @export_group("Modo de Jogo")
 @export_enum("NORMAL", "MST") var modo_jogo: String = "NORMAL"
