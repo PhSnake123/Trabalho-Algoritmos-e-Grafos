@@ -13,6 +13,11 @@ extends Resource
 # Aqui poderíamos ter um Enum para Bioma (ex: CAVERNA, LAB, FLORESTA)
 @export var bioma_tipo: int = 0
 
+# Economia da Fase
+@export_group("Economia e Tesouros")
+@export var qtd_baus: int = 0          # Quantos baús spawnar
+@export var moedas_por_bau: int = 50   # Quanto tem dentro de cada baú
+
 # Esta cor será aplicada ao CanvasModulate.
 # Dica: Use cores escuras e saturadas (Roxo, Azul Profundo, Vermelho) para o efeito dramático.
 # Se for Branco (1,1,1), o jogo fica com as cores originais.

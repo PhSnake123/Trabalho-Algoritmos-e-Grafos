@@ -9,7 +9,7 @@
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 <div align="center">
-  <img src="https://media.discordapp.net/attachments/420419746044051457/1443045401363222578/grafoslogo.png?ex=6927a442&is=692652c2&hm=3ae1ec8d98f25bd3cc31d2a397e69b7ab1e4205856c4d5b1494458f38cbd7ab2&=&format=webp&quality=lossless&width=1376&height=848" alt="logo" width="600">
+  <img src="https://media.discordapp.net/attachments/420419746044051457/1443081014149775461/grafos_logo2.png?ex=69286e2c&is=69271cac&hm=8ab502b20b926a56080c0afef00e7e677faeb3dde41946b6396ace80bf4077ea&=&format=webp&quality=lossless&width=1421&height=775" alt="logo" width="600">
 </div>
 
 > *Logo provisório gerado pelo Gemini.*

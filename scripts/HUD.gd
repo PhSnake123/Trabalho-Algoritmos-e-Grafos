@@ -6,6 +6,8 @@ extends CanvasLayer
 @onready var label_terminais = $Control/BarraSuperior/HBoxContainer/LabelTerminais
 @onready var icone_ativo = $Control/ItemEquipado/IconeAtivo
 @onready var inventory_container = $Control/ContainerInventario
+@onready var container_moedas = $Control/BarraSuperior/HBoxContainer/ContainerMoedas
+@onready var label_moedas = $Control/BarraSuperior/HBoxContainer/ContainerMoedas/LabelMoedas
 @export var limite_aceitavel_multiplier: float = 2.0
 var total_HP = Game_State.vida_jogador
 
@@ -14,6 +16,17 @@ func _ready():
 	# (Verifique se você adicionou o sinal 'item_equipado_alterado' no GameState na etapa anterior)
 	if Game_State.has_signal("item_equipado_alterado"):
 		Game_State.item_equipado_alterado.connect(_on_item_equipado_mudou)
+	
+	if Game_State.has_signal("moedas_alteradas"):
+		Game_State.moedas_alteradas.connect(_on_moedas_alteradas)
+	
+	# Se tiver moedas (ex: load game), mostra e atualiza.
+	if Game_State.moedas > 0:
+		container_moedas.show()
+		_on_moedas_alteradas(Game_State.moedas)
+	else:
+		# Se for 0 (novo jogo), esconde tudo (ícone + texto)
+		container_moedas.hide()
 	
 	# Atualiza a primeira vez (caso comece com item)
 	_on_item_equipado_mudou(Game_State.item_equipado)
@@ -48,7 +61,7 @@ func _process(_delta):
 	else:
 		# Vermelho (Estourou o limite)
 		label_timer.modulate = Color.FIREBRICK
-
+	
 func _input(event):
 	# Toggle do Inventário (Tecla TAB ou I)
 	if event.is_action_pressed("inventory_toggle") or (event is InputEventKey and event.pressed and event.keycode == KEY_TAB):
@@ -85,7 +98,31 @@ func _on_item_equipado_mudou(item: ItemData):
 			ItemData.ItemTipo.POTION: icone_ativo.modulate = Color.RED
 			_: icone_ativo.modulate = Color.GRAY
 
-# Adicione no final do script HUD.gd
+# Função que atualiza o texto
+func _on_moedas_alteradas(novo_saldo: int):
+	if label_moedas:
+		# Você pode colocar um ícone de cifrão ou "G"
+		label_moedas.text = "Moedas: %d" % novo_saldo
+		label_moedas.modulate = Color.DARK_ORANGE
+		
+		# L55ógica de Revelação
+		if novo_saldo > 0 and not container_moedas.visible:
+			container_moedas.show()
+			
+			# Animação de Entrada Triunfal (Pop-up de erro/alerta)
+			# Vamos animar o container inteiro para ele "brotar"
+			container_moedas.scale = Vector2(0, 0) # Começa minúsculo
+			var t = create_tween()
+			t.tween_property(container_moedas, "scale", Vector2(1.2, 1.2), 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			t.tween_property(container_moedas, "scale", Vector2(1.0, 1.0), 0.1)
+			
+		elif container_moedas.visible:
+			# Se já estava visível, faz só o pulinho discreto no texto (comportamento padrão)
+			var t = create_tween()
+			t.tween_property(label_moedas, "scale", Vector2(1.2, 1.2), 0.1)
+			t.tween_property(label_moedas, "scale", Vector2(1.0, 1.0), 0.1)
+	else:
+		print("HUD: LabelMoedas não encontrado. Verifique a cena.")
 
 func forcar_atualizacao_total():
 	# 1. Atualiza o Slot do Item Equipado (garante que mostre o item real ou vazio)
@@ -96,5 +133,16 @@ func forcar_atualizacao_total():
 	var inventory_ui = $Control/ContainerInventario/InventoryUI
 	if inventory_ui:
 		inventory_ui._atualizar_grid()
-		
+	
+	# Atualiza o texto
+	label_moedas.text = "Moedas: %d" % Game_State.moedas
+	label_moedas.modulate = Color.DARK_ORANGE
+	
+	# Decide se mostra ou esconde (sem animação, direto ao ponto)
+	if Game_State.moedas > 0:
+		container_moedas.show()
+		container_moedas.scale = Vector2(1, 1) # Garante que a escala esteja normal
+	else:
+		container_moedas.hide()	
+	
 	print("HUD: Visual atualizado após Load.")

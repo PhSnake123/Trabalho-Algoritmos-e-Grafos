@@ -1,0 +1,20 @@
+[gd_scene load_steps=5 format=3 uid="uid://bwlug2n6ykdpq"]
+
+[ext_resource type="Script" uid="uid://dileqoo11g13i" path="res://scripts/Chest.gd" id="1_rkgax"]
+[ext_resource type="Texture2D" uid="uid://b6s2kmv3tfol6" path="res://assets/tiles/chest_open.png" id="2_psq76"]
+[ext_resource type="Texture2D" uid="uid://cc6xx5g7bwe5" path="res://assets/tiles/chest.png" id="3_vpyr1"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rkgax"]
+size = Vector2(12, 12)
+
+[node name="Chest" type="StaticBody2D"]
+script = ExtResource("1_rkgax")
+sprite_fechado = ExtResource("2_psq76")
+sprite_aberto = ExtResource("3_vpyr1")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_psq76")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, 2)
+shape = SubResource("RectangleShape2D_rkgax")

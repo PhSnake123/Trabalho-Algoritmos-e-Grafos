@@ -87,6 +87,7 @@ func _get_current_game_state_dict() -> Dictionary:
 		"tempo_jogador": Game_State.tempo_jogador,
 		"tempo_par_level": Game_State.tempo_par_level,
 		"vida_jogador": Game_State.vida_jogador,
+		"moedas": Game_State.moedas,
 		"optional_objectives": Game_State.optional_objectives,
 		"terminais_ativos": Game_State.terminais_ativos,
 		"terminais_necessarios": Game_State.terminais_necessarios,
@@ -114,7 +115,8 @@ func _get_current_game_state_dict() -> Dictionary:
 		"fog_data": main_ref.fog_logic.fog_data,
 		"active_paths": main_ref.get_paths_save_data(),
 		"enemies_data": main_ref.get_enemies_state_data(),
-		"npcs_data": main_ref.get_npcs_state_data()
+		"npcs_data": main_ref.get_npcs_state_data(),
+		"chests_data": main_ref.get_chests_state_data()
 	}
 	
 	return data
@@ -125,6 +127,12 @@ func _apply_game_state_dict(data: Dictionary):
 		return
 	
 	var gs_data = data["gamestate"]
+	
+	if gs_data.has("moedas"):
+		Game_State.moedas = int(gs_data["moedas"])
+	else:
+		Game_State.moedas = 0 # Fallback para saves antigos
+	
 	# ... (Carregamento do GameState, Inventário e Player permanece igual) ...
 	Game_State.tempo_jogador = gs_data["tempo_jogador"]
 	if gs_data.has("indice_fase_atual"):
@@ -170,7 +178,21 @@ func _apply_game_state_dict(data: Dictionary):
 	
 	# 1. Mapa e Fog
 	main_ref.map_data = _deserialize_map(w_data["map_data"])
+	
+	# ATUALIZA AS DIMENSÕES IMEDIATAMENTE APÓS CARREGAR
+	if main_ref.map_data.size() > 0:
+		main_ref.altura_atual = main_ref.map_data.size()
+		main_ref.largura_atual = main_ref.map_data[0].size()
+		# Atualiza também o FogOfWar para evitar erros visuais
+		main_ref.fog_logic.largura = main_ref.largura_atual
+		main_ref.fog_logic.altura = main_ref.altura_atual
+	
 	main_ref.fog_logic.fog_data = w_data["fog_data"]
+	
+	if w_data.has("chests_data"):
+		main_ref.load_chests_state_data(w_data["chests_data"])
+	else:
+		pass
 	
 	# 2. Reconstrução do Grafo
 	print("SaveManager: Reconstruindo grafo e algoritmos baseados no save...")
@@ -299,3 +321,22 @@ func apply_latest_global_snapshot():
 	_apply_game_state_dict(snapshot)
 	global_snapshot_buffer.clear()
 	snapshot_timer.start()
+
+# [NOVO] Serializa o dicionário de baús (Vector2i -> String)
+func _serialize_baus(dict: Dictionary) -> Dictionary:
+	var serialized = {}
+	for pos in dict:
+		# Converte chave Vector2i para String "x,y"
+		var key = "%d,%d" % [pos.x, pos.y]
+		serialized[key] = dict[pos]
+	return serialized
+
+# [NOVO] Deserializa o dicionário de baús (String -> Vector2i)
+func _deserialize_baus(dict: Dictionary) -> Dictionary:
+	var deserialized = {}
+	for key in dict:
+		var split = key.split(",")
+		if split.size() >= 2:
+			var pos = Vector2i(int(split[0]), int(split[1]))
+			deserialized[pos] = dict[key]
+	return deserialized

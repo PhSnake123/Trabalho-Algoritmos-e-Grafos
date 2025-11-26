@@ -8,6 +8,10 @@ extends Resource
 @export var flag_secreta: String = "" 
 @export var ai_type: Enemy.EnemyAI = Enemy.EnemyAI.SMART
 
+# Economia
+@export_group("Economia")
+@export var moedas_drop: int = 5 # Valor fixo que o inimigo dropa
+
 @export_group("Customização Visual")
 # Se for Branco (1,1,1,1), o inimigo mantém a cor original.
 @export var cor_modulate: Color = Color.WHITE

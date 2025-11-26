@@ -259,7 +259,41 @@ func adicionar_terminais(grid, quantidade: int, inicio_pos: Vector2i) -> Array[V
 	
 	print("MapGenerator: Terminais posicionados em: ", terminais)
 	return terminais
-	
+
+# Retorna lista de Vector2i que são "pontas soltas" no labirinto
+func encontrar_becos_sem_saida(grid: Array, exit_pos: Vector2i, player_pos: Vector2i) -> Array[Vector2i]:
+	var becos: Array[Vector2i] = []
+
+	# Itera ignorando as bordas externas (que são sempre parede)
+	for y in range(1, self.altura - 1):
+		for x in range(1, self.largura - 1):
+			# Só analisa chão
+			var tile = grid[y][x] as MapTileData
+			if not tile.passavel:
+				continue
+			
+			var pos = Vector2i(x, y)
+			
+			# Ignora posições críticas (Início e Fim)
+			# Não queremos bloquear a saída ou spawnar um baú na cabeça do player
+			if pos == exit_pos or pos == player_pos:
+				continue
+			
+			# Conta vizinhos passáveis (Cardeais: Cima, Baixo, Esq, Dir)
+			var vizinhos_livres = 0
+			
+			# Checagem direta nos vizinhos (o loop já evita index out of bounds)
+			if grid[y-1][x].passavel: vizinhos_livres += 1
+			if grid[y+1][x].passavel: vizinhos_livres += 1
+			if grid[y][x-1].passavel: vizinhos_livres += 1
+			if grid[y][x+1].passavel: vizinhos_livres += 1
+			
+			# Se só tem 1 vizinho (o caminho de onde veio), é um Beco Sem Saída
+			if vizinhos_livres == 1:
+				becos.push_back(pos)
+				
+	return becos
+
 """
 Mecânica deletada por introduzir muitos bugs. Talves se tivéssemos mais tempo...
 

@@ -14,6 +14,10 @@ var inventario_jogador: Inventory
 var item_equipado: ItemData = null #NOVO Variável para item equipado
 signal item_equipado_alterado(novo_item: ItemData)#NOVO VAR PARA ALTERAR ITEM EQUIPADO
 
+# Sistema de Economia
+var moedas: int = 0
+signal moedas_alteradas(novo_saldo: int)
+
 var caminho_jogador: Array[Vector2i] = []
 var caminho_ideal_level: Array[Vector2i] = [] 
 var player_action_history: Array[Dictionary] = [] 
@@ -40,7 +44,8 @@ func reset_run_state():
 	tempo_jogador = 0.0
 	tempo_par_level = 0.0 
 	vida_jogador = 100
-	
+	moedas = 0 # Reset de moedas
+
 	caminho_jogador.clear()
 	player_action_history.clear()
 	caminho_ideal_level.clear()
@@ -84,6 +89,22 @@ func reset_run_state():
 	# ------------------------------------------------------
 
 	print("GameState: Estado da run resetado.")
+	
+# [NOVO] Helper Functions para Economia
+func adicionar_moedas(qtd: int):
+	moedas += qtd
+	emit_signal("moedas_alteradas", moedas)
+	print("GameState: +%d Moedas. Saldo: %d" % [qtd, moedas])
+
+func gastar_moedas(qtd: int) -> bool:
+	if moedas >= qtd:
+		moedas -= qtd
+		emit_signal("moedas_alteradas", moedas)
+		print("GameState: -%d Moedas. Saldo: %d" % [qtd, moedas])
+		return true
+	else:
+		print("GameState: Saldo insuficiente.")
+		return false
 
 func log_player_position(pos: Vector2i):
 	if caminho_jogador.is_empty() or caminho_jogador.back() != pos:

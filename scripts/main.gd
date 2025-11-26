@@ -5,6 +5,8 @@ extends Node2D
 var musica_teste = preload("res://Audio/music/Erik_Satie_Gymnopédie_No.1.ogg")
 const HUD_SCENE = preload("res://scenes/HUD.tscn")
 const FLOATING_LABEL_SCENE = preload("res://scenes/FloatingLabel.tscn")
+@export var cena_moeda: PackedScene # <--- ARRASTE A CENA DA MOEDA AQUI
+@export var cena_bau: PackedScene   # <--- ARRASTE A CENA DO BAÚ AQUI
 
 # 1. Carrega o script de lógica
 const TILE_SIZE := 16
@@ -44,6 +46,10 @@ var visual_registry = {
 	"SavePoint": ID_SAVE_POINT,
 	"Terminal": ID_TERMINAL
 }
+
+# Controle de Baús para persistência
+# Chave: Vector2i (posição), Valor: bool (true = aberto)
+var estado_baus: Dictionary = {}
 
 # 4. Dados do mapa
 var map_data = []
@@ -125,6 +131,7 @@ func _ready():
 		
 		_setup_camera()
 		hud.forcar_atualizacao_total()
+		
 		Game_State.carregar_save_ao_iniciar = false
 		
 		if AudioManager:
@@ -277,6 +284,8 @@ func _ready():
 		# --- SPAWNS USANDO LEVEL DATA ---
 		_spawnar_inimigos(level_data)
 		_spawnar_npcs(level_data)
+		_spawnar_baus(level_data)
+		_spawnar_moedas_no_mapa(level_data)
 		
 		SaveManager.save_auto_game()
 
@@ -869,6 +878,9 @@ func _spawnar_inimigos(level_data: LevelDefinition):
 				if spawn_data.passos_por_turno > -1:
 					novo_inimigo.passos_por_turno = spawn_data.passos_por_turno
 				
+				if "loot_moedas" in novo_inimigo:
+					novo_inimigo.loot_moedas = spawn_data.moedas_drop
+				
 				add_child(novo_inimigo)
 				criados += 1
 			else:
@@ -975,6 +987,8 @@ func _spawnar_npcs(level_data: LevelDefinition):
 				print("NPC ", npc.name, " spawnado em ", pos)
 			else:
 				break
+
+
 
 # --- ANTIGA FUNÇÃO DE SPAWN NPC ---
 """
@@ -1145,6 +1159,157 @@ func spawn_floating_text(world_pos: Vector2, valor: String, cor: Color):
 	add_child(label_inst)
 	label_inst.global_position = world_pos
 	label_inst.set_text(valor, cor)	
+	
+# [Main.gd] - Cole isso após as outras funções de spawn, mantendo a identação correta.
+
+func _spawnar_baus(level_data: LevelDefinition):
+	if level_data.qtd_baus <= 0:
+		return
+	
+	print("Main: Spawnando %d baús..." % level_data.qtd_baus)
+	
+	# 1. Instancia o gerador apenas para usar a matemática de encontrar becos
+	# (Assumindo que MapGenerator tem o script que ajustamos)
+	var map_gen = MapGenerator.new()
+	map_gen.largura = largura_atual
+	map_gen.altura = altura_atual
+	
+	# Precisamos passar o grid atual, a saída e o player para ele não spawnar neles
+	var becos = map_gen.encontrar_becos_sem_saida(map_data, vertice_fim, player.grid_pos)
+	
+	# 2. Embaralha a lista de becos para variar onde os baús caem a cada run (se a seed permitir)
+	becos.shuffle()
+	
+	var colocados = 0
+	
+	for pos in becos:
+		if colocados >= level_data.qtd_baus:
+			break
+		
+		# Verificação de segurança: Só coloca se o tile for Chão comum
+		# (Evita colocar em cima de Terminais ou SavePoints que também ficam no chão)
+		var tile = map_data[pos.y][pos.x]
+		if tile.tipo != "Chao":
+			continue
+		
+		# Instancia o Baú
+		if cena_bau:
+			var bau = cena_bau.instantiate()
+			# Centraliza no tile: (Coord * 16) + (Metade do Tile 8)
+			bau.position = (Vector2(pos) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
+			
+			# Passa a referência do Main para o Baú poder chamar funções de volta
+			bau.main_ref = self
+			add_child(bau)
+			
+			# Configura estado (verificando se já foi aberto neste save)
+			# Se não existir no dicionário, assume false (fechado)
+			var is_aberto = estado_baus.get(pos, false)
+			
+			# Chama a função de configuração do script do Baú
+			bau.configurar(pos, level_data.moedas_por_bau, is_aberto)
+			
+			colocados += 1
+		else:
+			print("ERRO: cena_bau não atribuída no Inspector do Main!")
+			break
+	
+	print("Main: %d baús colocados em becos sem saída." % colocados)
+
+# Chamado pelo script do Baú quando o jogador interage
+func registrar_bau_aberto(pos: Vector2i):
+	estado_baus[pos] = true
+	print("Main: Baú em %s registrado como aberto." % pos)
+
+# Chamado pelo script do Inimigo quando morre
+func spawn_moeda(pos_world: Vector2, valor: int):
+	if not cena_moeda:
+		print("AVISO: cena_moeda não atribuída no Main.")
+		return
+	
+	var moeda = cena_moeda.instantiate()
+	moeda.position = pos_world
+	
+	moeda.main_ref = self
+	
+	# Configura o valor antes de adicionar à cena
+	if moeda.has_method("configurar"):
+		moeda.configurar(valor)
+	
+	# 'call_deferred' é vital aqui: como isso acontece durante a morte (física),
+	# adicionar corpos físicos imediatamente pode causar erros no Godot.
+	call_deferred("add_child", moeda)
+
+# Retorna o nó do baú se houver um nessa posição
+func get_chest_at_position(pos: Vector2i) -> Node2D:
+	var baus = get_tree().get_nodes_in_group("baus")
+	for b in baus:
+		if is_instance_valid(b) and "grid_pos" in b:
+			if b.grid_pos == pos:
+				return b
+	return null
+
+# Verifica se a posição tem um baú (usado para bloquear movimento)
+func is_tile_occupied_by_chest(pos: Vector2i) -> bool:
+	return get_chest_at_position(pos) != null
+
+func get_chests_state_data() -> Array:
+	var chests_data = []
+	var baus = get_tree().get_nodes_in_group("baus")
+	
+	for b in baus:
+		if is_instance_valid(b) and b.has_method("get_save_data"):
+			chests_data.push_back(b.get_save_data())
+			
+	print("Main: Estado de %d baús capturado." % chests_data.size())
+	return chests_data
+
+func load_chests_state_data(loaded_data: Array):
+	print("Main: Recarregando baús do save...")
+	
+	# 1. Limpa baús existentes (para não duplicar)
+	var baus_atuais = get_tree().get_nodes_in_group("baus")
+	for b in baus_atuais:
+		b.queue_free()
+	
+	# 2. Recria baseados no save
+	for data in loaded_data:
+		if cena_bau:
+			var novo_bau = cena_bau.instantiate()
+			novo_bau.main_ref = self
+			add_child(novo_bau)
+			
+			# Carrega posição e estado (aberto/fechado)
+			novo_bau.load_save_data(data)
+
+# res://scripts/Main.gd
+
+func _spawnar_moedas_no_mapa(level_data: LevelDefinition):
+	# Configuração simples (pode ir pro LevelDefinition depois se quiser)
+	var chance_moeda = 0.05 # 5% de chance por tile de chão
+	var valor_moeda_chao = 1
+	
+	print("Main: Espalhando moedas pelo chão...")
+	var moedas_criadas = 0
+	
+	for y in range(1, altura_atual - 1):
+		for x in range(1, largura_atual - 1):
+			var pos = Vector2i(x, y)
+			
+			# Regras: Deve ser chão, não pode ser início/fim, nem ter nada em cima
+			var tile = map_data[y][x]
+			if tile.tipo != "Chao": continue
+			if pos == Vector2i(1, 1) or pos == vertice_fim: continue
+			
+			# Verifica se tem baú, inimigo ou npc
+			if is_tile_occupied_by_chest(pos) or is_tile_occupied_by_enemy(pos) or is_tile_occupied_by_npc(pos):
+				continue
+				
+			if randf() < chance_moeda:
+				spawn_moeda((Vector2(pos) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0), valor_moeda_chao)
+				moedas_criadas += 1
+				
+	print("Main: %d moedas espalhadas pelo mapa." % moedas_criadas)
 
 # --- TESTE TEMPORÁRIO BFS ---
 """func executar_teste_bfs():

@@ -30,6 +30,7 @@ var stats = {
 @onready var main_script = get_parent()
 
 func _ready():
+	add_to_group("player")
 	global_position = (Vector2(grid_pos) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
 	target_pos = global_position 
 	SaveManager.register_player(self) 
@@ -101,6 +102,12 @@ func start_moving(dir: Vector2):
 		get_tree().call_group("inimigos", "tomar_turno")
 		return # Retorna para não andar
 		
+	# Bloqueia se tiver baú
+	if main_script.is_tile_occupied_by_chest(target_grid_pos):
+		# Opcional: Tocar som de colisão ou feedback
+		print("Player: Bloqueado por baú.")
+		return
+	
 	# 2. Se livre, anda normal
 	if main_script.is_tile_passable(target_grid_pos):
 		#AudioManager.play_sfx(sfx_teste)
@@ -253,7 +260,14 @@ func _unhandled_input(event):
 				npc.interagir()
 				return # Sai da função, não interage com chão
 		
-		# 3. Se não tem NPC, interage com o chão (Save/Terminal)
+		if main_script.has_method("get_chest_at_position"):
+			var bau = main_script.get_chest_at_position(tile_frente)
+			if bau:
+				print("Player: Interagindo com baú.")
+				bau.interagir()
+				return
+		
+		# 3. Se não tem NPC nem baú, interage com o chão (Save/Terminal)
 		# Checa vitória primeiro
 		if grid_pos == main_script.vertice_fim and main_script.saida_destrancada:
 			print(">>> PARABÉNS! VOCÊ VENCEU O JOGO! <<<")

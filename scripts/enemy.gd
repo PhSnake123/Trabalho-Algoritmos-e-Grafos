@@ -30,6 +30,7 @@ var player_ref = null
 var current_hp: int
 var grid_pos: Vector2i = Vector2i.ZERO 
 var default_sprite_pos: Vector2 = Vector2.ZERO 
+var loot_moedas: int = 0 # Definido pelo Main no spawn
 
 func _ready():
 	current_hp = max_hp
@@ -213,6 +214,11 @@ func receber_dano_direto(qtd: int):
 
 func _morrer():
 	print("Inimigo derrotado!")
+	
+	# Drop de moeda
+	if main_ref and main_ref.has_method("spawn_moeda") and loot_moedas > 0:
+		main_ref.spawn_moeda(global_position, loot_moedas)
+	
 	queue_free()
 
 # --- UTILITÁRIOS ---
@@ -237,7 +243,7 @@ func get_save_data() -> Dictionary:
 		
 		#Salvamos a cor visual (convertendo para Hexadecimal String)
 		"modulate_html": modulate.to_html(),
-		
+		"loot_moedas": loot_moedas,
 		# [NOVO] Salvamos os atributos modificados
 		"stats_override": {
 			"max_hp": max_hp,
@@ -272,6 +278,9 @@ func load_save_data(data: Dictionary):
 	# 2. Carrega IA
 	if data.has("ai_type"): 
 		ai_type = int(data["ai_type"]) as EnemyAI
+	
+	if data.has("loot_moedas"):
+		loot_moedas = int(data["loot_moedas"])
 	
 	# 3. [NOVO] Carrega Cor Visual
 	if data.has("modulate_html"):

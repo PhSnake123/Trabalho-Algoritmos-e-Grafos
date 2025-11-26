@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://cbmsdr2d8wxe7"]
+[gd_scene load_steps=5 format=3 uid="uid://cbmsdr2d8wxe7"]
 
 [ext_resource type="Script" uid="uid://damlo86x86421" path="res://scripts/HUD.gd" id="1_fls4u"]
 [ext_resource type="PackedScene" uid="uid://dppnl5j80bqm0" path="res://scenes/InventoryUI.tscn" id="1_qpvh6"]
+[ext_resource type="Texture2D" uid="uid://c4obbqfms51vu" path="res://assets/sprites/coinhud.png" id="2_7hsmw"]
 [ext_resource type="PackedScene" uid="uid://cbjr3lv1y21tc" path="res://scenes/CustomCursor.tscn" id="3_1etfg"]
 
 [node name="HUD" type="CanvasLayer"]
@@ -39,6 +40,19 @@ horizontal_alignment = 2
 layout_mode = 2
 horizontal_alignment = 2
 
+[node name="ContainerMoedas" type="HBoxContainer" parent="Control/BarraSuperior/HBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Icone_Coin" type="TextureRect" parent="Control/BarraSuperior/HBoxContainer/ContainerMoedas"]
+layout_mode = 2
+texture = ExtResource("2_7hsmw")
+expand_mode = 2
+stretch_mode = 5
+
+[node name="LabelMoedas" type="Label" parent="Control/BarraSuperior/HBoxContainer/ContainerMoedas"]
+layout_mode = 2
+
 [node name="ItemEquipado" type="PanelContainer" parent="Control"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 1
@@ -61,6 +75,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = -12.0
+offset_top = -1.0
+offset_right = -12.0
+offset_bottom = -1.0
 grow_horizontal = 2
 grow_vertical = 2
 

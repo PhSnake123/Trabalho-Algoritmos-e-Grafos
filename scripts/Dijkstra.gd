@@ -176,7 +176,6 @@ func calcular_caminho_rapido(inicio: Vector2i, fim: Vector2i) -> Array[Vector2i]
 		# --- O PULO DO GATO (EARLY EXIT) ---
 		# Se chegamos no destino, paramos IMEDIATAMENTE.
 		if u == fim:
-			print("DEBUG: Dijkstra Rápido encontrou custo total: ", distancias_local[u])
 			return _reconstruir_caminho_local(pais_local, inicio, fim)
 		# -----------------------------------
 		
