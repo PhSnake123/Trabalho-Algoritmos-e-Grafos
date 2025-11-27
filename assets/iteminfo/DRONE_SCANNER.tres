@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3 uid="uid://0qontwq7fugd"]
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://0qontwq7fugd"]
 
 [ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_kojrh"]
+[ext_resource type="Texture2D" uid="uid://catemvfwwrcr5" path="res://assets/sprites/drone2.png" id="2_ww8tj"]
 
 [resource]
 script = ExtResource("1_kojrh")
@@ -11,4 +12,5 @@ tipo_item = 5
 efeito = "DRONE_SCANNER"
 valor_efeito = 5.0
 alcance_maximo = 15
+textura_icon = ExtResource("2_ww8tj")
 metadata/_custom_type_script = "uid://d01dm40km4s0s"

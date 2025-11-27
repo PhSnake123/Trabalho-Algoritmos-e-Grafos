@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3 uid="uid://wglql1osnai6"]
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://wglql1osnai6"]
 
 [ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_hboxe"]
+[ext_resource type="Texture2D" uid="uid://b0vd80srvkiq8" path="res://assets/sprites/chave.png" id="2_u2mf3"]
 
 [resource]
 script = ExtResource("1_hboxe")
@@ -8,4 +9,5 @@ nome_item = "Cartão de Acesso"
 descricao = "Abre uma porta trancada."
 tipo_item = 1
 efeito = "ABRE_PORTA"
+textura_icon = ExtResource("2_u2mf3")
 metadata/_custom_type_script = "uid://d01dm40km4s0s"

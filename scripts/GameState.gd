@@ -3,11 +3,12 @@ extends Node
 class_name GameState
 
 # --- Responsabilidade (Estado da Run) - Fase 1.3 ---
-var carregar_save_ao_iniciar: bool = false #NOVO
+var carregar_save_ao_iniciar: bool = false # Load Manual (Player)
+var carregar_auto_save_ao_iniciar: bool = false # Load Auto (Checkpoint)
 var musica_atual_path: String = ""
 var tempo_jogador: float = 0.0
 var tempo_par_level: float = 0.0 
-var vida_jogador: int = 100       
+var vida_jogador: int = 100
 const SAVE_TERMINAL_ITEM = preload("res://assets/iteminfo/save_terminal.tres") 
 
 var inventario_jogador: Inventory
@@ -24,6 +25,11 @@ var player_action_history: Array[Dictionary] = []
 var MAX_ACTION_HISTORY = 20 
 var is_dialogue_active: bool = false
 
+# --- NOVAS VARIÁVEIS DE CONTROLE DO HUB ---
+var is_in_hub: bool = false # Se true, bloqueia uso de itens e save manual
+var hub_desbloqueado: bool = false # Se true, o jogador sempre vai pro Hub entre fases
+var total_npc_interactions: int = 0 # Contador para desbloquear o Hub
+
 #(Finais Múltiplos)
 var optional_objectives: Dictionary = {} 
 
@@ -36,6 +42,7 @@ var terminais_necessarios: int = 0
 var enemy_states: Dictionary = {}
 var npc_states: Dictionary = {}
 var interactable_states: Dictionary = {}
+
 
 func _ready():
 	reset_run_state()
@@ -57,37 +64,38 @@ func reset_run_state():
 	enemy_states.clear()
 	npc_states.clear()
 	interactable_states.clear()
+	is_in_hub = false
+	total_npc_interactions = 0
 	
 	if inventario_jogador:
 		inventario_jogador.clear_items()
 	else:
 		inventario_jogador = Inventory.new() 
-	
-	inventario_jogador.adicionar_item(SAVE_TERMINAL_ITEM)
-	
-	var chave_teste = load("res://assets/iteminfo/chave.tres") 
-	if chave_teste:
-		inventario_jogador.adicionar_item(chave_teste)
-		
-	var drone_teste = load("res://assets/iteminfo/DroneAStar.tres")
-	if drone_teste: inventario_jogador.adicionar_item(drone_teste)
-	
-	var drone_dijkstra = load("res://assets/iteminfo/DroneDJKISTRA.tres")
-	if drone_dijkstra: inventario_jogador.adicionar_item(drone_dijkstra.duplicate())
 
-	var drone_astar_perm = load("res://assets/iteminfo/DroneAStarPerm.tres")
-	if drone_astar_perm: inventario_jogador.adicionar_item(drone_astar_perm.duplicate())
-	
-	# <--- [NOVO] IMPLEMENTAÇÃO DRONE SCANNER: Item de Teste
-	# Certifique-se de criar este arquivo .tres conforme as instruções anteriores
-	var drone_scanner = load("res://assets/iteminfo/DRONE_SCANNER.tres")
-	if drone_scanner: inventario_jogador.adicionar_item(drone_scanner.duplicate())
-	
-	var drone_limpeza = load("res://assets/iteminfo/DroneTerraformer.tres")
-	if drone_limpeza: inventario_jogador.adicionar_item(drone_limpeza.duplicate())	
-	
-	# ------------------------------------------------------
+	# Define uma função auxiliar temporária para carregar e configurar o item
+	var add_safe = func(path: String):
+		if ResourceLoader.exists(path):
+			var res = load(path)
+			if res:
+				var item = res.duplicate()
+				# AQUI ESTÁ O FIX: Salvamos o caminho manualmente na variável nova
+				item.arquivo_origem = path 
+				inventario_jogador.adicionar_item(item)
+			else:
+				print("ERRO: Falha ao carregar recurso em ", path)
+		else:
+			print("ERRO: Arquivo não existe: ", path)
 
+	add_safe.call("res://assets/iteminfo/save_terminal.tres")
+	add_safe.call("res://assets/iteminfo/chave.tres")
+	add_safe.call("res://assets/iteminfo/DroneAStar.tres")
+	add_safe.call("res://assets/iteminfo/DroneDJKISTRA.tres")
+	add_safe.call("res://assets/iteminfo/DroneAStarPerm.tres")
+	add_safe.call("res://assets/iteminfo/DRONE_SCANNER.tres")
+	add_safe.call("res://assets/iteminfo/DroneTerraformer.tres")
+	
+	carregar_save_ao_iniciar = false
+	carregar_auto_save_ao_iniciar = false
 	print("GameState: Estado da run resetado.")
 	
 # [NOVO] Helper Functions para Economia
@@ -148,5 +156,19 @@ func calcular_pontuacao_final():
 	
 	# A melhor abordagem: A Main envia o array antes de trocar de cena.
 	pass
+
+func registrar_interacao_npc():
+	total_npc_interactions += 1
+	print("GameState: Interações com NPC: ", total_npc_interactions)
+	check_hub_unlock()
+
+func check_hub_unlock():
+	if hub_desbloqueado: return # Já desbloqueou, não precisa checar
+	
+	# Regra: 1 Moeda OU 1 NPC
+	if moedas > 0 or total_npc_interactions > 0:
+		hub_desbloqueado = true
+		print(">>> ROTA SECRETA (HUB) DESBLOQUEADA! <<<")
+		# Opcional: Tocar um som misterioso ou salvar essa flag no disco imediatamente
 
 var caminho_ideal_ultima_fase: Array[Vector2i] = [] # Adicione essa variável

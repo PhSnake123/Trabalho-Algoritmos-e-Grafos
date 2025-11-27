@@ -92,6 +92,11 @@ func start_moving(dir: Vector2):
 	# 1. Checa Combate PRIMEIRO
 	
 	if main_script.is_tile_occupied_by_enemy(target_grid_pos):
+		
+		# Toca animação
+		last_facing = _get_facing_from_dir(dir)
+		anim.play("attack_" + last_facing)
+		
 		# ATAQUE!
 		_atacar_inimigo_no_tile(target_grid_pos)
 		

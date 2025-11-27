@@ -1,6 +1,10 @@
 extends CanvasLayer
+@onready var musica_game_over: AudioStreamPlayer2D = $AudioStreamPlayer2D
+
 
 func _ready():
+	AudioManager.stop_music()
+	musica_game_over.play()
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	
 	# Conexões existentes
@@ -18,9 +22,17 @@ func _ready():
 
 func _on_tentar_pressed():
 	print("GameOver: Tentando novamente (Novo Jogo)...")
-	Game_State.reset_run_state()
-	Game_State.carregar_save_ao_iniciar = false # Garante que é novo jogo
-	get_tree().change_scene_to_file("res://scenes/Main.tscn")
+	
+	if FileAccess.file_exists(SaveManager.SAVE_PATH_AUTO):
+		Game_State.reset_run_state() # Limpa memória suja
+		Game_State.carregar_auto_save_ao_iniciar = true
+		get_tree().change_scene_to_file("res://scenes/Main.tscn")
+	else:
+		# Fallback: Se não tem auto-save, começa tudo do zero (Novo Jogo)
+		print("GameOver: AutoSave não encontrado. Iniciando nova run do zero.")
+		Game_State.reset_run_state()
+		Game_State.carregar_save_ao_iniciar = false
+		get_tree().change_scene_to_file("res://scenes/Main.tscn")
 
 # --- NOVO: Lógica Reutilizada do Menu Principal ---
 func _on_carregar_pressed():

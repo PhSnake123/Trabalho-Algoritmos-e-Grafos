@@ -13,6 +13,9 @@ enum ItemTipo {
 	DRONE_TEMPORARIO
 }
 
+# Variável auxiliar para persistência, já que duplicate() apaga o resource_path
+var arquivo_origem: String = ""
+
 # (Fase 1.1) Strings para definir o que um item faz
 # Usamos strings para flexibilidade. O 'main.gd' ou 'player.gd'
 # vai ler esta string e decidir o que fazer.
@@ -37,6 +40,8 @@ const EFEITO_DRONE_TERRAFORMER = "DRONE_TERRAFORMER"
 @export_multiline var descricao: String = "Uma breve descrição do item."
 
 @export var tipo_item: ItemTipo = ItemTipo.GENERICO
+
+@export var preco_base: int = 0
 
 @export var efeito: String = "" # Ex: "CURA_HP" ou "DRONE_RECON_BFS"
 

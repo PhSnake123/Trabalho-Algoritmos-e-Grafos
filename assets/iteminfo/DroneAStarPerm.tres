@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3 uid="uid://xq4yfeancap"]
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://xq4yfeancap"]
 
 [ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_lwgtr"]
+[ext_resource type="Texture2D" uid="uid://rj2yll2pnid7" path="res://assets/sprites/drone6.png" id="2_v5qjq"]
 
 [resource]
 script = ExtResource("1_lwgtr")
@@ -9,4 +10,5 @@ descricao = "Traça parte do caminho  até a saída evitando tiles de dano."
 tipo_item = 5
 efeito = "DRONE_PATH_ASTAR"
 alcance_maximo = 30
+textura_icon = ExtResource("2_v5qjq")
 metadata/_custom_type_script = "uid://d01dm40km4s0s"

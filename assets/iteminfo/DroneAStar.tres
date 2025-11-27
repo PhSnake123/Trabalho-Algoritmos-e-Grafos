@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3 uid="uid://b1dmmik5qm0oe"]
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://b1dmmik5qm0oe"]
 
 [ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_b6p2m"]
+[ext_resource type="Texture2D" uid="uid://rj2yll2pnid7" path="res://assets/sprites/drone6.png" id="2_lvaj3"]
 
 [resource]
 script = ExtResource("1_b6p2m")
@@ -10,4 +11,5 @@ tipo_item = 6
 efeito = "DRONE_PATH_ASTAR"
 valor_efeito = 20.0
 alcance_maximo = -1
+textura_icon = ExtResource("2_lvaj3")
 metadata/_custom_type_script = "uid://d01dm40km4s0s"

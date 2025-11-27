@@ -59,8 +59,8 @@ var dijkstra: Dijkstra
 var bfs: BFS
 var vertice_fim: Vector2i
 var save_point_pos
-var camera_zoom_X = 2
-var camera_zoom_Y = 2
+var camera_zoom_X = 3
+var camera_zoom_Y = 3
 
 # Variáveis para o AStar e Drones
 var astar: AStar
@@ -88,209 +88,230 @@ func _ready():
 	# 1. Configurações Básicas
 	SaveManager.register_main(self)
 	
-	# Instancia o HUD
+	# Instancia o HUD e adiciona à cena
 	var hud = HUD_SCENE.instantiate()
+	hud.name = "HUD" # Nomeamos para facilitar encontrar depois
 	add_child(hud)
 
-	# 2. DECISÃO: CARREGAR SAVE OU GERAR NOVO?
+	# 2. DECISÃO: QUAL TIPO DE INICIALIZAÇÃO?
+	
+	# CASO A: LOAD MANUAL (Player clicou em Carregar no Menu)
 	if Game_State.carregar_save_ao_iniciar:
-		print("Main: Bandeira de LOAD detectada. Carregando save...")
-		await get_tree().process_frame
-		
-		# 1. Inicializa Névoa com tamanho padrão TEMPORÁRIO
-		fog_logic = FogOfWar.new(23, 23, 5)
-		
-		# 2. Carrega o jogo
-		SaveManager.load_player_game()
-		
-		# --- CORREÇÃO: SINCRONIZAR COM O LEVEL DEFINITION ---
-		var level_data = LevelManager.get_dados_fase_atual()
-		
-		if level_data:
-			fog_enabled = level_data.fog_enabled
-			if canvas_modulate:
-				canvas_modulate.color = level_data.cor_ambiente
-			if world_env and world_env.environment:
-				world_env.environment.glow_intensity = level_data.intensidade_glow
-			if tile_map:
-				tile_map.modulate = level_data.cor_tilemap
-		# 3. Atualiza as dimensões do Main baseadas no mapa carregado
-		if map_data.size() > 0:
-			altura_atual = map_data.size()
-			largura_atual = map_data[0].size()
-			
-			# Atualiza as dimensões internas do FogOfWar
-			fog_logic.largura = largura_atual
-			fog_logic.altura = altura_atual
-			_draw_fog() # Força redesenho para cobrir tudo corretamente
-		
-		if not fog_enabled: 
-			tile_map_fog.hide()
-		else: 
-			tile_map_fog.show()
-		
-		_setup_camera()
-		hud.forcar_atualizacao_total()
-		
+		print("Main: LOAD MANUAL detectado...")
+		await get_tree().process_frame # Espera um frame para segurança
+		_inicializar_via_load(false) # false = NÃO é auto save
 		Game_State.carregar_save_ao_iniciar = false
+
+	# CASO B: LOAD AUTOMÁTICO (Checkpoint / Tentar Novamente do Game Over)
+	elif Game_State.carregar_auto_save_ao_iniciar:
+		print("Main: LOAD AUTOMÁTICO (Checkpoint) detectado...")
+		await get_tree().process_frame
+		_inicializar_via_load(true) # true = É auto save
+		Game_State.carregar_auto_save_ao_iniciar = false
 		
-		if AudioManager:
-			if Game_State.musica_atual_path != "":
-				var stream = load(Game_State.musica_atual_path)
-				if stream: 
-					AudioManager.play_music(stream)
-				else:
-					AudioManager.music_player.stop()
+	# CASO C: NOVO JOGO (Geração Procedural)
 	else:
 		print("Main: Iniciando NOVO JOGO via LevelManager...")
-		
-		# 1. PEGAR DADOS DA FASE ATUAL
-		var level_data: LevelDefinition = LevelManager.get_dados_fase_atual()
-		
-		if not level_data:
-			print("Main: Rodando sem LevelDefinition. Usando padrões de teste.")
-			level_data = LevelDefinition.new() 
-		
-		print("Main: Gerando Fase - ", level_data.nome_fase)
-		
+		_inicializar_novo_jogo(vertice_inicio)
+
+	print("Ready concluído.")
+
+func _inicializar_via_load(is_auto: bool):
+	# 1. Inicializa Névoa com tamanho padrão TEMPORÁRIO
+	fog_logic = FogOfWar.new(23, 23, 5)
+	
+	# 2. Carrega o jogo (Decide qual arquivo ler)
+	if is_auto:
+		SaveManager.load_auto_game()
+	else:
+		SaveManager.load_player_game()
+	
+	# --- CORREÇÃO: SINCRONIZAR COM O LEVEL DEFINITION ---
+	var level_data = LevelManager.get_dados_fase_atual()
+	
+	if level_data:
 		fog_enabled = level_data.fog_enabled
-		
-		# --- CONFIGURAÇÃO ESTÉTICA ---
 		if canvas_modulate:
 			canvas_modulate.color = level_data.cor_ambiente
-			
 		if world_env and world_env.environment:
 			world_env.environment.glow_intensity = level_data.intensidade_glow
-		
 		if tile_map:
-			tile_map.modulate = level_data.cor_tilemap	
+			tile_map.modulate = level_data.cor_tilemap
+			
+	# 3. Atualiza as dimensões do Main baseadas no mapa carregado
+	if map_data.size() > 0:
+		altura_atual = map_data.size()
+		largura_atual = map_data[0].size()
 		
-		if AudioManager:
-			if level_data.musica_fundo:
-				AudioManager.play_music(level_data.musica_fundo)
-				Game_State.musica_atual_path = level_data.musica_fundo.resource_path
+		# Atualiza as dimensões internas do FogOfWar
+		fog_logic.largura = largura_atual
+		fog_logic.altura = altura_atual
+		_draw_fog() # Força redesenho para cobrir tudo corretamente
+	
+	if not fog_enabled: 
+		tile_map_fog.hide()
+	else: 
+		tile_map_fog.show()
+	
+	_setup_camera()
+	
+	# Recupera o HUD que criamos no _ready para atualizar ele
+	var hud = get_node_or_null("HUD")
+	if hud:
+		hud.forcar_atualizacao_total()
+	
+	if AudioManager:
+		if Game_State.musica_atual_path != "":
+			var stream = load(Game_State.musica_atual_path)
+			if stream: 
+				AudioManager.play_music(stream)
 			else:
 				AudioManager.music_player.stop()
 
-		# --- GERAÇÃO DO MAPA ---
-		var map_generator = MapGenerator.new()
-		
-		# Passa as dimensões do Resource para o Generator
-		map_data = map_generator.gerar_grid(level_data.tamanho.x, level_data.tamanho.y)
-		
-		# --- SALVA O TAMANHO ATUAL AQUI ---
-		largura_atual = level_data.tamanho.x
-		altura_atual = level_data.tamanho.y
-		
-		if level_data.seed_fixa != 0:
-			seed(level_data.seed_fixa)
-		else:
-			randomize()
-			
-		map_generator.gerar_labirinto_dfs(map_data, 1, 1)
-		
-		if level_data.salas_qtd > 0:
-			map_generator.criar_salas_no_labirinto(map_data, level_data.salas_qtd, level_data.salas_tamanho_min, level_data.salas_tamanho_max)
-			
-		if level_data.chance_quebra_paredes > 0:
-			map_generator.quebrar_paredes_internas(map_data, level_data.chance_quebra_paredes)
-			
-		# --- CONFIGURAÇÃO DO MODO DE JOGO ---
-		var modo_jogo = level_data.modo_jogo
-		Game_State.terminais_necessarios = 0 
-		
-		# [CORREÇÃO AQUI]: Usamos a nova função genérica 'aplicar_tiles_especiais'
-		var config_tiles = level_data.tiles_especiais
-		var qtd_portas = level_data.qtd_portas
-		
-		# Passamos o dicionário completo e a posição inicial (para evitar spawn na cabeça do player)
-		map_generator.aplicar_tiles_especiais(map_data, config_tiles, qtd_portas, vertice_inicio)
-		
-		if modo_jogo == "MST":
-			# Chama a função que restauramos no passo 1
-			terminais_pos = map_generator.adicionar_terminais(map_data, level_data.qtd_terminais, vertice_inicio)
-			Game_State.terminais_necessarios = terminais_pos.size()
-			saida_destrancada = false
-		else:
-			saida_destrancada = true
-
-		# --- CRIA O GRAFO E ALGORITMOS ---
-		grafo = Graph.new(map_data)
-		dijkstra = Dijkstra.new(grafo)
-		astar = AStar.new(grafo)
-		bfs = BFS.new(grafo)
-		
-		# --- CÁLCULO DE OBJETIVOS E TEMPO PAR ---
-		if modo_jogo == "NORMAL":
-			vertice_fim = dijkstra.encontrar_vertice_final(vertice_inicio)
-			if dijkstra.distancias.has(vertice_fim):
-				Game_State.tempo_par_level = dijkstra.distancias[vertice_fim]
-			else:
-				print("ERRO: Saída inalcançável.")
-				
-		elif modo_jogo == "MST":
-			vertice_fim = dijkstra.encontrar_vertice_final(vertice_inicio)
-			var pontos_interesse = [vertice_inicio] + terminais_pos + [vertice_fim]
-			var grafo_abstrato = {}
-			for origem in pontos_interesse:
-				grafo_abstrato[origem] = {}
-				var resultado = dijkstra.calcular_caminho_minimo(origem)
-				var dists = resultado["distancias"]
-				for destino in pontos_interesse:
-					if origem == destino: continue
-					if dists.has(destino) and dists[destino] != INF:
-						grafo_abstrato[origem][destino] = dists[destino]
-			
-			var resultado_mst = Prim.calcular_mst(grafo_abstrato) 
-			Game_State.tempo_par_level = resultado_mst["custo"]
-			dijkstra.calcular_caminho_minimo(vertice_inicio)
-		
-		# INSERÇÃO DE SAVE POINT (Lógica do Meio do Caminho)
-		dijkstra.calcular_caminho_minimo(vertice_inicio)
-		var caminho_otimo = dijkstra.reconstruir_caminho(vertice_inicio, vertice_fim)
-		
-		if caminho_otimo.size() > 2:
-			var meio_index = int(caminho_otimo.size() / 2)
-			var pos_meio = caminho_otimo[meio_index]
-			
-			# Define como Save Point
-			map_data[pos_meio.y][pos_meio.x] = SAVE_POINT_TILE.duplicate()
-			save_point_pos = pos_meio
-			
-			# Revela Save Point se houver Fog
-			if fog_enabled and fog_logic:
-				fog_logic.fog_data[pos_meio.y][pos_meio.x] = false
-			
-			print("Main: Save Point posicionado no meio do caminho crítico: ", save_point_pos)
-		else:
-			print("Main: Caminho muito curto para ter Save Point.")
-			
-		# --- FINALIZAÇÃO VISUAL ---
-		_draw_map()
-		_setup_camera()
-		
-		fog_logic = FogOfWar.new(largura_atual, altura_atual, 5)
-		if not fog_enabled: tile_map_fog.hide()
-		else: tile_map_fog.show()
-		
-		# Revela savepoint e terminais
-		if save_point_pos != null and fog_enabled:
-			fog_logic.fog_data[save_point_pos.y][save_point_pos.x] = false
-		for t in terminais_pos:
-			if fog_enabled: fog_logic.fog_data[t.y][t.x] = false
-
-		update_fog(vertice_inicio)
-		
-		# --- SPAWNS USANDO LEVEL DATA ---
-		_spawnar_inimigos(level_data)
-		_spawnar_npcs(level_data)
-		_spawnar_baus(level_data)
-		_spawnar_moedas_no_mapa(level_data)
-		
-		SaveManager.save_auto_game()
-
-	print("Ready concluído.")
+func _inicializar_novo_jogo(vertice_inicio: Vector2i):
+	# 1. PEGAR DADOS DA FASE ATUAL
+	var level_data: LevelDefinition = LevelManager.get_dados_fase_atual()
 	
+	if not level_data:
+		print("Main: Rodando sem LevelDefinition. Usando padrões de teste.")
+		level_data = LevelDefinition.new() 
+	
+	print("Main: Gerando Fase - ", level_data.nome_fase)
+	
+	fog_enabled = level_data.fog_enabled
+	
+	# --- CONFIGURAÇÃO ESTÉTICA ---
+	if canvas_modulate:
+		canvas_modulate.color = level_data.cor_ambiente
+		
+	if world_env and world_env.environment:
+		world_env.environment.glow_intensity = level_data.intensidade_glow
+	
+	if tile_map:
+		tile_map.modulate = level_data.cor_tilemap	
+	
+	if AudioManager:
+		if level_data.musica_fundo:
+			AudioManager.play_music(level_data.musica_fundo)
+			Game_State.musica_atual_path = level_data.musica_fundo.resource_path
+		else:
+			AudioManager.music_player.stop()
+
+	# --- GERAÇÃO DO MAPA ---
+	var map_generator = MapGenerator.new()
+	
+	# Passa as dimensões do Resource para o Generator
+	map_data = map_generator.gerar_grid(level_data.tamanho.x, level_data.tamanho.y)
+	
+	# --- SALVA O TAMANHO ATUAL AQUI ---
+	largura_atual = level_data.tamanho.x
+	altura_atual = level_data.tamanho.y
+	
+	if level_data.seed_fixa != 0:
+		seed(level_data.seed_fixa)
+	else:
+		randomize()
+		
+	map_generator.gerar_labirinto_dfs(map_data, 1, 1)
+	
+	if level_data.salas_qtd > 0:
+		map_generator.criar_salas_no_labirinto(map_data, level_data.salas_qtd, level_data.salas_tamanho_min, level_data.salas_tamanho_max)
+		
+	if level_data.chance_quebra_paredes > 0:
+		map_generator.quebrar_paredes_internas(map_data, level_data.chance_quebra_paredes)
+		
+	# --- CONFIGURAÇÃO DO MODO DE JOGO ---
+	var modo_jogo = level_data.modo_jogo
+	Game_State.terminais_necessarios = 0 
+	
+	var config_tiles = level_data.tiles_especiais
+	var qtd_portas = level_data.qtd_portas
+	
+	# Passamos o dicionário completo e a posição inicial
+	map_generator.aplicar_tiles_especiais(map_data, config_tiles, qtd_portas, vertice_inicio)
+	
+	if modo_jogo == "MST":
+		terminais_pos = map_generator.adicionar_terminais(map_data, level_data.qtd_terminais, vertice_inicio)
+		Game_State.terminais_necessarios = terminais_pos.size()
+		saida_destrancada = false
+	else:
+		saida_destrancada = true
+
+	# --- CRIA O GRAFO E ALGORITMOS ---
+	grafo = Graph.new(map_data)
+	dijkstra = Dijkstra.new(grafo)
+	astar = AStar.new(grafo)
+	bfs = BFS.new(grafo)
+	
+	# --- CÁLCULO DE OBJETIVOS E TEMPO PAR ---
+	if modo_jogo == "NORMAL":
+		vertice_fim = dijkstra.encontrar_vertice_final(vertice_inicio)
+		if dijkstra.distancias.has(vertice_fim):
+			Game_State.tempo_par_level = dijkstra.distancias[vertice_fim]
+		else:
+			print("ERRO: Saída inalcançável.")
+			
+	elif modo_jogo == "MST":
+		vertice_fim = dijkstra.encontrar_vertice_final(vertice_inicio)
+		var pontos_interesse = [vertice_inicio] + terminais_pos + [vertice_fim]
+		var grafo_abstrato = {}
+		for origem in pontos_interesse:
+			grafo_abstrato[origem] = {}
+			var resultado = dijkstra.calcular_caminho_minimo(origem)
+			var dists = resultado["distancias"]
+			for destino in pontos_interesse:
+				if origem == destino: continue
+				if dists.has(destino) and dists[destino] != INF:
+					grafo_abstrato[origem][destino] = dists[destino]
+		
+		var resultado_mst = Prim.calcular_mst(grafo_abstrato) 
+		Game_State.tempo_par_level = resultado_mst["custo"]
+		dijkstra.calcular_caminho_minimo(vertice_inicio)
+	
+	# INSERÇÃO DE SAVE POINT
+	dijkstra.calcular_caminho_minimo(vertice_inicio)
+	var caminho_otimo = dijkstra.reconstruir_caminho(vertice_inicio, vertice_fim)
+	
+	if caminho_otimo.size() > 2:
+		var meio_index = int(caminho_otimo.size() / 2)
+		var pos_meio = caminho_otimo[meio_index]
+		
+		# Define como Save Point
+		map_data[pos_meio.y][pos_meio.x] = SAVE_POINT_TILE.duplicate()
+		save_point_pos = pos_meio
+		
+		if fog_enabled and fog_logic:
+			fog_logic.fog_data[pos_meio.y][pos_meio.x] = false
+		
+		print("Main: Save Point posicionado no meio do caminho crítico: ", save_point_pos)
+	else:
+		print("Main: Caminho muito curto para ter Save Point.")
+		
+	# --- FINALIZAÇÃO VISUAL ---
+	_draw_map()
+	_setup_camera()
+	
+	fog_logic = FogOfWar.new(largura_atual, altura_atual, 5)
+	if not fog_enabled: tile_map_fog.hide()
+	else: tile_map_fog.show()
+	
+	# Revela savepoint e terminais
+	if save_point_pos != null and fog_enabled:
+		fog_logic.fog_data[save_point_pos.y][save_point_pos.x] = false
+	for t in terminais_pos:
+		if fog_enabled: fog_logic.fog_data[t.y][t.x] = false
+
+	update_fog(vertice_inicio)
+	
+	# --- SPAWNS USANDO LEVEL DATA ---
+	_spawnar_inimigos(level_data)
+	_spawnar_npcs(level_data)
+	_spawnar_baus(level_data)
+	_spawnar_moedas_no_mapa(level_data)
+	
+	# O Checkpoint Automático acontece aqui, assim que o mapa termina de gerar
+	SaveManager.save_auto_game()
+
 # --- [ALTERADO] LÓGICA DO DRONE SCANNER PERMANENTE ---
 func _process(delta):
 	# Se não tiver scanners, não gasta processamento
@@ -340,6 +361,55 @@ func _process(delta):
 func _draw_map():
 	tile_map.clear()
 	
+	# Listas para guardar onde vamos aplicar os terrenos
+	var celulas_parede: Array[Vector2i] = []
+	# Se você criar um autotile para o chão também:
+	# var celulas_chao: Array[Vector2i] = []
+
+	for y in range(map_data.size()):
+		for x in range(map_data[y].size()):
+			var tile: MapTileData = map_data[y][x]
+			var tile_pos = Vector2i(x, y)
+			
+			# ... (Lógica de Saída, Terminais, etc. continua igual) ...
+			
+			# 2. TILES COMUNS
+			if not tile.passavel:
+				if tile.eh_porta:
+					# Portas continuam sendo um tile fixo (não são autotile)
+					tile_map.set_cell(0, tile_pos, ID_BLOCK, Vector2i(0, 0))
+				else:
+					# --- MUDANÇA AQUI ---
+					# Em vez de desenhar agora, adicionamos na lista
+					celulas_parede.append(tile_pos)
+					# --------------------
+			else:
+				# (Lógica do Chao, Dano, etc...)
+				# Se você for usar autotile no chão também, adicione à lista celulas_chao
+				# Se não, continue usando set_cell com visual_registry como antes.
+				var tipo_string = tile.tipo
+				if visual_registry.has(tipo_string):
+					var id_visual = visual_registry[tipo_string]
+					tile_map.set_cell(0, tile_pos, id_visual, Vector2i(0, 0))
+
+	# --- A MÁGICA ACONTECE AQUI FORA DO LOOP ---
+	
+	# IDs que você viu no editor (ajuste se não for 0 e 0)
+	var terrain_set_id = 0
+	var terrain_id_parede = 0 
+	
+	# Esta função incrível pega a lista de posições e calcula as conexões automaticamente
+	if not celulas_parede.is_empty():
+		tile_map.set_cells_terrain_connect(0, celulas_parede, terrain_set_id, terrain_id_parede)
+
+	# Se fizer pro chão:
+	# if not celulas_chao.is_empty():
+	# 	tile_map.set_cells_terrain_connect(0, celulas_chao, terrain_set_id, terrain_id_chao)
+
+"""
+func _draw_map():
+	tile_map.clear()
+	
 	for y in range(map_data.size()):
 		for x in range(map_data[y].size()):
 			var tile: MapTileData = map_data[y][x]
@@ -381,7 +451,7 @@ func _draw_map():
 				else:
 					# Fallback: Se criou um tipo novo e esqueceu de registrar, desenha chão e avisa
 					tile_map.set_cell(0, tile_pos, ID_CHAO, Vector2i(0, 0))
-					
+"""
 
 # --- VERIFICAÇÃO DE MOVIMENTO (Atualizada para Saída Trancada) ---
 func is_tile_passable(grid_pos: Vector2i) -> bool:

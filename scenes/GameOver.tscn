@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://m5ptyc07a840"]
+[gd_scene load_steps=4 format=3 uid="uid://m5ptyc07a840"]
 
 [ext_resource type="Script" uid="uid://dxiihft1cp11e" path="res://scripts/GameOver.gd" id="1_6bcno"]
+[ext_resource type="AudioStream" uid="uid://k27qjquy1je5" path="res://Audio/music/Game_Over_Retro.ogg" id="2_qae0b"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_6bcno"]
 font_size = 64
@@ -52,3 +53,6 @@ text = "Voltar ao Menu Principal"
 [node name="BtnSair" type="Button" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
 text = "Sair do Jogo"
+
+[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("2_qae0b")

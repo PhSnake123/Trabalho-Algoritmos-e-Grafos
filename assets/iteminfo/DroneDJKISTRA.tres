@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3 uid="uid://d0ut6aj4fpf4s"]
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://d0ut6aj4fpf4s"]
 
 [ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_k04wo"]
+[ext_resource type="Texture2D" uid="uid://xk13yltsepun" path="res://assets/sprites/drone4.png" id="2_xgh50"]
 
 [resource]
 script = ExtResource("1_k04wo")
@@ -9,4 +10,5 @@ descricao = "Revela parte do caminho mínimo até a saída."
 tipo_item = 5
 efeito = "DRONE_PATH_DIJKSTRA"
 alcance_maximo = 40
+textura_icon = ExtResource("2_xgh50")
 metadata/_custom_type_script = "uid://d01dm40km4s0s"

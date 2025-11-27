@@ -36,3 +36,8 @@ func play_sfx(sfx_stream: AudioStream):
 	# mas por enquanto, vamos deixar assim
 	sfx_player.stream = sfx_stream
 	sfx_player.play()
+
+# Função para parar a música atual
+func stop_music():
+	if music_player.playing:
+		music_player.stop()

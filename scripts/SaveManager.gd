@@ -63,15 +63,20 @@ func _serialize_map(map_data: Array) -> Array:
 func _serialize_inventory(items: Array[ItemData]) -> Array:
 	var serialized_items = []
 	for item in items:
-		# [CORREÇÃO] Agora salvamos TUDO que importa, incluindo o alcance!
+		# Tenta usar a nossa variável manual. Se estiver vazia, tenta o path nativo.
+		var path_para_salvar = item.arquivo_origem
+		if path_para_salvar == "" and item.resource_path != "":
+			path_para_salvar = item.resource_path
+			
 		serialized_items.push_back({
+			"resource_path": path_para_salvar, # Salvamos o caminho descoberto acima
 			"nome_item": item.nome_item,
 			"descricao": item.descricao,
 			"tipo_item": item.tipo_item, 
 			"efeito": item.efeito,
 			"valor_efeito": item.valor_efeito,
 			"durabilidade": item.durabilidade,
-			"alcance_maximo": item.alcance_maximo # <--- ERA ISSO QUE FALTAVA!
+			"alcance_maximo": item.alcance_maximo
 		})
 	return serialized_items
 
@@ -253,24 +258,41 @@ func _deserialize_map(serialized_map: Array) -> Array:
 		map_data.push_back(row)
 	return map_data
 
+# Em SaveManager.gd
+
 func _deserialize_inventory(serialized_items: Array) -> Array:
 	var items = []
 	for item_data in serialized_items:
-		var new_item = ItemData.new()
-		new_item.nome_item = item_data["nome_item"]
-		new_item.descricao = item_data["descricao"]
-		# Forçamos 'int' para garantir que o Enum funcione
-		new_item.tipo_item = int(item_data["tipo_item"]) 
-		new_item.efeito = item_data["efeito"]
-		new_item.valor_efeito = item_data["valor_efeito"]
+		var new_item: ItemData
+		
+		# TENTA CARREGAR O ARQUIVO ORIGINAL
+		if item_data.has("resource_path") and item_data["resource_path"] != "":
+			if ResourceLoader.exists(item_data["resource_path"]):
+				# Carrega e duplica
+				new_item = load(item_data["resource_path"]).duplicate()
+				
+				# *** O PULO DO GATO ***
+				# Re-injeta o caminho na cópia para que o próximo save funcione!
+				new_item.arquivo_origem = item_data["resource_path"]
+			else:
+				print("SaveManager: Aviso - Recurso não encontrado: ", item_data["resource_path"])
+				new_item = ItemData.new()
+		else:
+			new_item = ItemData.new()
+		
+		# Aplica durabilidade e dados extras
 		new_item.durabilidade = int(item_data["durabilidade"])
 		
-		# [CORREÇÃO] Carrega o alcance se existir no save
-		if item_data.has("alcance_maximo"):
-			new_item.alcance_maximo = int(item_data["alcance_maximo"])
-		else:
-			new_item.alcance_maximo = 0 # Fallback para saves antigos
-			
+		# (Fallback para itens criados via código sem arquivo)
+		if new_item.arquivo_origem == "":
+			new_item.nome_item = item_data["nome_item"]
+			new_item.descricao = item_data["descricao"]
+			new_item.tipo_item = int(item_data["tipo_item"]) 
+			new_item.efeito = item_data["efeito"]
+			new_item.valor_efeito = item_data["valor_efeito"]
+			if item_data.has("alcance_maximo"):
+				new_item.alcance_maximo = int(item_data["alcance_maximo"])
+
 		items.push_back(new_item)
 	return items
 

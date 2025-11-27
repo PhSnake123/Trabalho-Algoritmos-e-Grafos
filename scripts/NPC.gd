@@ -33,6 +33,7 @@ func _ready():
 # Função chamada pelo Player (Input Interagir)
 func interagir():
 	print("NPC: Olá!")
+	Game_State.registrar_interacao_npc()
 	if escolhas == 1:
 		var interagiu = DialogueData.new()
 		interagiu.nome_npc = "Solaire"

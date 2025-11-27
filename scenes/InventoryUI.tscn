@@ -18,10 +18,10 @@ offset_right = 240.0
 offset_bottom = 185.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.22538003, 0.44467977, 1, 0.39215687)
+color = Color(0.3403394, 0.3403393, 0.34033924, 0.39215687)
 
 [node name="GridContainer" type="GridContainer" parent="."]
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
 columns = 5

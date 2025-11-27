@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3 uid="uid://b03360n2oiwpt"]
+
+[ext_resource type="Script" uid="uid://bys5jaq0cyad7" path="res://scripts/ShopSpot.gd" id="1_0xfcs"]
+
+[node name="ShopSpot" type="Node2D"]
+script = ExtResource("1_0xfcs")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+
+[node name="LabelPreco" type="Label" parent="."]
+offset_left = -10.0
+offset_top = -34.0
+offset_right = 12.0
+offset_bottom = -11.0
+theme_override_constants/outline_size = 4
+text = "99"
+horizontal_alignment = 1
