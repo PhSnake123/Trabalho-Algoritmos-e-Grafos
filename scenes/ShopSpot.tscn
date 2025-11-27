@@ -8,10 +8,11 @@ script = ExtResource("1_0xfcs")
 [node name="Sprite2D" type="Sprite2D" parent="."]
 
 [node name="LabelPreco" type="Label" parent="."]
-offset_left = -10.0
-offset_top = -34.0
-offset_right = 12.0
-offset_bottom = -11.0
+offset_left = -11.0
+offset_top = -26.0
+offset_right = 11.0
+offset_bottom = -3.0
 theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 12
 text = "99"
 horizontal_alignment = 1

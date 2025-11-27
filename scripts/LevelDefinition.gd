@@ -29,6 +29,12 @@ extends Resource
 # [NOVO] Cor que multiplica apenas os tiles (Paredes/Chão)
 @export var cor_tilemap: Color = Color.WHITE
 
+@export_group("Mapa Fixo")
+# Se esta variável tiver uma cena (ex: HubMap.tscn), o jogo IGNORA a geração aleatória
+# e carrega esta cena no lugar.
+@export var cena_fixa: PackedScene
+@export var player_spawn_pos: Vector2i = Vector2i(7, 2)
+
 @export_group("Modo de Jogo")
 @export_enum("NORMAL", "MST") var modo_jogo: String = "NORMAL"
 @export var tempo_par_tolerancia: float = 2.0 # Multiplicador para o Good Ending

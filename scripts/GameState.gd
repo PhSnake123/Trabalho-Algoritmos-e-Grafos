@@ -51,7 +51,7 @@ func reset_run_state():
 	tempo_jogador = 0.0
 	tempo_par_level = 0.0 
 	vida_jogador = 100
-	moedas = 0 # Reset de moedas
+	moedas = 1000 # Reset de moedas
 
 	caminho_jogador.clear()
 	player_action_history.clear()
