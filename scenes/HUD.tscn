@@ -1,9 +1,23 @@
-[gd_scene load_steps=5 format=3 uid="uid://cbmsdr2d8wxe7"]
+[gd_scene load_steps=6 format=3 uid="uid://cbmsdr2d8wxe7"]
 
 [ext_resource type="Script" uid="uid://damlo86x86421" path="res://scripts/HUD.gd" id="1_fls4u"]
 [ext_resource type="PackedScene" uid="uid://dppnl5j80bqm0" path="res://scenes/InventoryUI.tscn" id="1_qpvh6"]
 [ext_resource type="Texture2D" uid="uid://c4obbqfms51vu" path="res://assets/sprites/coinhud.png" id="2_7hsmw"]
 [ext_resource type="PackedScene" uid="uid://cbjr3lv1y21tc" path="res://scenes/CustomCursor.tscn" id="3_1etfg"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7hsmw"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0, 0, 0, 0.5882353)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0, 1, 1, 0.5882353)
+shadow_color = Color(0, 1, 1, 0.5882353)
+shadow_size = 10
 
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_fls4u")
@@ -64,6 +78,7 @@ offset_top = 49.0
 offset_right = -22.0
 offset_bottom = 113.0
 grow_horizontal = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_7hsmw")
 
 [node name="IconeAtivo" type="TextureRect" parent="Control/ItemEquipado"]
 layout_mode = 2

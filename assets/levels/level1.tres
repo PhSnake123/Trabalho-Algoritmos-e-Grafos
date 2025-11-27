@@ -37,12 +37,12 @@ script = ExtResource("1_obbn4")
 nome_fase = "Starting Node"
 texto_intro = "Sua jornada começa aqui."
 musica_fundo = ExtResource("5_n2dr7")
-tamanho = Vector2i(35, 31)
-fog_enabled = true
 qtd_baus = 2
 modo_jogo = "MST"
-qtd_terminais = 4
-salas_qtd = 10
+qtd_terminais = 2
+salas_qtd = 1
+salas_tamanho_min = 3
+salas_tamanho_max = 5
 chance_quebra_paredes = 0.3
 tiles_especiais = {
 "Dano": 50,

@@ -361,50 +361,50 @@ func _process(delta):
 func _draw_map():
 	tile_map.clear()
 	
-	# Listas para guardar onde vamos aplicar os terrenos
+	# Listas para guardar onde vamos aplicar os terrenos (Autotile)
 	var celulas_parede: Array[Vector2i] = []
-	# Se você criar um autotile para o chão também:
-	# var celulas_chao: Array[Vector2i] = []
-
+	
 	for y in range(map_data.size()):
 		for x in range(map_data[y].size()):
 			var tile: MapTileData = map_data[y][x]
 			var tile_pos = Vector2i(x, y)
 			
-			# ... (Lógica de Saída, Terminais, etc. continua igual) ...
+			# --- [CORREÇÃO] 1. PRIORIDADE TOTAL: SAÍDA ---
+			# Se este tile é a saída, desenhamos o sprite específico e pulamos o resto.
+			if tile_pos == vertice_fim:
+				var visual_saida = ID_SAIDA if saida_destrancada else ID_SAIDA_FECHADA
+				tile_map.set_cell(0, tile_pos, visual_saida, Vector2i(0, 0))
+				continue # Pula o processamento de parede/chão para este tile
 			
-			# 2. TILES COMUNS
+			# --- 2. PRIORIDADE: TERMINAIS (Modo MST) ---
+			if tile.tipo == "Terminal":
+				# Se ainda está na lista de ativos, desenha o terminal
+				if tile_pos in terminais_pos:
+					tile_map.set_cell(0, tile_pos, ID_TERMINAL, Vector2i(0, 0))
+					continue
+			
+			# --- 3. TILES COMUNS ---
 			if not tile.passavel:
 				if tile.eh_porta:
-					# Portas continuam sendo um tile fixo (não são autotile)
+					# Portas continuam sendo um tile fixo
 					tile_map.set_cell(0, tile_pos, ID_BLOCK, Vector2i(0, 0))
 				else:
-					# --- MUDANÇA AQUI ---
-					# Em vez de desenhar agora, adicionamos na lista
+					# Paredes vão para a lista do Terrain Connect
 					celulas_parede.append(tile_pos)
-					# --------------------
 			else:
-				# (Lógica do Chao, Dano, etc...)
-				# Se você for usar autotile no chão também, adicione à lista celulas_chao
-				# Se não, continue usando set_cell com visual_registry como antes.
+				# Lógica padrão do chão
 				var tipo_string = tile.tipo
 				if visual_registry.has(tipo_string):
 					var id_visual = visual_registry[tipo_string]
 					tile_map.set_cell(0, tile_pos, id_visual, Vector2i(0, 0))
 
-	# --- A MÁGICA ACONTECE AQUI FORA DO LOOP ---
+	# --- A MÁGICA DO AUTOTILE ---
 	
-	# IDs que você viu no editor (ajuste se não for 0 e 0)
 	var terrain_set_id = 0
 	var terrain_id_parede = 0 
 	
-	# Esta função incrível pega a lista de posições e calcula as conexões automaticamente
 	if not celulas_parede.is_empty():
 		tile_map.set_cells_terrain_connect(0, celulas_parede, terrain_set_id, terrain_id_parede)
-
-	# Se fizer pro chão:
-	# if not celulas_chao.is_empty():
-	# 	tile_map.set_cells_terrain_connect(0, celulas_chao, terrain_set_id, terrain_id_chao)
 
 """
 func _draw_map():

@@ -2,7 +2,7 @@
 
 # Grafos Quest
 
-> *"Otimizar é eliminar o humano. Nós somos o erro no sistema."*
+> *"Otimizar é o divino. O humano é o erro."*
 
 ![Godot Engine](https://img.shields.io/badge/Godot-v4.5-%23478cbf?logo=godot-engine&logoColor=white)
 ![Status](https://img.shields.io/badge/Status-Em_Desenvolvimento-orange)

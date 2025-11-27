@@ -3,7 +3,7 @@ extends Control
 # Precisamos carregar a cena do Slot para criar cópias
 const SLOT_SCENE = preload("res://scenes/InventorySlot.tscn")
 
-@onready var grid_container = $GridContainer
+@onready var grid_container = $BackgroundPanel/MarginContainer/GridContainer
 
 func _ready():
 	# Conecta aos sinais do inventário global
