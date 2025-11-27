@@ -1,6 +1,80 @@
-[gd_scene load_steps=2 format=3 uid="uid://cjt0skq1bn241"]
+[gd_scene load_steps=7 format=3 uid="uid://cjt0skq1bn241"]
 
 [ext_resource type="Script" uid="uid://b7ispk76lp5lf" path="res://scripts/DialogueManager.gd" id="1_m70fm"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_m70fm"]
+bg_color = Color(0, 0, 0, 0.5882353)
+border_width_left = 6
+border_width_top = 6
+border_width_right = 6
+border_width_bottom = 6
+border_color = Color(0, 1, 1, 0.5882353)
+border_blend = true
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+shadow_color = Color(0, 1, 1, 0.5882353)
+shadow_size = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cyvvh"]
+bg_color = Color(0, 0, 0, 0.11764706)
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.101960786, 0.627451, 0.19215687, 0.19607843)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+shadow_color = Color(0.101960786, 0.627451, 0.19215687, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xi3yh"]
+bg_color = Color(0.101960786, 0.627451, 0.19215687, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.101960786, 0.627451, 0.19215687, 1)
+border_blend = true
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+shadow_color = Color(0.101960786, 0.627451, 0.19215687, 1)
+shadow_size = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ebjfy"]
+bg_color = Color(0.101960786, 0.627451, 0.19215687, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.101960786, 0.627451, 0.19215687, 1)
+border_blend = true
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+shadow_color = Color(0.101960786, 0.627451, 0.19215687, 1)
+shadow_size = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_01vcs"]
+bg_color = Color(0.101960786, 0.627451, 0.19215687, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.101960786, 0.627451, 0.19215687, 1)
+border_blend = true
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+shadow_color = Color(0.101960786, 0.627451, 0.19215687, 1)
+shadow_size = 12
 
 [node name="DialogueManager" type="CanvasLayer"]
 layer = 10
@@ -28,6 +102,7 @@ offset_right = -20.0
 offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_m70fm")
 
 [node name="MarginContainer" type="MarginContainer" parent="DialogBox"]
 layout_mode = 2
@@ -57,9 +132,18 @@ scroll_active = false
 [node name="ButtonsContainer" type="HBoxContainer" parent="DialogBox/MarginContainer/VBoxContainer"]
 visible = false
 layout_mode = 2
+theme_override_constants/separation = 40
 
 [node name="Button" type="Button" parent="DialogBox/MarginContainer/VBoxContainer/ButtonsContainer"]
 layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_cyvvh")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_xi3yh")
+theme_override_styles/hover = SubResource("StyleBoxFlat_ebjfy")
+theme_override_styles/focus = SubResource("StyleBoxFlat_01vcs")
 
 [node name="Button2" type="Button" parent="DialogBox/MarginContainer/VBoxContainer/ButtonsContainer"]
 layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_cyvvh")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_xi3yh")
+theme_override_styles/hover = SubResource("StyleBoxFlat_ebjfy")
+theme_override_styles/focus = SubResource("StyleBoxFlat_01vcs")

@@ -1,9 +1,24 @@
-[gd_scene load_steps=6 format=3 uid="uid://cbmsdr2d8wxe7"]
+[gd_scene load_steps=7 format=3 uid="uid://cbmsdr2d8wxe7"]
 
 [ext_resource type="Script" uid="uid://damlo86x86421" path="res://scripts/HUD.gd" id="1_fls4u"]
 [ext_resource type="PackedScene" uid="uid://dppnl5j80bqm0" path="res://scenes/InventoryUI.tscn" id="1_qpvh6"]
 [ext_resource type="Texture2D" uid="uid://c4obbqfms51vu" path="res://assets/sprites/coinhud.png" id="2_7hsmw"]
 [ext_resource type="PackedScene" uid="uid://cbjr3lv1y21tc" path="res://scenes/CustomCursor.tscn" id="3_1etfg"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nysna"]
+bg_color = Color(0, 0, 0, 0.5882353)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0, 1, 1, 0.5882353)
+border_blend = true
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+shadow_color = Color(0, 1, 1, 0.5882353)
+shadow_size = 3
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7hsmw"]
 content_margin_left = 4.0
@@ -36,6 +51,7 @@ anchors_preset = 10
 anchor_right = 1.0
 offset_bottom = 30.0
 grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_nysna")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="Control/BarraSuperior"]
 layout_mode = 2
