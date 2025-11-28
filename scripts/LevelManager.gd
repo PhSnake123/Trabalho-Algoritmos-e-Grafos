@@ -13,8 +13,8 @@ var indice_fase_atual: int = 0
 func _ready():
 	# CARREGUE SUAS FASES AQUI PARA TESTE
 	# Crie os arquivos Fase1.tres na pasta resources antes de rodar!
-	#lista_fases.append(load("res://assets/levels/level1.tres"))
-	lista_fases.append(load("res://assets/levels/HubMap.tres"))
+	lista_fases.append(load("res://assets/levels/level1.tres"))
+	#lista_fases.append(load("res://assets/levels/HubMap.tres"))
 	# lista_fases.append(load("res://scripts/resources/levels/Fase2.tres"))
 	pass
 

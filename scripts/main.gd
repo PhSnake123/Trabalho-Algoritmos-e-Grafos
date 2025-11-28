@@ -87,6 +87,7 @@ func _ready():
 	
 	# 1. Configurações Básicas
 	SaveManager.register_main(self)
+	Engine.time_scale = 1.0
 	
 	# Instancia o HUD e adiciona à cena
 	var hud = HUD_SCENE.instantiate()
@@ -1495,6 +1496,18 @@ func get_shop_at_position(pos: Vector2i) -> Node2D:
 				return shop
 	return null
 
+# Função de "Game Juice" para impacto
+func aplicar_hit_stop(time_scale: float, duracao_real: float):
+	# 1. Desacelera ou para o tempo
+	Engine.time_scale = time_scale
+	
+	# 2. Espera um pouquinho (usando tempo real, ignorando a escala de tempo do jogo)
+	# create_timer(tempo, process_always, process_in_physics, ignore_time_scale)
+	await get_tree().create_timer(duracao_real, true, false, true).timeout
+	
+	# 3. Volta ao normal
+	Engine.time_scale = 1.0
+	
 # --- TESTE TEMPORÁRIO BFS ---
 """func executar_teste_bfs():
 	print("--- INICIANDO TESTE VISUAL DO BFS ---")

@@ -22,6 +22,7 @@ func _ready():
 
 func _on_tentar_pressed():
 	print("GameOver: Tentando novamente (Novo Jogo)...")
+	Engine.time_scale = 1.0
 	
 	if FileAccess.file_exists(SaveManager.SAVE_PATH_AUTO):
 		Game_State.reset_run_state() # Limpa memória suja
@@ -37,6 +38,7 @@ func _on_tentar_pressed():
 # --- NOVO: Lógica Reutilizada do Menu Principal ---
 func _on_carregar_pressed():
 	print("GameOver: Carregando último save...")
+	Engine.time_scale = 1.0
 	
 	# 1. Limpa tudo
 	Game_State.reset_run_state()
@@ -50,6 +52,7 @@ func _on_carregar_pressed():
 # --- NOVO: Voltar pro Menu ---
 func _on_menu_pressed():
 	print("GameOver: Voltando para o Menu...")
+	Engine.time_scale = 1.0
 	# Ajuste o caminho se seu menu estiver em outra pasta
 	get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
 
