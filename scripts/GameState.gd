@@ -8,12 +8,18 @@ var carregar_auto_save_ao_iniciar: bool = false # Load Auto (Checkpoint)
 var musica_atual_path: String = ""
 var tempo_jogador: float = 0.0
 var tempo_par_level: float = 0.0 
-var vida_jogador: int = 100
+var vida_jogador: int
+var max_vida_jogador: int
 const SAVE_TERMINAL_ITEM = preload("res://assets/iteminfo/save_terminal.tres") 
 
 var inventario_jogador: Inventory
 var item_equipado: ItemData = null #NOVO Variável para item equipado
 signal item_equipado_alterado(novo_item: ItemData)#NOVO VAR PARA ALTERAR ITEM EQUIPADO
+
+#(Stalker e MST)
+var heat_map: Array = [] 
+var terminais_ativos: int = 0
+var terminais_necessarios: int = 0
 
 # Sistema de Economia
 var moedas: int = 0
@@ -25,18 +31,19 @@ var player_action_history: Array[Dictionary] = []
 var MAX_ACTION_HISTORY = 20 
 var is_dialogue_active: bool = false
 
-# --- NOVAS VARIÁVEIS DE CONTROLE DO HUB ---
+# --- VARIÁVEIS DE CONTROLE DO HUB ---
 var is_in_hub: bool = false # Se true, bloqueia uso de itens e save manual
 var hub_desbloqueado: bool = false # Se true, o jogador sempre vai pro Hub entre fases
 var total_npc_interactions: int = 0 # Contador para desbloquear o Hub
 
+# Variáveis para a tela de vitória
+var moedas_ganhas_na_fase: int = 0
+var status_vitoria: String = "" # "PERFEITO", "BOM"
+var falha_por_tempo: bool = false
+
 #(Finais Múltiplos)
 var optional_objectives: Dictionary = {} 
-
-#(Stalker e MST)
-var heat_map: Array = [] 
-var terminais_ativos: int = 0
-var terminais_necessarios: int = 0
+var bad_ending_count: int = 0
 
 #Estado de entidades para save/load
 var enemy_states: Dictionary = {}
@@ -50,8 +57,9 @@ func _ready():
 func reset_run_state():
 	tempo_jogador = 0.0
 	tempo_par_level = 0.0 
-	vida_jogador = 100
-	moedas = 0 # Reset de moedas
+	max_vida_jogador = 50
+	vida_jogador = max_vida_jogador
+	moedas = 0
 
 	caminho_jogador.clear()
 	player_action_history.clear()
@@ -172,3 +180,70 @@ func check_hub_unlock():
 		# Opcional: Tocar um som misterioso ou salvar essa flag no disco imediatamente
 
 var caminho_ideal_ultima_fase: Array[Vector2i] = [] # Adicione essa variável
+
+func processar_resultado_fase(tolerancia: float):
+	print("GameState: Processando resultado da fase...")
+	
+	# 1. Checagem de Bad Ending (Zona Vermelha)
+	var limite_maximo = tempo_par_level * tolerancia
+	
+	if tempo_jogador > limite_maximo:
+		print("GameState: Falha Crítica! Tempo %d excedeu limite %d." % [tempo_jogador, limite_maximo])
+		falha_por_tempo = true
+		bad_ending_count += 1
+		# Não ganha moedas, não ganha nada. Apenas vergonha.
+		return
+
+	# 2. Se passou no teste, calcula vitória normal
+	falha_por_tempo = false
+	
+	# Recompensa Base
+	var base = 50 + (LevelManager.indice_fase_atual * 10)
+	
+	# Bônus de Tempo
+	var bonus_tempo = 0
+	if tempo_jogador < tempo_par_level:
+		var diferenca = tempo_par_level - tempo_jogador
+		bonus_tempo = int(diferenca * 2.0)
+	
+	# Total
+	moedas_ganhas_na_fase = base + bonus_tempo
+	adicionar_moedas(moedas_ganhas_na_fase)
+	
+	# Avaliação
+	if tempo_jogador <= tempo_par_level:
+		status_vitoria = "ROTA OTIMIZADA"
+	elif tempo_jogador <= tempo_par_level * 1.5:
+		status_vitoria = "ROTA SUB-ÓTIMA"
+	else:
+		status_vitoria = "ROTA INEFICIENTE" # Passou raspando, mas passou
+		
+	print("Vitória! Lucro: %d. Status: %s" % [moedas_ganhas_na_fase, status_vitoria])
+
+"""
+func processar_vitoria_fase():
+	print("Processando vitória...")
+	
+	# 1. Recompensa Base
+	var base = 50 + (LevelManager.indice_fase_atual * 10) # Fica mais valioso a cada fase
+	
+	# 2. Bônus de Tempo (Eficiência de Dijkstra)
+	var bonus_tempo = 0
+	if tempo_jogador < tempo_par_level:
+		var diferenca = tempo_par_level - tempo_jogador
+		bonus_tempo = int(diferenca * 2.0) # 2 moedas por "segundo/custo" economizado
+	
+	# 3. Total
+	moedas_ganhas_na_fase = base + bonus_tempo
+	adicionar_moedas(moedas_ganhas_na_fase)
+	
+	# 4. Avaliação
+	if tempo_jogador <= tempo_par_level:
+		status_vitoria = "ROTA OTIMIZADA"
+	elif tempo_jogador <= tempo_par_level * 1.5:
+		status_vitoria = "ROTA SUB-ÓTIMA"
+	else:
+		status_vitoria = "ROTA INEFICIENTE"
+		
+	print("Vitória! Base: %d, Bônus: %d. Total: %d. Status: %s" % [base, bonus_tempo, moedas_ganhas_na_fase, status_vitoria])
+"""

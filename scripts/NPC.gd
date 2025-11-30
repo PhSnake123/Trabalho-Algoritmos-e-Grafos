@@ -27,6 +27,21 @@ func _ready():
 	grid_pos = _world_to_grid(global_position)
 	position = _grid_to_world(grid_pos)
 	
+	# Auto-Search: Se ninguém me disse quem é o Main, eu procuro.
+	if not main_ref:
+		# Tenta achar o nó "Main" na raiz da cena atual
+		var root = get_tree().current_scene
+		if root.name == "Main":
+			main_ref = root
+		else:
+			# Fallback: Se o Hub for filho do Main, sobe a hierarquia
+			var parent = get_parent()
+			while parent:
+				if parent.name == "Main":
+					main_ref = parent
+					break
+				parent = parent.get_parent()
+	
 	# Bloqueia o tile no grafo (para pathfinding enxergar como parede, DEFASADO)
 	#_bloquear_tile_no_mapa()
 
@@ -89,7 +104,8 @@ func _morrer():
 		var tile = main_ref.get_tile_data(grid_pos)
 		if tile: 
 			tile.passavel = true
-			main_ref.grafo.atualizar_aresta_dinamica(grid_pos)
+			if Game_State.is_in_hub == false:
+				main_ref.grafo.atualizar_aresta_dinamica(grid_pos)
 	
 	queue_free()
 

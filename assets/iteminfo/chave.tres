@@ -5,7 +5,7 @@
 
 [resource]
 script = ExtResource("1_hboxe")
-nome_item = "Cartão de Acesso"
+nome_item = "Decodificador"
 descricao = "Abre uma porta trancada."
 tipo_item = 1
 efeito = "ABRE_PORTA"

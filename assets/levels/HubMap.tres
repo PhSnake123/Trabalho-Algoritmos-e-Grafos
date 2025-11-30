@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="LevelDefinition" load_steps=11 format=3 uid="uid://fatid15d85h0"]
+
+[ext_resource type="Script" uid="uid://ci6dlknyw5xas" path="res://scripts/EnemySpawnData.gd" id="1_207wk"]
+[ext_resource type="PackedScene" uid="uid://cjfowd1wr0k68" path="res://scenes/HubMap.tscn" id="1_f5aug"]
+[ext_resource type="Script" uid="uid://c6yn1hesl0qc7" path="res://scripts/NpcSpawnData.gd" id="2_atush"]
+[ext_resource type="AudioStream" uid="uid://cbfvnabrxyi4u" path="res://Audio/music/icy.mp3" id="3_atush"]
+[ext_resource type="Script" uid="uid://d34551vbrdkqx" path="res://scripts/LevelDefinition.gd" id="3_f5aug"]
+[ext_resource type="PackedScene" uid="uid://bnaq07rewb3r7" path="res://scenes/NPC.tscn" id="4_y0kqk"]
+[ext_resource type="PackedScene" uid="uid://l4ldd3yuau4m" path="res://scenes/NPCDaikstra.tscn" id="5_lamsk"]
+[ext_resource type="Script" uid="uid://di8bclwurui43" path="res://scripts/HubLogic.gd" id="7_w3cf1"]
+
+[sub_resource type="Resource" id="Resource_w3cf1"]
+script = ExtResource("2_atush")
+npc_cena = ExtResource("4_y0kqk")
+pos_fixa = Vector2i(2, 2)
+metadata/_custom_type_script = "uid://c6yn1hesl0qc7"
+
+[sub_resource type="Resource" id="Resource_5ts5s"]
+script = ExtResource("2_atush")
+npc_cena = ExtResource("5_lamsk")
+pos_fixa = Vector2i(8, 4)
+metadata/_custom_type_script = "uid://c6yn1hesl0qc7"
+
+[resource]
+script = ExtResource("3_f5aug")
+nome_fase = "Nexus"
+musica_fundo = ExtResource("3_atush")
+cena_fixa = ExtResource("1_f5aug")
+lista_npcs = Array[ExtResource("2_atush")]([SubResource("Resource_w3cf1"), SubResource("Resource_5ts5s")])
+script_logico = ExtResource("7_w3cf1")
+metadata/_custom_type_script = "uid://d34551vbrdkqx"

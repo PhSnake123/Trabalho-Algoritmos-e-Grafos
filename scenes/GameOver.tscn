@@ -46,6 +46,10 @@ text = "Carregar Ultimo Save"
 layout_mode = 2
 text = "Reiniciar Fase"
 
+[node name="BtnHub" type="Button" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "Retornar ao Setor Defeituoso"
+
 [node name="BtnMenu" type="Button" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
 text = "Voltar ao Menu Principal"

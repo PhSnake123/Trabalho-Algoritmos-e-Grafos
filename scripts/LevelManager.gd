@@ -1,49 +1,93 @@
 # res://scripts/managers/LevelManager.gd
 extends Node
 
-# Aqui você arrasta seus arquivos .tres (Fase1, Fase2, etc) pelo Inspector
-# Mas como é um Autoload, você configura isso na aba Project Settings ou via código.
-# Para facilitar agora, vamos carregar uma lista hardcoded de teste,
-# mas idealmente você teria uma variável exportada se isso fosse um nó na cena.
+# Lista de fases (Definições)
 var lista_fases: Array[LevelDefinition] = []
 
-# Índice da fase atual
+# Índice da fase de JOGO (não conta o Hub)
 var indice_fase_atual: int = 0
 
-func _ready():
-	# CARREGUE SUAS FASES AQUI PARA TESTE
-	# Crie os arquivos Fase1.tres na pasta resources antes de rodar!
-	lista_fases.append(load("res://assets/levels/level1.tres"))
-	# lista_fases.append(load("res://scripts/resources/levels/Fase2.tres"))
-	pass
+# Referência ao Hub
+var hub_definition: LevelDefinition 
 
-# Chamado pelo Main.gd para saber o que gerar
+func _ready():
+	# Carregue suas fases
+	lista_fases.append(load("res://assets/levels/tutorial1.tres"))
+	lista_fases.append(load("res://assets/levels/tutorial2.tres"))
+	lista_fases.append(load("res://assets/levels/tutorial3.tres"))
+	lista_fases.append(load("res://assets/levels/tutorial4.tres"))
+	lista_fases.append(load("res://assets/levels/tutorial5.tres"))
+	lista_fases.append(load("res://assets/levels/level1.tres"))
+	lista_fases.append(load("res://assets/levels/level2.tres"))
+	
+	# Carregue a definição do Hub
+	hub_definition = load("res://assets/levels/HubMap.tres")
+
+# Chamado pelo Main para saber o que carregar
 func get_dados_fase_atual() -> LevelDefinition:
+	# 1. Se estamos no Hub, retorna a definição do Hub
+	if Game_State.is_in_hub:
+		if hub_definition:
+			return hub_definition
+		else:
+			print("ERRO: HubDef não carregado no LevelManager!")
+			return null
+			
+	# 2. Se não, retorna a fase da lista
 	if lista_fases.is_empty():
-		print("LevelManager: Nenhuma fase carregada! Retornando nulo.")
 		return null
 	
 	if indice_fase_atual >= lista_fases.size():
-		print("LevelManager: Índice de fase inválido (Fim de jogo?).")
-		return null
+		return null # Fim de jogo
 		
 	return lista_fases[indice_fase_atual]
 
-# Chamado quando o jogador entra na saída
+# A Lógica de Transição Inteligente (Simplificada)
 func avancar_para_proxima_fase():
-	indice_fase_atual += 1
+	print("LevelManager: Transição solicitada.")
 	
-	if indice_fase_atual < lista_fases.size():
-		print("LevelManager: Carregando fase ", indice_fase_atual)
-		# Reinicia a cena Main, que vai ler o novo índice no _ready
-		get_tree().change_scene_to_file("res://scenes/Main.tscn")
-	else:
-		print("LevelManager: Fim da lista de fases! Vitória!")
-		# Aqui você chamaria a tela de "Zerou o Jogo" ou voltaria pro Hub
-		# get_tree().change_scene_to_file("res://scenes/VictoryScreen.tscn")
+	# CENÁRIO A: Estamos no HUB -> Vamos para a Próxima Fase
+	if Game_State.is_in_hub:
+		print("LevelManager: Saindo do Hub -> Iniciando Fase ", indice_fase_atual + 1)
+		Game_State.is_in_hub = false
+		
+		# Avança o índice da fase apenas quando SAÍMOS do Hub
+		indice_fase_atual += 1
+		
+		if indice_fase_atual >= lista_fases.size():
+			print("VITÓRIA FINAL!")
+			# get_tree().change_scene_to_file("res://scenes/VictoryScreen.tscn")
+			return
+		
+		_carregar_cena_main()
+		return
 
-# Útil para debug ou para o Hub selecionar fase
-func carregar_fase_especifica(index: int):
-	if index >= 0 and index < lista_fases.size():
-		indice_fase_atual = index
-		get_tree().change_scene_to_file("res://scenes/Main.tscn")
+	# CENÁRIO B: Estamos numa FASE -> Vamos para o HUB
+	else:
+		print("LevelManager: Fase Concluída -> Indo para o Hub.")
+		Game_State.is_in_hub = true
+		_carregar_cena_main()
+
+func _carregar_cena_main():
+	# Reinicia a cena Main. O Main._ready() vai perguntar ao LevelManager 
+	# "quem sou eu?" e o LevelManager vai responder baseado no is_in_hub.
+	get_tree().change_scene_to_file("res://scenes/Main.tscn")
+
+# LevelManager.gd
+
+# Pula direto para a próxima fase da lista sem passar pelo Hub
+func forcar_proxima_fase_direto():
+	print("LevelManager: Avançando direto para a próxima fase (Tutorial)...")
+	indice_fase_atual += 1
+	Game_State.is_in_hub = false # Garante que não estamos no Hub
+	_carregar_cena_main()
+
+# Força a ida para o Hub
+func forcar_ida_ao_hub():
+	print("LevelManager: Fim do Tutorial. Transportando para o Hub...")
+	Game_State.is_in_hub = true
+	# Nota: Não incrementamos o índice aqui, pois o jogador vai "começar" o jogo real agora
+	# ou você pode incrementar se o Hub for considerado "fase 4".
+	# Geralmente, queremos apenas carregar o Hub.
+	SaveManager.save_hub_backup()
+	_carregar_cena_main()

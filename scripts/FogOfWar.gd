@@ -79,3 +79,9 @@ func esta_visivel(x: int, y: int) -> bool:
 	if 0 <= x and x < largura and 0 <= y and y < altura:
 		return not fog_data[y][x] # Invertemos, pois 'true' é oculto
 	return false
+
+func revelar_tudo():
+	"""Revela o mapa inteiro (útil para o Hub ou Debug)."""
+	for y in range(altura):
+		for x in range(largura):
+			fog_data[y][x] = false

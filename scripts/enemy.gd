@@ -126,6 +126,16 @@ func receber_dano(atk_atacante: int, kb_power: int, pos_atacante: Vector2i):
 	var dano_final = max(0, atk_atacante - def)
 	current_hp -= dano_final
 	print("Inimigo recebeu %d de dano. HP: %d/%d" % [dano_final, current_hp, max_hp])
+	
+	if main_ref and main_ref.has_method("aplicar_hit_stop"):
+		# Congela o jogo quase totalmente (0.05 de velocidade) por 0.15 segundos
+		# Parece pouco, mas faz uma diferença.
+		main_ref.aplicar_hit_stop(0.05, 0.08)
+	
+	# --- EFEITO EXTRA: SCREEN SHAKE (Tremida de Tela) ---
+	# Se você quisermos o pacote completo, peça pra câmera tremer aqui também.
+	#if main_ref.camera.has_method("apply_shake"):
+	#	main_ref.camera.apply_shake(2.0)
 	_atualizar_feedback_dano(dano_final)
 	
 	if sprite:

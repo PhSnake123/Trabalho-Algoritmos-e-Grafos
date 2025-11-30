@@ -11,6 +11,7 @@ const FLOATING_LABEL_SCENE = preload("res://scenes/FloatingLabel.tscn")
 # 1. Carrega o script de lógica
 const TILE_SIZE := 16
 const SAVE_POINT_TILE = preload("res://assets/tileinfo/savepoint.tres")
+var script_fase_atual: Node = null
 
 # 2. Referência aos nós da cena
 @onready var tile_map = $TileMap
@@ -87,6 +88,7 @@ func _ready():
 	
 	# 1. Configurações Básicas
 	SaveManager.register_main(self)
+	Engine.time_scale = 1.0
 	
 	# Instancia o HUD e adiciona à cena
 	var hud = HUD_SCENE.instantiate()
@@ -180,15 +182,16 @@ func _inicializar_novo_jogo(vertice_inicio: Vector2i):
 	
 	fog_enabled = level_data.fog_enabled
 	
-	# --- CONFIGURAÇÃO ESTÉTICA ---
-	if canvas_modulate:
-		canvas_modulate.color = level_data.cor_ambiente
-		
-	if world_env and world_env.environment:
-		world_env.environment.glow_intensity = level_data.intensidade_glow
+	# Define a flag global do Hub
+	if level_data.cena_fixa != null:
+		Game_State.is_in_hub = true
+	else:
+		Game_State.is_in_hub = false
 	
-	if tile_map:
-		tile_map.modulate = level_data.cor_tilemap	
+	# --- CONFIGURAÇÃO ESTÉTICA ---
+	if canvas_modulate: canvas_modulate.color = level_data.cor_ambiente
+	if world_env and world_env.environment: world_env.environment.glow_intensity = level_data.intensidade_glow
+	if tile_map: tile_map.modulate = level_data.cor_tilemap	
 	
 	if AudioManager:
 		if level_data.musica_fundo:
@@ -198,119 +201,165 @@ func _inicializar_novo_jogo(vertice_inicio: Vector2i):
 			AudioManager.music_player.stop()
 
 	# --- GERAÇÃO DO MAPA ---
-	var map_generator = MapGenerator.new()
 	
-	# Passa as dimensões do Resource para o Generator
-	map_data = map_generator.gerar_grid(level_data.tamanho.x, level_data.tamanho.y)
-	
-	# --- SALVA O TAMANHO ATUAL AQUI ---
-	largura_atual = level_data.tamanho.x
-	altura_atual = level_data.tamanho.y
-	
-	if level_data.seed_fixa != 0:
-		seed(level_data.seed_fixa)
-	else:
-		randomize()
+	if level_data.cena_fixa:
+		# >>> ROTA A: MAPA FIXO (HUB) <<<
+		_carregar_mapa_fixo(level_data.cena_fixa)
 		
-	map_generator.gerar_labirinto_dfs(map_data, 1, 1)
-	
-	if level_data.salas_qtd > 0:
-		map_generator.criar_salas_no_labirinto(map_data, level_data.salas_qtd, level_data.salas_tamanho_min, level_data.salas_tamanho_max)
-		
-	if level_data.chance_quebra_paredes > 0:
-		map_generator.quebrar_paredes_internas(map_data, level_data.chance_quebra_paredes)
-		
-	# --- CONFIGURAÇÃO DO MODO DE JOGO ---
-	var modo_jogo = level_data.modo_jogo
-	Game_State.terminais_necessarios = 0 
-	
-	var config_tiles = level_data.tiles_especiais
-	var qtd_portas = level_data.qtd_portas
-	
-	# Passamos o dicionário completo e a posição inicial
-	map_generator.aplicar_tiles_especiais(map_data, config_tiles, qtd_portas, vertice_inicio)
-	
-	if modo_jogo == "MST":
-		terminais_pos = map_generator.adicionar_terminais(map_data, level_data.qtd_terminais, vertice_inicio)
-		Game_State.terminais_necessarios = terminais_pos.size()
+		# Define início e fim "dummy"
+		vertice_fim = Vector2i(999, 999) 
 		saida_destrancada = false
-	else:
-		saida_destrancada = true
+		
+		# Spawn configurado no .tres
+		player.grid_pos = level_data.player_spawn_pos
+		player.global_position = (Vector2(level_data.player_spawn_pos) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
+		
+		# === SPAWNAR NPCS NO HUB ===
+		_spawnar_npcs(level_data) 
+				
+		# Configura câmera e Fog Dummy para o Hub
+		_setup_camera()
+		fog_logic = FogOfWar.new(largura_atual, altura_atual, 100)
+		fog_logic.revelar_tudo() # Agora essa função existe!
+		if tile_map_fog: tile_map_fog.hide()
 
-	# --- CRIA O GRAFO E ALGORITMOS ---
-	grafo = Graph.new(map_data)
-	dijkstra = Dijkstra.new(grafo)
-	astar = AStar.new(grafo)
-	bfs = BFS.new(grafo)
-	
-	# --- CÁLCULO DE OBJETIVOS E TEMPO PAR ---
-	if modo_jogo == "NORMAL":
-		vertice_fim = dijkstra.encontrar_vertice_final(vertice_inicio)
-		if dijkstra.distancias.has(vertice_fim):
-			Game_State.tempo_par_level = dijkstra.distancias[vertice_fim]
-		else:
-			print("ERRO: Saída inalcançável.")
+		# === AUTO SAVE DO HUB ===
+		# Esperamos um frame para garantir que tudo (posições, hp) esteja atualizado
+		await get_tree().process_frame
+		print("Main: Entrou no Hub. Salvando progresso...")
+		
+		# 1. Salva o jogo normal (para continuar de onde parou)
+		SaveManager.save_player_game()
+		
+		# 2. Salva o BACKUP DE SEGURANÇA (para o Bad Ending)
+		SaveManager.save_hub_backup()
+		
+	else:
+		# >>> ROTA B: MAPA PROCEDURAL <<<
+		#1. Zera o cronômetro.
+		Game_State.tempo_jogador = 0.0
+		
+		# 2. Limpa o rastro do grafo (O bug da tela de vitória)
+		Game_State.caminho_jogador.clear()
+		
+		# 3. Limpa o histórico de "Desfazer" (para não dar erro de array)
+		Game_State.player_action_history.clear()
+		
+		# 4. Registra a posição inicial (1,1) como o primeiro ponto do novo gráfico
+		Game_State.log_player_position(vertice_inicio)
+		
+		#5. Reseta numero de terminais
+		Game_State.terminais_ativos = 0
+		
+		var map_generator = MapGenerator.new()
+		
+		map_data = map_generator.gerar_grid(level_data.tamanho.x, level_data.tamanho.y)
+		largura_atual = level_data.tamanho.x
+		altura_atual = level_data.tamanho.y
+		
+		if level_data.seed_fixa != 0: seed(level_data.seed_fixa)
+		else: randomize()
 			
-	elif modo_jogo == "MST":
-		vertice_fim = dijkstra.encontrar_vertice_final(vertice_inicio)
-		var pontos_interesse = [vertice_inicio] + terminais_pos + [vertice_fim]
-		var grafo_abstrato = {}
-		for origem in pontos_interesse:
-			grafo_abstrato[origem] = {}
-			var resultado = dijkstra.calcular_caminho_minimo(origem)
-			var dists = resultado["distancias"]
-			for destino in pontos_interesse:
-				if origem == destino: continue
-				if dists.has(destino) and dists[destino] != INF:
-					grafo_abstrato[origem][destino] = dists[destino]
+		map_generator.gerar_labirinto_dfs(map_data, 1, 1)
 		
-		var resultado_mst = Prim.calcular_mst(grafo_abstrato) 
-		Game_State.tempo_par_level = resultado_mst["custo"]
-		dijkstra.calcular_caminho_minimo(vertice_inicio)
-	
-	# INSERÇÃO DE SAVE POINT
-	dijkstra.calcular_caminho_minimo(vertice_inicio)
-	var caminho_otimo = dijkstra.reconstruir_caminho(vertice_inicio, vertice_fim)
-	
-	if caminho_otimo.size() > 2:
-		var meio_index = int(caminho_otimo.size() / 2)
-		var pos_meio = caminho_otimo[meio_index]
+		if level_data.salas_qtd > 0:
+			map_generator.criar_salas_no_labirinto(map_data, level_data.salas_qtd, level_data.salas_tamanho_min, level_data.salas_tamanho_max)
+			
+		if level_data.chance_quebra_paredes > 0:
+			map_generator.quebrar_paredes_internas(map_data, level_data.chance_quebra_paredes)
+			
+		var modo_jogo = level_data.modo_jogo
+		Game_State.terminais_necessarios = 0 
+		var config_tiles = level_data.tiles_especiais
+		var qtd_portas = level_data.qtd_portas
 		
-		# Define como Save Point
-		map_data[pos_meio.y][pos_meio.x] = SAVE_POINT_TILE.duplicate()
-		save_point_pos = pos_meio
+		map_generator.aplicar_tiles_especiais(map_data, config_tiles, qtd_portas, vertice_inicio)
 		
-		if fog_enabled and fog_logic:
-			fog_logic.fog_data[pos_meio.y][pos_meio.x] = false
-		
-		print("Main: Save Point posicionado no meio do caminho crítico: ", save_point_pos)
-	else:
-		print("Main: Caminho muito curto para ter Save Point.")
-		
-	# --- FINALIZAÇÃO VISUAL ---
-	_draw_map()
-	_setup_camera()
-	
-	fog_logic = FogOfWar.new(largura_atual, altura_atual, 5)
-	if not fog_enabled: tile_map_fog.hide()
-	else: tile_map_fog.show()
-	
-	# Revela savepoint e terminais
-	if save_point_pos != null and fog_enabled:
-		fog_logic.fog_data[save_point_pos.y][save_point_pos.x] = false
-	for t in terminais_pos:
-		if fog_enabled: fog_logic.fog_data[t.y][t.x] = false
+		if modo_jogo == "MST":
+			terminais_pos = map_generator.adicionar_terminais(map_data, level_data.qtd_terminais, vertice_inicio)
+			Game_State.terminais_necessarios = terminais_pos.size()
+			saida_destrancada = false
+		else:
+			saida_destrancada = true
 
-	update_fog(vertice_inicio)
-	
-	# --- SPAWNS USANDO LEVEL DATA ---
-	_spawnar_inimigos(level_data)
-	_spawnar_npcs(level_data)
-	_spawnar_baus(level_data)
-	_spawnar_moedas_no_mapa(level_data)
-	
-	# O Checkpoint Automático acontece aqui, assim que o mapa termina de gerar
-	SaveManager.save_auto_game()
+		grafo = Graph.new(map_data)
+		dijkstra = Dijkstra.new(grafo)
+		astar = AStar.new(grafo)
+		bfs = BFS.new(grafo)
+		
+		if modo_jogo == "NORMAL":
+			vertice_fim = dijkstra.encontrar_vertice_final(vertice_inicio)
+			if dijkstra.distancias.has(vertice_fim):
+				Game_State.tempo_par_level = dijkstra.distancias[vertice_fim]
+			else:
+				print("ERRO: Saída inalcançável.")
+				
+		elif modo_jogo == "MST":
+			vertice_fim = dijkstra.encontrar_vertice_final(vertice_inicio)
+			var pontos_interesse = [vertice_inicio] + terminais_pos + [vertice_fim]
+			var grafo_abstrato = {}
+			for origem in pontos_interesse:
+				grafo_abstrato[origem] = {}
+				var resultado = dijkstra.calcular_caminho_minimo(origem)
+				var dists = resultado["distancias"]
+				for destino in pontos_interesse:
+					if origem == destino: continue
+					if dists.has(destino) and dists[destino] != INF:
+						grafo_abstrato[origem][destino] = dists[destino]
+			
+			var resultado_mst = Prim.calcular_mst(grafo_abstrato) 
+			Game_State.tempo_par_level = resultado_mst["custo"]
+			dijkstra.calcular_caminho_minimo(vertice_inicio)
+		
+		dijkstra.calcular_caminho_minimo(vertice_inicio)
+		var caminho_otimo = dijkstra.reconstruir_caminho(vertice_inicio, vertice_fim)
+		
+		# INSERÇÃO DE SAVE POINT (Modificado)
+		if level_data.gerar_save_point:
+			if caminho_otimo.size() > 2:
+				var meio_index = int(caminho_otimo.size() / 2)
+				var pos_meio = caminho_otimo[meio_index]
+				map_data[pos_meio.y][pos_meio.x] = SAVE_POINT_TILE.duplicate()
+				save_point_pos = pos_meio
+				if fog_enabled and fog_logic:
+					fog_logic.fog_data[pos_meio.y][pos_meio.x] = false
+		else:
+			print("Main: Save Point desativado para esta fase.")
+		
+		# --- FINALIZAÇÃO VISUAL ---
+		_draw_map()
+		_setup_camera()
+		
+		fog_logic = FogOfWar.new(largura_atual, altura_atual, 5)
+		if not fog_enabled: tile_map_fog.hide()
+		else: tile_map_fog.show()
+		
+		if save_point_pos != null and fog_enabled:
+			fog_logic.fog_data[save_point_pos.y][save_point_pos.x] = false
+		for t in terminais_pos:
+			if fog_enabled: fog_logic.fog_data[t.y][t.x] = false
+
+		update_fog(vertice_inicio)
+		
+		# Spawns do Procedural
+		_spawnar_inimigos(level_data)
+		_spawnar_baus(level_data)
+		_spawnar_moedas_no_mapa(level_data)
+		_spawnar_npcs(level_data) # Procedural também chama aqui no final
+		
+		if level_data.script_logico:
+			# Instancia o script como um Node
+			var script_node = Node.new()
+			script_node.set_script(level_data.script_logico)
+			script_node.name = "LevelScript"
+			add_child(script_node)
+			script_fase_atual = script_node
+			
+			# Opcional: Chama uma função de setup se existir
+			if script_fase_atual.has_method("setup_fase"):
+				script_fase_atual.setup_fase(self)
+		
+		SaveManager.save_auto_game()
 
 # --- [ALTERADO] LÓGICA DO DRONE SCANNER PERMANENTE ---
 func _process(delta):
@@ -872,90 +921,71 @@ func _abrir_porta(pos: Vector2i):
 	print("Main: Porta aberta em ", pos)
 
 # --- FUNÇÃO DE SPAWN ---
-# Substitua a antiga _spawnar_inimigos por esta
 func _spawnar_inimigos(level_data: LevelDefinition):
 	if level_data.lista_inimigos.is_empty():
 		return
 
-	print("Main: Iniciando spawn de inimigos via LevelDefinition...")
+	print("Main: Iniciando spawn de inimigos GARANTIDO...")
 	
 	for spawn_data in level_data.lista_inimigos:
-		# 1. Checa a Flag Secreta (Lógica da "Rota Weird")
+		# 1. Checa a Flag Secreta
 		if spawn_data.flag_secreta != "":
 			if Game_State.optional_objectives.get(spawn_data.flag_secreta, false) != true:
-				continue # Pula este inimigo se não tiver a flag
+				continue 
 		
 		# 2. Loop de Quantidade
 		var qtd = spawn_data.quantidade
-		var criados = 0
-		var tentativas = 0
-		var max_tentativas_por_tipo = qtd * 20
 		
-		while criados < qtd and tentativas < max_tentativas_por_tipo:
-			tentativas += 1
+		for i in range(qtd):
+			# CHAMA A FUNÇÃO DE SPAWN GARANTIDO
+			# O raio_minimo_spawn vem das variáveis exportadas no topo do Main.gd
+			var pos_final = _encontrar_posicao_spawn_garantida(raio_minimo_spawn, [])
 			
-			# Escolhe posição aleatória baseada no tamanho ATUAL do mapa
-			# Importante: Usamos as variáveis do map_generator (ou level_data.tamanho)
-			var x = randi_range(1, level_data.tamanho.x - 2)
-			var y = randi_range(1, level_data.tamanho.y - 2)
-			var pos_candidata = Vector2i(x, y)
-			
-			# Validações padrão
-			var tile = get_tile_data(pos_candidata)
-			if not tile or not tile.passavel or tile.tipo == "Dano": continue
-			if pos_candidata.distance_to(player.grid_pos) < raio_minimo_spawn: continue
-			if pos_candidata.distance_to(vertice_fim) < 5: continue
-			if is_tile_occupied_by_enemy(pos_candidata): continue
-			
-			# Instancia
-			if spawn_data.inimigo_cena:
-				var novo_inimigo = spawn_data.inimigo_cena.instantiate()
-				novo_inimigo.global_position = (Vector2(pos_candidata) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
-				novo_inimigo.main_ref = self
-				novo_inimigo.player_ref = player
-				
-				# Se o inimigo tiver a variável grid_pos, precisamos definir ela também
-				if "grid_pos" in novo_inimigo:
-					novo_inimigo.grid_pos = pos_candidata
-				
-				# --- 1. APLICA A INTELIGÊNCIA ---
-				novo_inimigo.ai_type = spawn_data.ai_type
-				
-				# --- 2. APLICA A COR (VISUAL) ---
-				# Modulate multiplica a cor. Branco (1,1,1) é neutro.
-				if spawn_data.cor_modulate != Color.WHITE:
-					novo_inimigo.modulate = spawn_data.cor_modulate
-				
-				# --- 3. APLICA OVERRIDES DE ATRIBUTOS ---
-				# Só aplica se o valor for válido (> -1)
-				if spawn_data.hp_maximo > 0:
-					novo_inimigo.max_hp = spawn_data.hp_maximo
-					# IMPORTANTE: Atualizar a vida atual também, senão ele nasce "machucado"
-					novo_inimigo.current_hp = spawn_data.hp_maximo
+			if pos_final != Vector2i(-1, -1):
+				# Instancia
+				if spawn_data.inimigo_cena:
+					var novo_inimigo = spawn_data.inimigo_cena.instantiate()
+					novo_inimigo.global_position = (Vector2(pos_final) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
+					novo_inimigo.main_ref = self
+					novo_inimigo.player_ref = player
 					
-				if spawn_data.ataque > -1:
-					novo_inimigo.atk = spawn_data.ataque
+					# Define grid_pos se existir
+					if "grid_pos" in novo_inimigo:
+						novo_inimigo.grid_pos = pos_final
 					
-				if spawn_data.defesa > -1:
-					novo_inimigo.def = spawn_data.defesa
+					# --- 1. APLICA A INTELIGÊNCIA ---
+					novo_inimigo.ai_type = spawn_data.ai_type
 					
-				if spawn_data.poise > -1:
-					novo_inimigo.poise = spawn_data.poise
+					# --- 2. APLICA A COR (VISUAL) ---
+					if spawn_data.cor_modulate != Color.WHITE:
+						novo_inimigo.modulate = spawn_data.cor_modulate
 					
-				if spawn_data.knockback > -1:
-					novo_inimigo.knockback_power = spawn_data.knockback
-				
-				if spawn_data.passos_por_turno > -1:
-					novo_inimigo.passos_por_turno = spawn_data.passos_por_turno
-				
-				if "loot_moedas" in novo_inimigo:
-					novo_inimigo.loot_moedas = spawn_data.moedas_drop
-				
-				add_child(novo_inimigo)
-				criados += 1
+					# --- 3. APLICA OVERRIDES DE ATRIBUTOS ---
+					if spawn_data.hp_maximo > 0:
+						novo_inimigo.max_hp = spawn_data.hp_maximo
+						novo_inimigo.current_hp = spawn_data.hp_maximo
+						
+					if spawn_data.ataque > -1:
+						novo_inimigo.atk = spawn_data.ataque
+						
+					if spawn_data.defesa > -1:
+						novo_inimigo.def = spawn_data.defesa
+						
+					if spawn_data.poise > -1:
+						novo_inimigo.poise = spawn_data.poise
+						
+					if spawn_data.knockback > -1:
+						novo_inimigo.knockback_power = spawn_data.knockback
+					
+					if spawn_data.passos_por_turno > -1:
+						novo_inimigo.passos_por_turno = spawn_data.passos_por_turno
+					
+					if "loot_moedas" in novo_inimigo:
+						novo_inimigo.loot_moedas = spawn_data.moedas_drop
+					
+					add_child(novo_inimigo)
 			else:
-				print("ERRO: EnemySpawnData sem cena configurada.")
-				break
+				print("AVISO CRÍTICO: Mapa totalmente lotado! Impossível spawnar inimigo %d." % i)
 				
 func is_tile_occupied_by_enemy(target_pos: Vector2i) -> bool:
 	# FIX DE SEGURANÇA 
@@ -1015,7 +1045,49 @@ func load_enemies_state_data(loaded_data: Array):
 
 # NOVA FUNÇÃO DE SPAWN DE NPV
 
-# Substitua a antiga _spawnar_npc_aleatorio por esta
+func _spawnar_npcs(level_data: LevelDefinition):
+	if level_data.lista_npcs.is_empty():
+		return
+		
+	print("Main: Spawnando NPCs configurados (Garantido)...")
+	
+	for npc_data in level_data.lista_npcs:
+		# Lógica de Flag
+		if npc_data.flag_necessaria != "":
+			if Game_State.optional_objectives.get(npc_data.flag_necessaria, false) != true:
+				continue
+		
+		var pos_final = Vector2i(-1, -1) # Inicia como inválido
+		
+		# --- DECISÃO: FIXO OU ALEATÓRIO? ---
+		
+		# Se tivermos uma posição fixa definida (Hub), usamos ela direto
+		if npc_data.pos_fixa != Vector2i(-1, -1):
+			pos_final = npc_data.pos_fixa
+		else:
+			# LÓGICA ALEATÓRIA GARANTIDA
+			# Raio 5 é suficiente para NPCs não nascerem colados no jogador
+			pos_final = _encontrar_posicao_spawn_garantida(5, [])
+		
+		# --- INSTANCIAÇÃO ---
+		if pos_final != Vector2i(-1, -1):
+			if npc_data.npc_cena:
+				var npc = npc_data.npc_cena.instantiate()
+				add_child(npc)
+				
+				# Centraliza no tile
+				npc.global_position = (Vector2(pos_final) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
+				npc.main_ref = self
+				
+				if "grid_pos" in npc:
+					npc.grid_pos = pos_final
+				
+				print("NPC ", npc.name, " spawnado em ", pos_final)
+		else:
+			print("ERRO CRÍTICO: Não foi possível encontrar local para o NPC!")
+
+# ANTIGA FUNÇÃO SEM MAPA FIXO
+"""
 func _spawnar_npcs(level_data: LevelDefinition):
 	if level_data.lista_npcs.is_empty():
 		return
@@ -1057,46 +1129,8 @@ func _spawnar_npcs(level_data: LevelDefinition):
 				print("NPC ", npc.name, " spawnado em ", pos)
 			else:
 				break
-
-
-
-# --- ANTIGA FUNÇÃO DE SPAWN NPC ---
 """
-func _spawnar_npc_aleatorio():
-	if not cena_npc: return
-	
-	var tentativas = 0
-	var spawnou = false
-	
-	while not spawnou and tentativas < 100:
-		tentativas += 1
-		var x = randi_range(1, MapGenerator.LARGURA - 2)
-		var y = randi_range(1, MapGenerator.ALTURA - 2)
-		var pos = Vector2i(x, y)
-		
-		var tile = get_tile_data(pos)
-		if not tile or not tile.passavel or tile.tipo == "Dano": continue
-		if pos.distance_to(player.grid_pos) < 5: continue
-		if pos == vertice_fim: continue
-		if is_tile_occupied_by_enemy(pos): continue
-		
-		var npc = cena_npc.instantiate()
-		
-		# 1. Adiciona primeiro à cena para garantir que _ready rode
-		add_child(npc)
-		
-		# 2. Define a posição global
-		npc.global_position = (Vector2(pos) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
-		npc.main_ref = self
-		
-		# 3. FORÇA o NPC a atualizar o grid_pos agora que a posição está certa
-		# (Como o _ready já rodou no add_child com posição 0,0, precisamos corrigir)
-		npc.grid_pos = pos 
-		# Ou se preferir recalculando: npc.grid_pos = npc._world_to_grid(npc.global_position)
-		
-		spawnou = true
-		print("NPC spawnado e fixado em: ", pos)
-"""
+
 
 # 1. Coleta dados de todos os NPCs vivos
 func get_npcs_state_data() -> Array:
@@ -1355,31 +1389,250 @@ func load_chests_state_data(loaded_data: Array):
 # res://scripts/Main.gd
 
 func _spawnar_moedas_no_mapa(level_data: LevelDefinition):
-	# Configuração simples (pode ir pro LevelDefinition depois se quiser)
-	var chance_moeda = 0.05 # 5% de chance por tile de chão
-	var valor_moeda_chao = 1
+	# 1. Pega o valor configurado no Inspector (.tres)
+	# Se a variável no LevelDefinition for 'qtd_moedas', use ela.
+	# (Verifique se no LevelDefinition.gd a variável chama 'qtd_moedas' mesmo)
+	var qtd_desejada = level_data.qtd_moedas 
 	
-	print("Main: Espalhando moedas pelo chão...")
+	# 2. Se for 0, sai imediatamente. Isso resolve o problema do Tutorial 1.
+	if qtd_desejada <= 0:
+		print("Main: Nenhuma moeda configurada para esta fase.")
+		return
+	
+	print("Main: Tentando espalhar %d moedas..." % qtd_desejada)
+	
 	var moedas_criadas = 0
+	var tentativas = 0
+	var max_tentativas = qtd_desejada * 100 # Segurança contra loop infinito
 	
+	# 3. Loop até criar a quantidade exata pedida
+	while moedas_criadas < qtd_desejada and tentativas < max_tentativas:
+		tentativas += 1
+		
+		# Sorteia uma posição
+		var x = randi_range(1, largura_atual - 2)
+		var y = randi_range(1, altura_atual - 2)
+		var pos = Vector2i(x, y)
+		
+		# --- VALIDAÇÕES ---
+		var tile = get_tile_data(pos)
+		if not tile or tile.tipo != "Chao": continue # Só spawna em chão
+		if pos == Vector2i(1, 1) or pos == vertice_fim: continue # Não spawna no início/fim
+		
+		# Não spawna em cima de outras coisas
+		if is_tile_occupied_by_chest(pos): continue
+		if is_tile_occupied_by_enemy(pos): continue
+		if is_tile_occupied_by_npc(pos): continue
+		
+		# Verifica se JÁ TEM UMA MOEDA ali (para não empilhar)
+		# Como moedas não tem grupo específico no seu código atual, 
+		# uma checagem simples de distância ou lista temporária resolve.
+		var ja_tem_moeda = false
+		for m in get_tree().get_nodes_in_group("coletaveis"): # Supondo que moedas estão nesse grupo
+			if is_instance_valid(m) and Vector2i(m.position / TILE_SIZE) == pos:
+				ja_tem_moeda = true
+				break
+		if ja_tem_moeda: continue
+
+		# --- SPAWN ---
+		# Valor padrão 1, ou você pode adicionar 'valor_moeda' no LevelDefinition depois
+		spawn_moeda((Vector2(pos) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0), 1)
+		moedas_criadas += 1
+				
+	print("Main: Sucesso. %d moedas espalhadas." % moedas_criadas)
+
+# --- SISTEMA DE MAPA FIXO (HUB) ---
+
+# Em Main.gd
+
+func _carregar_mapa_fixo(cena_packed: PackedScene):
+	print("Main: Carregando mapa fixo (Modo Hub)...")
+	
+	# Limpa mapa anterior se houver
+	if map_data.size() > 0:
+		tile_map.clear()
+	
+	var mapa_instancia = cena_packed.instantiate()
+	add_child(mapa_instancia)
+	move_child(mapa_instancia, 0) 
+	
+	# 1. Busca as camadas pelo nome exato que definimos
+	var layer_chao = mapa_instancia.get_node_or_null("LayerChao")
+	var layer_paredes = mapa_instancia.get_node_or_null("LayerParedes")
+	
+	# Fallback
+	if not layer_chao and mapa_instancia is TileMapLayer:
+		layer_chao = mapa_instancia
+	
+	if not layer_chao:
+		print("ERRO: HubMap precisa ter um nó chamado 'LayerChao'.")
+		return
+
+	# 2. Detecta tamanho baseado no chão
+	var rect = layer_chao.get_used_rect()
+	largura_atual = rect.end.x + 5 
+	altura_atual = rect.end.y + 5
+	
+	# 3. Inicializa tudo como PAREDE (Vazio = Parede)
+	map_data = []
+	for y in range(altura_atual):
+		var linha = []
+		for x in range(largura_atual):
+			var tile = MapTileData.new()
+			tile.passavel = false 
+			tile.tipo = "Parede"
+			linha.push_back(tile)
+		map_data.push_back(linha)
+	
+	# 4. Processa o CHÃO (Torna passável)
+	for coords in layer_chao.get_used_cells():
+		if _dentro_do_mapa(coords):
+			var tile = map_data[coords.y][coords.x]
+			tile.passavel = true
+			tile.tipo = "Chao"
+			tile.custo_tempo = 1.0
+
+	# 5. Processa as PAREDES/DECORAÇÃO (Torna intransponível)
+	if layer_paredes:
+		for coords in layer_paredes.get_used_cells():
+			if _dentro_do_mapa(coords):
+				var tile = map_data[coords.y][coords.x]
+				tile.passavel = false 
+				tile.tipo = "Parede" 
+	
+	# Esconde o procedural
+	tile_map.hide()
+	
+	# === LÓGICA DO HUB ===
+	if mapa_instancia.has_method("atualizar_estado_hub"):
+		mapa_instancia.atualizar_estado_hub()
+	
+	# === [FIX] AJUSTA CÂMERA ===
+	_setup_camera()
+	
+	print("Main: Hub carregado e processado.")
+
+func _dentro_do_mapa(pos: Vector2i) -> bool:
+	return pos.x >= 0 and pos.x < largura_atual and pos.y >= 0 and pos.y < altura_atual
+
+# Retorna o nó do ShopSpot se houver um nessa posição
+func get_shop_at_position(pos: Vector2i) -> Node2D:
+	# O ShopSpot.gd já se adiciona ao grupo "shop_items" no _ready
+	var shops = get_tree().get_nodes_in_group("shop_items")
+	
+	for shop in shops:
+		if is_instance_valid(shop) and "grid_pos" in shop:
+			if shop.grid_pos == pos:
+				return shop
+	return null
+
+# Função de "Game Juice" para impacto
+func aplicar_hit_stop(time_scale: float, duracao_real: float):
+	# 1. Desacelera ou para o tempo
+	Engine.time_scale = time_scale
+	
+	# 2. Espera um pouquinho (usando tempo real, ignorando a escala de tempo do jogo)
+	# create_timer(tempo, process_always, process_in_physics, ignore_time_scale)
+	await get_tree().create_timer(duracao_real, true, false, true).timeout
+	
+	# 3. Volta ao normal
+	Engine.time_scale = 1.0
+
+func chegou_saida(player_grid_pos: Vector2i):
+	if player_grid_pos == vertice_fim and saida_destrancada:
+		print(">>> JOGADOR ALCANÇOU A SAÍDA! <<<")
+		
+		# --- HOOK: PERGUNTA PRO SCRIPT DA FASE SE ELE QUER ASSUMIR ---
+		if script_fase_atual and script_fase_atual.has_method("on_level_complete"):
+			
+			var assumiu_controle = await script_fase_atual.on_level_complete()
+			
+			if assumiu_controle:
+				return # O script cuidou de tudo, a Main não faz mais nada.
+		
+		# Pega a tolerância do LevelDefinition (ou usa padrão)
+		var level_data = LevelManager.get_dados_fase_atual()
+		var tolerancia = level_data.tempo_par_tolerancia if level_data else 2.0
+		
+		# 1. Processa o resultado
+		Game_State.processar_resultado_fase(tolerancia)
+		
+		# 2. Decide qual tela mostrar
+		if Game_State.falha_por_tempo:
+			# BAD ENDING: Instancia a tela de punição
+			var tela_bad = load("res://scenes/BadEndingScreen.tscn").instantiate()
+			add_child(tela_bad)
+		else:
+			# VITÓRIA: Instancia a tela de sucesso
+			var tela_vitoria = load("res://scenes/LevelComplete.tscn").instantiate()
+			add_child(tela_vitoria)
+		
+		# 3. Trava o Player
+		player.set_physics_process(false)
+		player.set_process_unhandled_input(false)	
+
+# Adicione esta função utilitária no Main.gd
+func _encontrar_posicao_spawn_garantida(raio_minimo_ideal: int, evitar_posicoes: Array[Vector2i]) -> Vector2i:
+	var tentativas = 0
+	var max_tentativas_boas = 50
+	
+	# 1. TENTATIVA IDEAL (Respeita o raio mínimo configurado)
+	while tentativas < max_tentativas_boas:
+		var x = randi_range(1, largura_atual - 2)
+		var y = randi_range(1, altura_atual - 2)
+		var pos = Vector2i(x, y)
+		
+		if _eh_spawn_valido(pos, raio_minimo_ideal, evitar_posicoes):
+			return pos
+		tentativas += 1
+	
+	# 2. TENTATIVA MÉDIA (Reduz o raio pela metade)
+	tentativas = 0
+	var raio_reduzido = int(raio_minimo_ideal / 2.0)
+	while tentativas < max_tentativas_boas:
+		var x = randi_range(1, largura_atual - 2)
+		var y = randi_range(1, altura_atual - 2)
+		var pos = Vector2i(x, y)
+		
+		if _eh_spawn_valido(pos, raio_reduzido, evitar_posicoes):
+			return pos
+		tentativas += 1
+		
+	# 3. DESESPERO (Hard Fix: Pega qualquer chão longe 2 tiles do player)
+	# Varre o mapa todo procurando vagas
+	var candidatos = []
 	for y in range(1, altura_atual - 1):
 		for x in range(1, largura_atual - 1):
 			var pos = Vector2i(x, y)
-			
-			# Regras: Deve ser chão, não pode ser início/fim, nem ter nada em cima
-			var tile = map_data[y][x]
-			if tile.tipo != "Chao": continue
-			if pos == Vector2i(1, 1) or pos == vertice_fim: continue
-			
-			# Verifica se tem baú, inimigo ou npc
-			if is_tile_occupied_by_chest(pos) or is_tile_occupied_by_enemy(pos) or is_tile_occupied_by_npc(pos):
-				continue
-				
-			if randf() < chance_moeda:
-				spawn_moeda((Vector2(pos) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0), valor_moeda_chao)
-				moedas_criadas += 1
-				
-	print("Main: %d moedas espalhadas pelo mapa." % moedas_criadas)
+			# Raio mínimo de 2 só para não spawnar COLADO no player
+			if _eh_spawn_valido(pos, 2, evitar_posicoes):
+				candidatos.push_back(pos)
+	
+	if candidatos.size() > 0:
+		return candidatos.pick_random()
+	
+	return Vector2i(-1, -1) # Mapa 100% cheio, impossível spawnar
+
+func _eh_spawn_valido(pos: Vector2i, raio: int, evitar: Array[Vector2i]) -> bool:
+	# Regras Básicas: Chão e sem Dano
+	var tile = get_tile_data(pos)
+	if not tile or not tile.passavel or tile.tipo == "Dano": return false
+	
+	# Regra de Distância do Player
+	if pos.distance_to(player.grid_pos) < raio: return false
+	
+	# Regra de Distância da Saída (Fixo 3 tiles pra não bloquear)
+	if pos.distance_to(vertice_fim) < 3: return false
+	
+	# Regra de Ocupação (Lista de evitar)
+	if pos in evitar: return false
+	
+	# Regras de Entidades Vivas
+	if is_tile_occupied_by_enemy(pos): return false
+	if is_tile_occupied_by_npc(pos): return false
+	if is_tile_occupied_by_chest(pos): return false
+	
+	return true
 
 # --- TESTE TEMPORÁRIO BFS ---
 """func executar_teste_bfs():

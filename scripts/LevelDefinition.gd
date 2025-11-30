@@ -12,22 +12,27 @@ extends Resource
 @export var fog_enabled: bool = false
 # Aqui poderíamos ter um Enum para Bioma (ex: CAVERNA, LAB, FLORESTA)
 @export var bioma_tipo: int = 0
+# Esta cor será aplicada ao CanvasModulate.
+# Dica: Use cores escuras e saturadas (Roxo, Azul Profundo, Vermelho) para o efeito dramático.
+# Se for Branco (1,1,1), o jogo fica com as cores originais.
+@export var cor_ambiente: Color = Color.WHITE
+# [NOVO] Cor que multiplica apenas os tiles (Paredes/Chão)
+@export var cor_tilemap: Color = Color.WHITE
+# Controla a intensidade do efeito "Neon" para esta fase específica.
+# 1.0 = Padrão.
+@export var intensidade_glow: float = 1.0
 
 # Economia da Fase
 @export_group("Economia e Tesouros")
 @export var qtd_baus: int = 0          # Quantos baús spawnar
 @export var moedas_por_bau: int = 50   # Quanto tem dentro de cada baú
+@export var qtd_moedas: int = 0
 
-# Esta cor será aplicada ao CanvasModulate.
-# Dica: Use cores escuras e saturadas (Roxo, Azul Profundo, Vermelho) para o efeito dramático.
-# Se for Branco (1,1,1), o jogo fica com as cores originais.
-@export var cor_ambiente: Color = Color.WHITE
-# Controla a intensidade do efeito "Neon" para esta fase específica.
-# 1.0 = Padrão.
-@export var intensidade_glow: float = 1.0
-
-# [NOVO] Cor que multiplica apenas os tiles (Paredes/Chão)
-@export var cor_tilemap: Color = Color.WHITE
+@export_group("Mapa Fixo")
+# Se esta variável tiver uma cena (ex: HubMap.tscn), o jogo IGNORA a geração aleatória
+# e carrega esta cena no lugar.
+@export var cena_fixa: PackedScene
+@export var player_spawn_pos: Vector2i = Vector2i(7, 2)
 
 @export_group("Modo de Jogo")
 @export_enum("NORMAL", "MST") var modo_jogo: String = "NORMAL"
@@ -36,6 +41,7 @@ extends Resource
 
 @export_group("Geração Procedural")
 # Configurações para o algoritmo de salas (Room generation)
+@export var gerar_save_point: bool = true
 @export var salas_qtd: int = 0
 @export var salas_tamanho_min: int = 2
 @export var salas_tamanho_max: int = 4
@@ -61,10 +67,13 @@ extends Resource
 	"Dano": 0,
 	"Lama": 0,
 }
-@export var qtd_moedas: int = 0
 
 @export_group("Entidades - Inimigos")
 # Em vez de Dictionary, usamos Array tipado com nossa nova classe
 @export var lista_inimigos: Array[EnemySpawnData] = []
 @export_group("Entidades - NPCs")
 @export var lista_npcs: Array[NpcSpawnData] = []
+
+@export_group("Eventos e Scripts")
+# Script GDScript opcional para rodar lógica específica desta fase (diálogos, triggers)
+@export var script_logico: GDScript

@@ -5,8 +5,8 @@
 
 [resource]
 script = ExtResource("1_kojrh")
-nome_item = "Drone Sonar"
-descricao = "Revela uma parte da nevoa no mapa por um certo limite de tempo.
+nome_item = "Indexador"
+descricao = "Revela uma parte do mapa afetada por entropia.
 "
 tipo_item = 5
 efeito = "DRONE_SCANNER"

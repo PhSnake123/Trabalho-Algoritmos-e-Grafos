@@ -44,7 +44,7 @@ func _process(_delta):
 	elif Game_State.vida_jogador <=total_HP*0.25:
 		label_hp.modulate = Color.RED
 	
-	label_terminais.text = "Terminais: %d/%d" % [Game_State.terminais_ativos, Game_State.terminais_necessarios]
+	label_terminais.text = "Flags: %d/%d" % [Game_State.terminais_ativos, Game_State.terminais_necessarios]
 
 	# 3. ATUALIZA O TEMPO (PASSOS / PAR) COM CORES
 	var atual = int(Game_State.tempo_jogador)
@@ -102,7 +102,7 @@ func _on_item_equipado_mudou(item: ItemData):
 func _on_moedas_alteradas(novo_saldo: int):
 	if label_moedas:
 		# Você pode colocar um ícone de cifrão ou "G"
-		label_moedas.text = "Moedas: %d" % novo_saldo
+		label_moedas.text = "Fragmentos: %d" % novo_saldo
 		label_moedas.modulate = Color.DARK_ORANGE
 		
 		# L55ógica de Revelação

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="LevelDefinition" load_steps=6 format=3 uid="uid://de76xttunqeae"]
+
+[ext_resource type="Script" uid="uid://ci6dlknyw5xas" path="res://scripts/EnemySpawnData.gd" id="1_pgfrq"]
+[ext_resource type="Script" uid="uid://c6yn1hesl0qc7" path="res://scripts/NpcSpawnData.gd" id="2_5lvmt"]
+[ext_resource type="AudioStream" uid="uid://cesfpsep1gjy" path="res://Audio/music/MoonlightSonata.mp3" id="3_5lvmt"]
+[ext_resource type="Script" uid="uid://d34551vbrdkqx" path="res://scripts/LevelDefinition.gd" id="3_dxect"]
+[ext_resource type="Script" uid="uid://ciu8nndl76y3u" path="res://scripts/Tutorial3.gd" id="5_dxect"]
+
+[resource]
+script = ExtResource("3_dxect")
+nome_fase = "Tutorial 3"
+musica_fundo = ExtResource("3_5lvmt")
+tamanho = Vector2i(21, 15)
+fog_enabled = true
+qtd_terminais = 1
+gerar_save_point = false
+chance_quebra_paredes = 0.1
+script_logico = ExtResource("5_dxect")
+metadata/_custom_type_script = "uid://d34551vbrdkqx"

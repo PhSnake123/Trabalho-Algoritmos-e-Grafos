@@ -228,37 +228,70 @@ func _eh_chao_valido(grid, x, y):
 
 func adicionar_terminais(grid, quantidade: int, inicio_pos: Vector2i) -> Array[Vector2i]:
 	var terminais: Array[Vector2i] = []
-	var tentativas_max = 1000
+	var tentativas_max = 500 # Tentativas "bonitas"
 	var tentativas = 0
 	
-	print("MapGenerator: Tentando posicionar %d terminais..." % quantidade)
+	print("MapGenerator: Tentando posicionar %d terminais (Modo Ideal)..." % quantidade)
 	
+	# --- FASE 1: TENTATIVA IDEAL (Com distanciamento) ---
 	while terminais.size() < quantidade and tentativas < tentativas_max:
 		var x = randi_range(1, self.largura - 2)
 		var y = randi_range(1, self.altura - 2)
 		var pos = Vector2i(x, y)
 		
-		var tile_atual = grid[y][x]
-		
-		# Regras: Deve ser CHÃO, não ser o início, e não estar na lista ainda
-		if tile_atual == CHAO and pos != inicio_pos and not (pos in terminais):
-			
-			# Verifica espalhamento (distância mínima 10 entre terminais)
-			var muito_perto = false
-			for t in terminais:
-				if (abs(pos.x - t.x) + abs(pos.y - t.y)) < 10:
-					muito_perto = true
-					break
-			
-			if not muito_perto:
-				# SUCESSO: Define o tile lógico como TERMINAL
-				grid[y][x] = TERMINAL_TILE.duplicate()
-				terminais.push_back(pos)
+		# Regras estritas: Distância > 10
+		if _eh_posicao_valida_para_terminal(grid, pos, inicio_pos, terminais, 10):
+			grid[y][x] = TERMINAL_TILE.duplicate()
+			terminais.push_back(pos)
 		
 		tentativas += 1
 	
-	print("MapGenerator: Terminais posicionados em: ", terminais)
+	# --- FASE 2: HARD FIX (Modo Pânico) ---
+	if terminais.size() < quantidade:
+		print("MapGenerator: AVISO - Falha no spawn ideal. Iniciando FORCE SPAWN para %d terminais restantes." % (quantidade - terminais.size()))
+		
+		# 1. Coleta TODOS os chãos válidos do mapa
+		var candidatos: Array[Vector2i] = []
+		for y in range(1, self.altura - 1):
+			for x in range(1, self.largura - 1):
+				var pos = Vector2i(x, y)
+				# Se é chão E não é o início E não é um terminal já colocado
+				if grid[y][x] == CHAO and pos != inicio_pos and not (pos in terminais):
+					candidatos.push_back(pos)
+		
+		# 2. Embaralha para não ficar linear
+		candidatos.shuffle()
+		
+		# 3. Preenche o que falta
+		while terminais.size() < quantidade and not candidatos.is_empty():
+			var pos = candidatos.pop_back()
+			
+			grid[pos.y][pos.x] = TERMINAL_TILE.duplicate()
+			
+			terminais.push_back(pos)
+			print("MapGenerator: Terminal forçado em ", pos)
+
+	if terminais.size() < quantidade:
+		print("MapGenerator: ERRO CRÍTICO. Não há chão suficiente no mapa para os terminais!")
+	else:
+		print("MapGenerator: Terminais posicionados com sucesso: ", terminais)
+		
 	return terminais
+
+# Função auxiliar para limpar o código
+func _eh_posicao_valida_para_terminal(grid, pos: Vector2i, inicio: Vector2i, lista_atual: Array, dist_min: int) -> bool:
+	if grid[pos.y][pos.x] != CHAO: return false
+	if pos == inicio: return false
+	if pos in lista_atual: return false
+	
+	# Verifica distância do player
+	if (abs(pos.x - inicio.x) + abs(pos.y - inicio.y)) < dist_min: return false
+	
+	# Verifica distância dos outros terminais
+	for t in lista_atual:
+		if (abs(pos.x - t.x) + abs(pos.y - t.y)) < dist_min: return false
+		
+	return true
 
 # Retorna lista de Vector2i que são "pontas soltas" no labirinto
 func encontrar_becos_sem_saida(grid: Array, exit_pos: Vector2i, player_pos: Vector2i) -> Array[Vector2i]:

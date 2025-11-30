@@ -113,6 +113,12 @@ func start_moving(dir: Vector2):
 		print("Player: Bloqueado por baú.")
 		return
 	
+	# Se estiver no Hub E tiver um NPC no alvo, bloqueia o passo.
+	if Game_State.is_in_hub:
+		if main_script.is_tile_occupied_by_npc(target_grid_pos):
+			print("Player: NPC bloqueando caminho no Hub.")
+			return
+	
 	# 2. Se livre, anda normal
 	if main_script.is_tile_passable(target_grid_pos):
 		#AudioManager.play_sfx(sfx_teste)
@@ -150,13 +156,14 @@ func move_towards_target(delta):
 		
 		var tile_data: MapTileData = main_script.get_tile_data(grid_pos)
 		if tile_data:
-			Game_State.tempo_jogador += tile_data.custo_tempo
-			
-			if tile_data.custo_tempo > 0:
-				var txt = "-%d" % tile_data.custo_tempo
-				# Offset (0, -16) para aparecer acima da cabeça do player
-				main_script.spawn_floating_text(global_position + Vector2(0, -24), txt, Color.CYAN)
-			
+			# Só soma o tempo se NÃO estiver no Hub
+			if not Game_State.is_in_hub:
+				Game_State.tempo_jogador += tile_data.custo_tempo
+				
+				if tile_data.custo_tempo > 0:
+					var txt = "-%d" % tile_data.custo_tempo
+					main_script.spawn_floating_text(global_position + Vector2(0, -24), txt, Color.CYAN)
+		
 			if tile_data.dano_hp > 0:
 				Game_State.vida_jogador -= tile_data.dano_hp
 				main_script.spawn_floating_text(global_position + Vector2(-16, -8), "-%d" % tile_data.dano_hp, Color.RED)
@@ -215,8 +222,20 @@ func _usar_drone_avancado(efeito: String, tipo: ItemData.ItemTipo):
 		print("Player: Item (Efeito: %s | Tipo: %s) não encontrado." % [efeito, tipo])
 		
 func _unhandled_input(event):
+	#Se estivermos no meio de um diálogo, ignora ação.
 	if Game_State.is_dialogue_active:
 		return
+	
+	# Se estivermos no Hub, bloqueamos teclas de atalho (1-5) e uso de item equipado.
+	if Game_State.is_in_hub:
+		# Verifica se apertou teclas de atalho ou botão de usar item
+		var tentou_usar_drone = (event is InputEventKey and event.pressed and event.keycode >= KEY_1 and event.keycode <= KEY_5)
+		var tentou_usar_mao = event.is_action_pressed("usar_item_equipado")
+		
+		if tentou_usar_drone or tentou_usar_mao:
+			print("Player: Uso de itens/drones bloqueado nesta área segura.")
+			return # Cancela a ação
+	
 	if event is InputEventKey and event.pressed and event.keycode == KEY_1:
 		_usar_drone_avancado(ItemData.EFEITO_DRONE_PATH_ASTAR, ItemData.ItemTipo.DRONE_TEMPORARIO)
 	if event is InputEventKey and event.pressed and event.keycode == KEY_2:
@@ -265,6 +284,14 @@ func _unhandled_input(event):
 				npc.interagir()
 				return # Sai da função, não interage com chão
 		
+		# --- CHECK DE LOJA ---
+		if main_script.has_method("get_shop_at_position"):
+			var shop = main_script.get_shop_at_position(tile_frente)
+			if shop:
+				print("Player: Loja encontrada.")
+				shop.interagir()
+				return
+		
 		if main_script.has_method("get_chest_at_position"):
 			var bau = main_script.get_chest_at_position(tile_frente)
 			if bau:
@@ -275,7 +302,7 @@ func _unhandled_input(event):
 		# 3. Se não tem NPC nem baú, interage com o chão (Save/Terminal)
 		# Checa vitória primeiro
 		if grid_pos == main_script.vertice_fim and main_script.saida_destrancada:
-			print(">>> PARABÉNS! VOCÊ VENCEU O JOGO! <<<")
+			main_script.chegou_saida(grid_pos)
 			return
 			
 		var current_tile: MapTileData = main_script.get_tile_data(grid_pos)

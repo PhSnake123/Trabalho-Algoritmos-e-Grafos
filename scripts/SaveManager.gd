@@ -4,6 +4,7 @@ extends Node
 # --- Configuração ---
 const SAVE_PATH_AUTO = "user://grafos_quest_auto.json"
 const SAVE_PATH_PLAYER = "user://grafos_quest_player.json"
+const SAVE_PATH_HUB_BACKUP = "user://grafos_quest_hub_backup.json"
 
 # Configuração do Rewind Global (Item 1)
 @export var snapshot_interval: float = 120.0 
@@ -87,9 +88,12 @@ func _get_current_game_state_dict() -> Dictionary:
 
 	var data = {}
 	
-	# Dados gerais do GameState
+	# 1. GameState Geral
 	data["gamestate"] = {
+		"is_in_hub": Game_State.is_in_hub,
+		"bad_ending_count": Game_State.bad_ending_count,
 		"tempo_jogador": Game_State.tempo_jogador,
+		"caminho_jogador": _serialize_path(Game_State.caminho_jogador),
 		"tempo_par_level": Game_State.tempo_par_level,
 		"vida_jogador": Game_State.vida_jogador,
 		"moedas": Game_State.moedas,
@@ -104,25 +108,37 @@ func _get_current_game_state_dict() -> Dictionary:
 		"musica_atual_path": Game_State.musica_atual_path
 	}
 	
-	# Dados do Player
+	# 2. Dados do Player (Sempre salvamos)
 	data["player"] = {
 		"grid_pos_x": player_ref.grid_pos.x,
 		"grid_pos_y": player_ref.grid_pos.y,
 		"last_facing": player_ref.last_facing
 	}
 	
-	# Dados do Mundo + INIMIGOS
-	data["world"] = {
-		"vertice_fim_x": main_ref.vertice_fim.x,
-		"vertice_fim_y": main_ref.vertice_fim.y,
-		"saida_destrancada": main_ref.saida_destrancada,
-		"map_data": _serialize_map(main_ref.map_data),
-		"fog_data": main_ref.fog_logic.fog_data,
-		"active_paths": main_ref.get_paths_save_data(),
-		"enemies_data": main_ref.get_enemies_state_data(),
-		"npcs_data": main_ref.get_npcs_state_data(),
-		"chests_data": main_ref.get_chests_state_data()
-	}
+	# 3. Dados do Mundo (BIFURCAÇÃO PARA EVITAR O ERRO)
+	if Game_State.is_in_hub:
+		# --- ROTA A: HUB ---
+		# Salvamos apenas um marcador. Não tentamos ler fog_logic ou map_data
+		# porque eles não existem ou são irrelevantes no Hub fixo.
+		data["world"] = {
+			"is_hub_save": true,
+			"npcs_data": main_ref.get_npcs_state_data(),
+			"chests_data": main_ref.get_chests_state_data()
+		}
+	else:
+		# --- ROTA B: FASE PROCEDURAL ---
+		# Aqui salvamos tudo, pois o mapa foi gerado proceduralmente
+		data["world"] = {
+			"vertice_fim_x": main_ref.vertice_fim.x,
+			"vertice_fim_y": main_ref.vertice_fim.y,
+			"saida_destrancada": main_ref.saida_destrancada,
+			"map_data": _serialize_map(main_ref.map_data),
+			"fog_data": main_ref.fog_logic.fog_data, # Agora seguro, pois só roda na fase
+			"active_paths": main_ref.get_paths_save_data(),
+			"enemies_data": main_ref.get_enemies_state_data(),
+			"npcs_data": main_ref.get_npcs_state_data(),
+			"chests_data": main_ref.get_chests_state_data()
+		}
 	
 	return data
 
@@ -132,109 +148,139 @@ func _apply_game_state_dict(data: Dictionary):
 		return
 	
 	var gs_data = data["gamestate"]
+	Game_State.bad_ending_count = int(gs_data.get("bad_ending_count", 0))
 	
-	if gs_data.has("moedas"):
-		Game_State.moedas = int(gs_data["moedas"])
+	# Restaura Globais
+	Game_State.is_in_hub = gs_data.get("is_in_hub", false)
+	Game_State.moedas = int(gs_data.get("moedas", 0))
+	Game_State.tempo_jogador = float(gs_data.get("tempo_jogador", 0.0))
+	
+	if gs_data.has("caminho_jogador"):
+		Game_State.caminho_jogador = _deserialize_path(gs_data["caminho_jogador"])
 	else:
-		Game_State.moedas = 0 # Fallback para saves antigos
+		Game_State.caminho_jogador.clear() # Só limpa se o save for antigo/vazio
 	
-	# ... (Carregamento do GameState, Inventário e Player permanece igual) ...
-	Game_State.tempo_jogador = gs_data["tempo_jogador"]
+	# Carrega caminho para printar na tela de vitória
 	if gs_data.has("indice_fase_atual"):
 		LevelManager.indice_fase_atual = int(gs_data["indice_fase_atual"])
-		print("SaveManager: Índice de fase restaurado para: ", LevelManager.indice_fase_atual)
 	else:
-		# Fallback para saves antigos (assume fase 0)
 		LevelManager.indice_fase_atual = 0
 	
-	if gs_data.has("musica_atual_path"):
-		Game_State.musica_atual_path = gs_data["musica_atual_path"]
+	if gs_data.has("indice_fase_atual"):
+		LevelManager.indice_fase_atual = int(gs_data["indice_fase_atual"])
 	else:
-		Game_State.musica_atual_path = "" # Fallback para saves antigos
-	
-	Game_State.tempo_par_level = gs_data["tempo_par_level"]
-	Game_State.vida_jogador = gs_data["vida_jogador"]
-	Game_State.optional_objectives = gs_data["optional_objectives"]
-	Game_State.terminais_ativos = gs_data["terminais_ativos"]
-	Game_State.terminais_necessarios = gs_data["terminais_necessarios"]
-	Game_State.enemy_states = gs_data["enemy_states"]
-	Game_State.npc_states = gs_data["npc_states"]
-	Game_State.interactable_states = gs_data["interactable_states"]
+		LevelManager.indice_fase_atual = 0
+		
+	Game_State.musica_atual_path = gs_data.get("musica_atual_path", "")
+	Game_State.tempo_par_level = gs_data.get("tempo_par_level", 0.0)
+	Game_State.vida_jogador = gs_data.get("vida_jogador", 50)
+	Game_State.optional_objectives = gs_data.get("optional_objectives", {})
+	Game_State.terminais_ativos = gs_data.get("terminais_ativos", 0)
+	Game_State.terminais_necessarios = gs_data.get("terminais_necessarios", 0)
+	Game_State.enemy_states = gs_data.get("enemy_states", {})
+	Game_State.npc_states = gs_data.get("npc_states", {})
+	Game_State.interactable_states = gs_data.get("interactable_states", {})
 	
 	Game_State.inventario_jogador.items.assign(_deserialize_inventory(gs_data["inventory"]))
 	
+	# Posiciona Jogador
 	var p_data = data["player"]
 	var new_grid_pos = Vector2i(p_data["grid_pos_x"], p_data["grid_pos_y"])
 	player_ref.grid_pos = new_grid_pos
 	player_ref.last_facing = p_data["last_facing"]
-	
 	player_ref.global_position = (Vector2(new_grid_pos) * main_ref.TILE_SIZE) + (Vector2.ONE * main_ref.TILE_SIZE / 2.0)
 	player_ref.reset_state_on_load()
+
+	# ========================================================
+	# ROTA A: CARREGAMENTO DO HUB
+	# ========================================================
+	if Game_State.is_in_hub:
+		print("SaveManager: Detectado save no HUB.")
+		
+		# 1. Carrega Visual Fixo
+		if LevelManager.hub_definition:
+			main_ref._carregar_mapa_fixo(LevelManager.hub_definition.cena_fixa)
+		
+		# 2. Configura Câmera e Névoa Dummy
+		main_ref._setup_camera()
+		if not main_ref.fog_logic: # Cria se não existir
+			main_ref.fog_logic = FogOfWar.new(main_ref.largura_atual, main_ref.altura_atual, 100)
+		main_ref.fog_logic.revelar_tudo()
+		if main_ref.tile_map_fog:
+			main_ref.tile_map_fog.hide()
+
+		# 3. RECUPERAÇÃO DE ENTIDADES (NPCs e Baús)
+		var w_data = data["world"]
+		
+		# Tenta carregar NPCs do save
+		if w_data.has("npcs_data") and not w_data["npcs_data"].is_empty():
+			main_ref.load_npcs_state_data(w_data["npcs_data"])
+		else:
+			# FALLBACK: Se o save não tem NPCs (save antigo/bugado), spawna os padrões!
+			print("SaveManager: Nenhum NPC no save do Hub. Spawnando padrões...")
+			if LevelManager.hub_definition:
+				main_ref._spawnar_npcs(LevelManager.hub_definition)
+		
+		# Tenta carregar Baús do save
+		if w_data.has("chests_data"):
+			main_ref.load_chests_state_data(w_data["chests_data"])
+
+		print("SaveManager: Hub restaurado com NPCs.")
+		return 
+
+	# ========================================================
+	# ROTA B: CARREGAMENTO PROCEDURAL
+	# ========================================================
 	
-	# --- CARREGAMENTO DO MUNDO ---
 	var w_data = data["world"]
 	main_ref.vertice_fim = Vector2i(w_data["vertice_fim_x"], w_data["vertice_fim_y"])
 	
 	if w_data.has("saida_destrancada"):
 		main_ref.saida_destrancada = w_data["saida_destrancada"]
 	else:
-		# Fallback para saves antigos (assume fechada por segurança)
 		main_ref.saida_destrancada = false
 	
-	# 1. Mapa e Fog
+	# Carrega Mapa
 	main_ref.map_data = _deserialize_map(w_data["map_data"])
 	
-	# ATUALIZA AS DIMENSÕES IMEDIATAMENTE APÓS CARREGAR
 	if main_ref.map_data.size() > 0:
 		main_ref.altura_atual = main_ref.map_data.size()
 		main_ref.largura_atual = main_ref.map_data[0].size()
-		# Atualiza também o FogOfWar para evitar erros visuais
-		main_ref.fog_logic.largura = main_ref.largura_atual
-		main_ref.fog_logic.altura = main_ref.altura_atual
+		# Reconstrói a névoa com tamanho correto antes de carregar dados
+		main_ref.fog_logic = FogOfWar.new(main_ref.largura_atual, main_ref.altura_atual, 5)
 	
 	main_ref.fog_logic.fog_data = w_data["fog_data"]
 	
 	if w_data.has("chests_data"):
 		main_ref.load_chests_state_data(w_data["chests_data"])
-	else:
-		pass
 	
-	# 2. Reconstrução do Grafo
-	print("SaveManager: Reconstruindo grafo e algoritmos baseados no save...")
+	# Grafo
 	main_ref.grafo = Graph.new(main_ref.map_data)
 	main_ref.dijkstra = Dijkstra.new(main_ref.grafo)
 	main_ref.astar = AStar.new(main_ref.grafo)
 	main_ref.bfs = BFS.new(main_ref.grafo)
 	
-	# Reconstrói a lista 'terminais_pos' baseada nos tiles que acabamos de carregar
 	main_ref.reconstruir_dados_logicos_do_mapa()
 	
-	# 3. Caminhos (Drones)
 	if w_data.has("active_paths"):
 		main_ref.load_paths_save_data(w_data["active_paths"])
 	else:
 		main_ref.caminhos_ativos.clear()
 		main_ref.tile_map_path.clear()
 		
-	# --- CARREGA OS INIMIGOS ---
-	# Verifica se existe a chave para compatibilidade com saves antigos
 	if w_data.has("enemies_data"):
 		main_ref.load_enemies_state_data(w_data["enemies_data"])
-	else:
-		print("SaveManager: Save antigo detectado. Inimigos resetados pelo spawn padrão.")
 	
-	# ---CARREGA OS NPCS ---	
 	if w_data.has("npcs_data"):
 		main_ref.load_npcs_state_data(w_data["npcs_data"])
 	else:
-		# Se for um save antigo ou novo jogo sem dados, spawna um aleatório (fallback)
-		main_ref._spawnar_npc_aleatorio()
+		main_ref._spawnar_npcs(LevelManager.get_dados_fase_atual())
 	
 	main_ref._draw_map()
 	main_ref.update_fog(player_ref.grid_pos)
+	main_ref._setup_camera()
 	
-	Game_State.caminho_jogador.clear()
-	Game_State.player_action_history.clear()
+	# Game_State.caminho_jogador.clear()
 	Game_State.log_player_position(player_ref.grid_pos)
 
 # ===============================================
@@ -362,3 +408,76 @@ func _deserialize_baus(dict: Dictionary) -> Dictionary:
 			var pos = Vector2i(int(split[0]), int(split[1]))
 			deserialized[pos] = dict[key]
 	return deserialized
+
+func save_hub_backup():
+	print("SaveManager: Criando ponto de restauração do Hub...")
+	_save_game_to_path(SAVE_PATH_HUB_BACKUP)
+
+func load_hub_backup():
+	print("SaveManager: Restaurando backup do Hub...")
+	if FileAccess.file_exists(SAVE_PATH_HUB_BACKUP):
+		_load_game_from_path(SAVE_PATH_HUB_BACKUP)
+		return true
+	else:
+		print("SaveManager: Nenhum backup de Hub encontrado.")
+		return false
+
+# No final do SaveManager.gd
+
+func aplicar_punicao_e_reverter_para_hub():
+	print("SaveManager: Iniciando protocolo de punição (Revertendo para Hub)...")
+	
+	# 1. Verifica se existe um backup seguro do Hub
+	if not FileAccess.file_exists(SAVE_PATH_HUB_BACKUP):
+		print("SaveManager: ERRO CRÍTICO. Nenhum backup de Hub encontrado. Resetando save.")
+		# Se não tem backup, infelizmente o jogador perde tudo ou reinicia a fase atual.
+		# Por segurança, vamos apenas deletar o save do player para forçar New Game
+		DirAccess.remove_absolute(SAVE_PATH_PLAYER)
+		return
+
+	# 2. Lê o arquivo de Backup do Hub (Raw Text)
+	var file_read = FileAccess.open(SAVE_PATH_HUB_BACKUP, FileAccess.READ)
+	var json_text = file_read.get_as_text()
+	file_read.close()
+	
+	# 3. Converte para Dicionário para podermos editar
+	var data = JSON.parse_string(json_text)
+	if data == null:
+		print("SaveManager: Erro ao ler JSON do Backup.")
+		return
+
+	# 4. INJETA A PUNIÇÃO
+	# Pegamos o valor atual da memória (que já foi incrementado na BadEndingScreen)
+	# e forçamos ele dentro do dicionário do backup antigo.
+	data["gamestate"]["bad_ending_count"] = Game_State.bad_ending_count
+	
+	# (Opcional) Zera as moedas ganhas na fase fracassada?
+	# data["gamestate"]["moedas"] = ... (Se quiser punir o bolso também)
+
+	# 5. SOBRESCREVE o Save Principal (Player) com esse Backup Modificado
+	# Agora, quando o jogador clicar em "Carregar", ele vai ler este arquivo (que é o Hub)
+	var file_player = FileAccess.open(SAVE_PATH_PLAYER, FileAccess.WRITE)
+	file_player.store_string(JSON.stringify(data, "\t"))
+	file_player.close()
+	
+	# 6. Atualiza também o Backup (para manter a consistência da punição no futuro)
+	var file_backup = FileAccess.open(SAVE_PATH_HUB_BACKUP, FileAccess.WRITE)
+	file_backup.store_string(JSON.stringify(data, "\t"))
+	file_backup.close()
+	
+	print("SaveManager: Punição aplicada. Save revertido para o Hub com BadEndingCount = ", Game_State.bad_ending_count)
+
+# Converta Array[Vector2i] para Array de Arrays [[x,y], [x,y]]
+func _serialize_path(caminho: Array[Vector2i]) -> Array:
+	var result = []
+	for pos in caminho:
+		result.push_back([pos.x, pos.y])
+	return result
+
+# Converte de volta para Vector2i
+func _deserialize_path(data: Array) -> Array[Vector2i]:
+	var result: Array[Vector2i] = []
+	for p in data:
+		# p é [x, y]
+		result.push_back(Vector2i(int(p[0]), int(p[1])))
+	return result

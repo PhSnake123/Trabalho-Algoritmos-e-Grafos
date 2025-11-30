@@ -5,9 +5,8 @@
 
 [resource]
 script = ExtResource("1_63yxu")
-nome_item = "Drone de Limpeza"
-descricao = "Remove tiles de dano e com custo de tempo maior que 1(Lama).
-"
+nome_item = "Defragger"
+descricao = "Remove blocos de dano e com custo de tempo maior que 1."
 tipo_item = 5
 efeito = "DRONE_TERRAFORMER"
 alcance_maximo = 10

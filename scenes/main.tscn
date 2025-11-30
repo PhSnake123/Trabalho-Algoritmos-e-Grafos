@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://cg6sxg3vu5rem" path="res://scripts/main.gd" id="1_jyhfs"]
 [ext_resource type="PackedScene" uid="uid://n66wgisnf4m8" path="res://scenes/Coin.tscn" id="2_a8y0u"]
-[ext_resource type="Texture2D" uid="uid://smcmfrkg7y4" path="res://assets/tiles/floor.png" id="2_sugp2"]
 [ext_resource type="PackedScene" uid="uid://bwlug2n6ykdpq" path="res://scenes/Chest.tscn" id="3_jkv2x"]
 [ext_resource type="Texture2D" uid="uid://dteln61cwgllk" path="res://assets/tiles/path.png" id="3_o6xl0"]
 [ext_resource type="Texture2D" uid="uid://bu5xoyyg7e6iv" path="res://assets/tiles/save.png" id="4_choun"]
@@ -11,9 +10,10 @@
 [ext_resource type="Texture2D" uid="uid://cxdpw4dopfpp4" path="res://assets/tiles/8x8tiles.png" id="6_a8y0u"]
 [ext_resource type="Texture2D" uid="uid://cn8q3sqjaovqw" path="res://assets/tiles/poison.png" id="7_85g3d"]
 [ext_resource type="Texture2D" uid="uid://dmqnji6pnxejb" path="res://assets/tiles/blackfloor.png" id="7_a8y0u"]
+[ext_resource type="Texture2D" uid="uid://xcyycyqnh6y" path="res://assets/tiles/floor2.png" id="7_jkv2x"]
 [ext_resource type="Texture2D" uid="uid://bsqjpjpjo74dl" path="res://assets/tiles/block.png" id="8_choun"]
-[ext_resource type="Texture2D" uid="uid://bupg1asydry0q" path="res://assets/tiles/terminal.png" id="10_ya4ey"]
 [ext_resource type="Texture2D" uid="uid://d0lw48376chfr" path="res://assets/tiles/lama.png" id="11_eb6dy"]
+[ext_resource type="Texture2D" uid="uid://dmuniwl8bstmv" path="res://assets/tiles/flag.png" id="12_a8y0u"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_tefeu"]
 texture = ExtResource("7_a8y0u")
@@ -410,7 +410,7 @@ texture = ExtResource("6_a8y0u")
 16:4/0/terrains_peering_bit/top_side = 0
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_tbgi4"]
-texture = ExtResource("2_sugp2")
+texture = ExtResource("7_jkv2x")
 0:0/0 = 0
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_o6xl0"]
@@ -430,7 +430,7 @@ texture = ExtResource("4_choun")
 0:0/0 = 0
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_trceg"]
-texture = ExtResource("10_ya4ey")
+texture = ExtResource("12_a8y0u")
 0:0/0 = 0
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_a8y0u"]

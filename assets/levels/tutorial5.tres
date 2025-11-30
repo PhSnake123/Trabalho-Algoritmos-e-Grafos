@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="LevelDefinition" load_steps=10 format=3 uid="uid://bjkhjhpcgucf1"]
+
+[ext_resource type="Script" uid="uid://ci6dlknyw5xas" path="res://scripts/EnemySpawnData.gd" id="1_42c8x"]
+[ext_resource type="Script" uid="uid://c6yn1hesl0qc7" path="res://scripts/NpcSpawnData.gd" id="2_ftp41"]
+[ext_resource type="PackedScene" uid="uid://wy711p61hc6f" path="res://scenes/Enemy.tscn" id="2_vf5js"]
+[ext_resource type="AudioStream" uid="uid://cesfpsep1gjy" path="res://Audio/music/MoonlightSonata.mp3" id="3_ftp41"]
+[ext_resource type="Script" uid="uid://d34551vbrdkqx" path="res://scripts/LevelDefinition.gd" id="3_joqio"]
+[ext_resource type="PackedScene" uid="uid://bnaq07rewb3r7" path="res://scenes/NPC.tscn" id="4_ne1su"]
+[ext_resource type="Script" uid="uid://oeymi4016qjo" path="res://scripts/Tutorial5.gd" id="7_ne1su"]
+
+[sub_resource type="Resource" id="Resource_ed447"]
+script = ExtResource("1_42c8x")
+inimigo_cena = ExtResource("2_vf5js")
+metadata/_custom_type_script = "uid://ci6dlknyw5xas"
+
+[sub_resource type="Resource" id="Resource_vddn1"]
+script = ExtResource("2_ftp41")
+npc_cena = ExtResource("4_ne1su")
+metadata/_custom_type_script = "uid://c6yn1hesl0qc7"
+
+[resource]
+script = ExtResource("3_joqio")
+nome_fase = "Tutorial Final"
+musica_fundo = ExtResource("3_ftp41")
+tamanho = Vector2i(23, 19)
+cor_ambiente = Color(0.6039216, 1, 0.57254905, 1)
+qtd_moedas = 100
+modo_jogo = "MST"
+qtd_terminais = 2
+gerar_save_point = false
+salas_qtd = 1
+qtd_portas = 20
+tiles_especiais = {
+"Dano": 20,
+"Lama": 10
+}
+lista_inimigos = Array[ExtResource("1_42c8x")]([SubResource("Resource_ed447")])
+lista_npcs = Array[ExtResource("2_ftp41")]([SubResource("Resource_vddn1")])
+script_logico = ExtResource("7_ne1su")
+metadata/_custom_type_script = "uid://d34551vbrdkqx"

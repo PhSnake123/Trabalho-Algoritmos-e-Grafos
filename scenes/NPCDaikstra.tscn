@@ -1,0 +1,58 @@
+[gd_scene load_steps=9 format=3 uid="uid://l4ldd3yuau4m"]
+
+[ext_resource type="Script" uid="uid://fovvreds02nr" path="res://scripts/npc_daikstra.gd" id="1_mrf0h"]
+[ext_resource type="Texture2D" uid="uid://8hsdxxn7m70t" path="res://assets/sprites/Char_002_Idle.png" id="2_mrf0h"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1wk0h"]
+atlas = ExtResource("2_mrf0h")
+region = Rect2(0, 0, 24, 24)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xdj5m"]
+atlas = ExtResource("2_mrf0h")
+region = Rect2(24, 0, 24, 24)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f4hv7"]
+atlas = ExtResource("2_mrf0h")
+region = Rect2(48, 0, 24, 24)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_x2b1k"]
+atlas = ExtResource("2_mrf0h")
+region = Rect2(72, 0, 24, 24)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_5t8s8"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1wk0h")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xdj5m")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_f4hv7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_x2b1k")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_6xvi5"]
+size = Vector2(8, 15)
+
+[node name="NPC" type="CharacterBody2D"]
+collision_layer = 8
+script = ExtResource("1_mrf0h")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+z_index = 6
+sprite_frames = SubResource("SpriteFrames_5t8s8")
+autoplay = "default"
+frame_progress = 0.86589396
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+z_index = 1
+position = Vector2(0, 3)
+shape = SubResource("RectangleShape2D_6xvi5")

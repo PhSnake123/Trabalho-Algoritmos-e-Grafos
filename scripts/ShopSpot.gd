@@ -60,7 +60,16 @@ func interagir():
 		if sucesso:
 			# 3. Entrega o Item
 			# Importante: duplicate() para não alterar o recurso original se tiver durabilidade
-			Game_State.inventario_jogador.adicionar_item(item_a_venda.duplicate())
+			var item_novo = item_a_venda.duplicate()
+			
+			# 2. Garante que o item saiba qual é seu arquivo original
+			# Se o item à venda tem um arquivo de origem, passamos para a cópia.
+			if item_a_venda.resource_path != "":
+				item_novo.arquivo_origem = item_a_venda.resource_path
+			elif item_a_venda.arquivo_origem != "":
+				item_novo.arquivo_origem = item_a_venda.arquivo_origem
+			
+			Game_State.inventario_jogador.adicionar_item(item_novo)
 			
 			print("Shop: Compra realizada!")
 			

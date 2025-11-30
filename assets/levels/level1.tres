@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="LevelDefinition" load_steps=10 format=3 uid="uid://q51cb1cil4og"]
+[gd_resource type="Resource" script_class="LevelDefinition" load_steps=9 format=3 uid="uid://q51cb1cil4og"]
 
 [ext_resource type="Script" uid="uid://d34551vbrdkqx" path="res://scripts/LevelDefinition.gd" id="1_obbn4"]
 [ext_resource type="Script" uid="uid://ci6dlknyw5xas" path="res://scripts/EnemySpawnData.gd" id="1_vgqkp"]
@@ -10,21 +10,6 @@
 [sub_resource type="Resource" id="Resource_e23yg"]
 script = ExtResource("1_vgqkp")
 inimigo_cena = ExtResource("2_e23yg")
-quantidade = 2
-metadata/_custom_type_script = "uid://ci6dlknyw5xas"
-
-[sub_resource type="Resource" id="Resource_11fua"]
-script = ExtResource("1_vgqkp")
-inimigo_cena = ExtResource("2_e23yg")
-ai_type = 0
-moedas_drop = 15
-cor_modulate = Color(0.59507024, 0, 0.11169373, 1)
-hp_maximo = 60
-ataque = 15
-defesa = 3
-poise = 5
-knockback = 3
-passos_por_turno = 2
 metadata/_custom_type_script = "uid://ci6dlknyw5xas"
 
 [sub_resource type="Resource" id="Resource_xbu8s"]
@@ -37,6 +22,8 @@ script = ExtResource("1_obbn4")
 nome_fase = "Starting Node"
 texto_intro = "Sua jornada começa aqui."
 musica_fundo = ExtResource("5_n2dr7")
+tamanho = Vector2i(19, 15)
+fog_enabled = true
 qtd_baus = 2
 modo_jogo = "MST"
 qtd_terminais = 2
@@ -45,10 +32,10 @@ salas_tamanho_min = 3
 salas_tamanho_max = 5
 chance_quebra_paredes = 0.3
 tiles_especiais = {
-"Dano": 50,
-"Lama": 30
+"Dano": 5,
+"Lama": 5
 }
 qtd_moedas = 10
-lista_inimigos = Array[ExtResource("1_vgqkp")]([SubResource("Resource_e23yg"), SubResource("Resource_11fua")])
+lista_inimigos = Array[ExtResource("1_vgqkp")]([SubResource("Resource_e23yg")])
 lista_npcs = Array[ExtResource("2_6r273")]([SubResource("Resource_xbu8s")])
 metadata/_custom_type_script = "uid://d34551vbrdkqx"
