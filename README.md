@@ -9,7 +9,7 @@
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 <div align="center">
-  <img src="https://media.discordapp.net/attachments/420419746044051457/1443081014149775461/grafos_logo2.png?ex=6929bfac&is=69286e2c&hm=141bd186edfb5477764f60352d536ecff68768c55415837c732951a8dee89e9b&=&format=webp&quality=lossless&width=1376&height=751" alt="logo" width="600">
+  <img src="https://cdn.discordapp.com/attachments/420419746044051457/1443081014149775461/grafos_logo2.png?ex=692db42c&is=692c62ac&hm=96d8443b83cbd546804edf24d6cdcde36a7883ebeef67ce6ccb5864de3e849f2" alt="logo" width="600">
 </div>
 
 > *Logo provisório gerado pelo Gemini.*
@@ -57,7 +57,7 @@ Os algoritmos de grafo acima são utilizados em quase todos os aspectos do jogo:
 ## Como Jogar
 
 <div align="center">
-  <img src="https://media.discordapp.net/attachments/420419746044051457/1443049195828285591/image.png?ex=6927a7ca&is=6926564a&hm=459c62f0f3de1d74ae61b9cefdcc807b0a07da24229b59d978371c207e2671b6&=&format=webp&quality=lossless" alt="Gameplay Demo" width="600">
+  <img src="https://cdn.discordapp.com/attachments/420419746044051457/1443049195828285591/image.png?ex=692d968a&is=692c450a&hm=90d0b512400033fb4e58cbb2f5f181974eb23e41bd7ef7279dc07feb6a91126f" alt="Gameplay Demo" width="600">
 </div>
 
 1.  **Mova-se:** Use as setas ou `WASD`. O jogo é baseado em turnos: inimigos só se movem quando você se move.
