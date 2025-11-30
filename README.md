@@ -9,7 +9,7 @@
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 <div align="center">
-  <img src="https://cdn.discordapp.com/attachments/420419746044051457/1443081014149775461/grafos_logo2.png?ex=692db42c&is=692c62ac&hm=96d8443b83cbd546804edf24d6cdcde36a7883ebeef67ce6ccb5864de3e849f2" alt="logo" width="600">
+  <img src="https://private-user-images.githubusercontent.com/96603651/520536576-675bf009-7a60-420c-a9de-92e7bbaa86cf.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NjQ1NDI2MTUsIm5iZiI6MTc2NDU0MjMxNSwicGF0aCI6Ii85NjYwMzY1MS81MjA1MzY1NzYtNjc1YmYwMDktN2E2MC00MjBjLWE5ZGUtOTJlN2JiYWE4NmNmLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTExMzAlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUxMTMwVDIyMzgzNVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTBjMzYyNDQzN2IzMWQzZTZlMWUyZTljNGE3YzM0NzAyMTY0ZGY1MTEyYjkyZTViMDc3MGVhMTNiNzZkOWZmOWMmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.PuY_MVeQe9BCZaXYJgYuN_-WV8hgc7UQV4sAeS_rWXE" alt="logo" width="600">
 </div>
 
 > *Logo provisório gerado pelo Gemini.*
@@ -57,7 +57,7 @@ Os algoritmos de grafo acima são utilizados em quase todos os aspectos do jogo:
 ## Como Jogar
 
 <div align="center">
-  <img src="https://cdn.discordapp.com/attachments/420419746044051457/1443049195828285591/image.png?ex=692d968a&is=692c450a&hm=90d0b512400033fb4e58cbb2f5f181974eb23e41bd7ef7279dc07feb6a91126f" alt="Gameplay Demo" width="600">
+  <img src="https://private-user-images.githubusercontent.com/96603651/520537072-3ca98b91-3f18-49fb-b47b-b31c38a803b1.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NjQ1NDI2MTUsIm5iZiI6MTc2NDU0MjMxNSwicGF0aCI6Ii85NjYwMzY1MS81MjA1MzcwNzItM2NhOThiOTEtM2YxOC00OWZiLWI0N2ItYjMxYzM4YTgwM2IxLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTExMzAlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUxMTMwVDIyMzgzNVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTE3MWNmN2VkYmNkOWRhZjFjZTFiOTI5MjNmMWE2ODI0M2YxMWY2OTgzODhiNDI3ZDczYjY4ZjY4NjJhMDRkMGUmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.Jj-j4HWuELuR9aKO6WcLAyS08LsEXD93lbNrzlTuJN8" alt="Gameplay Demo" width="800">
 </div>
 
 1.  **Mova-se:** Use as setas ou `WASD`. O jogo é baseado em turnos: inimigos só se movem quando você se move.
