@@ -728,6 +728,36 @@ func usar_item(item: ItemData):
 			ativar_drone_terraformer(player.grid_pos, item.alcance_maximo)
 			return
 		
+		ItemData.EFEITO_CURA_HP:
+			print("Main: Aplicando cura...")
+			var cura_real = 0
+			var max_vida = Game_State.max_vida_jogador
+			
+			# Lógica Híbrida: Se valor <= 1.0, trata como porcentagem. Se > 1.0, trata como valor fixo.
+			if item.valor_efeito <= 1.0 and item.valor_efeito > 0.0:
+				cura_real = int(max_vida * item.valor_efeito)
+			else:
+				cura_real = int(item.valor_efeito)
+			
+			# Aplica a cura respeitando o teto
+			var vida_anterior = Game_State.vida_jogador
+			Game_State.vida_jogador = min(max_vida, Game_State.vida_jogador + cura_real)
+			
+			var curado = Game_State.vida_jogador - vida_anterior
+			
+			# Feedback Visual e Consumo
+			if curado > 0:
+				spawn_floating_text(player.global_position + Vector2(0, -20), "+%d HP" % curado, Color.GREEN)
+				if item.durabilidade > 0:
+					item.durabilidade -= 1
+					if item.durabilidade <= 0:
+						Game_State.inventario_jogador.remover_item(item)
+						Game_State.equipar_item(null)
+			else:
+				spawn_floating_text(player.global_position + Vector2(0, -20), "HP CHEIO", Color.WHITE)
+			
+			return
+		
 		ItemData.EFEITO_ABRE_PORTA:
 			var minha_pos = player.grid_pos
 			var direcao_olhar = Vector2i.ZERO
@@ -937,8 +967,7 @@ func _spawnar_inimigos(level_data: LevelDefinition):
 		var qtd = spawn_data.quantidade
 		
 		for i in range(qtd):
-			# CHAMA A FUNÇÃO DE SPAWN GARANTIDO
-			# O raio_minimo_spawn vem das variáveis exportadas no topo do Main.gd
+			# Spawn Garantido (Hard Fix)
 			var pos_final = _encontrar_posicao_spawn_garantida(raio_minimo_spawn, [])
 			
 			if pos_final != Vector2i(-1, -1):
@@ -949,12 +978,16 @@ func _spawnar_inimigos(level_data: LevelDefinition):
 					novo_inimigo.main_ref = self
 					novo_inimigo.player_ref = player
 					
-					# Define grid_pos se existir
 					if "grid_pos" in novo_inimigo:
 						novo_inimigo.grid_pos = pos_final
 					
-					# --- 1. APLICA A INTELIGÊNCIA ---
+					# --- 1. APLICA A INTELIGÊNCIA E COMPORTAMENTO (ATUALIZADO) ---
 					novo_inimigo.ai_type = spawn_data.ai_type
+					novo_inimigo.behavior = spawn_data.behavior # [NOVO] Aplica Sentinela/Turret/Etc
+					
+					# [NOVO] Aplica Raio de Detecção se foi configurado (> -1)
+					if spawn_data.raio_deteccao > -1:
+						novo_inimigo.raio_deteccao_bfs = spawn_data.raio_deteccao
 					
 					# --- 2. APLICA A COR (VISUAL) ---
 					if spawn_data.cor_modulate != Color.WHITE:
@@ -965,20 +998,11 @@ func _spawnar_inimigos(level_data: LevelDefinition):
 						novo_inimigo.max_hp = spawn_data.hp_maximo
 						novo_inimigo.current_hp = spawn_data.hp_maximo
 						
-					if spawn_data.ataque > -1:
-						novo_inimigo.atk = spawn_data.ataque
-						
-					if spawn_data.defesa > -1:
-						novo_inimigo.def = spawn_data.defesa
-						
-					if spawn_data.poise > -1:
-						novo_inimigo.poise = spawn_data.poise
-						
-					if spawn_data.knockback > -1:
-						novo_inimigo.knockback_power = spawn_data.knockback
-					
-					if spawn_data.passos_por_turno > -1:
-						novo_inimigo.passos_por_turno = spawn_data.passos_por_turno
+					if spawn_data.ataque > -1: novo_inimigo.atk = spawn_data.ataque
+					if spawn_data.defesa > -1: novo_inimigo.def = spawn_data.defesa
+					if spawn_data.poise > -1: novo_inimigo.poise = spawn_data.poise
+					if spawn_data.knockback > -1: novo_inimigo.knockback_power = spawn_data.knockback
+					if spawn_data.passos_por_turno > -1: novo_inimigo.passos_por_turno = spawn_data.passos_por_turno
 					
 					if "loot_moedas" in novo_inimigo:
 						novo_inimigo.loot_moedas = spawn_data.moedas_drop
@@ -1018,29 +1042,37 @@ func get_enemies_state_data() -> Array:
 	return enemies_data
 
 # 2. Recebe uma lista de dados e recria os inimigos exatamente onde estavam
+# Main.gd
+
 func load_enemies_state_data(loaded_data: Array):
 	print("Main: Recarregando %d inimigos do save..." % loaded_data.size())
 	
-	# A. Limpa inimigos existentes (do spawn automático ou da sessão anterior)
+	# A. Limpa inimigos existentes
 	var inimigos_atuais = get_tree().get_nodes_in_group("inimigos")
 	for inimigo in inimigos_atuais:
 		inimigo.queue_free()
 	
-	# B. Recria inimigos a partir dos dados
+	# B. Recria inimigos
 	for data in loaded_data:
-		if cena_inimigo:
-			var novo_inimigo = cena_inimigo.instantiate()
+		var cena_para_instanciar = cena_inimigo # Padrão (Slime)
+		
+		# [FIX] Tenta carregar a cena específica salva (Monstro Diferente)
+		if data.has("scene_path") and data["scene_path"] != "":
+			if ResourceLoader.exists(data["scene_path"]):
+				cena_para_instanciar = load(data["scene_path"])
+			else:
+				print("AVISO: Cena de inimigo não encontrada: ", data["scene_path"])
+		
+		if cena_para_instanciar:
+			var novo_inimigo = cena_para_instanciar.instantiate()
 			
-			# Configura referências ANTES de adicionar à árvore
+			# Configura referências
 			novo_inimigo.main_ref = self
 			novo_inimigo.player_ref = player
 			
-			# Adiciona à cena
 			add_child(novo_inimigo)
 			
-			# Carrega os dados específicos (HP, Posição)
-			# Nota: O _ready do inimigo roda ao adicionar child, mas o load_save_data
-			# vai sobrescrever a posição logo em seguida, o que é o comportamento desejado.
+			# Carrega os dados (Vida, Posição, IA, etc)
 			novo_inimigo.load_save_data(data)
 
 # NOVA FUNÇÃO DE SPAWN DE NPV

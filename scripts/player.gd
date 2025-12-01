@@ -158,11 +158,43 @@ func move_towards_target(delta):
 		if tile_data:
 			# Só soma o tempo se NÃO estiver no Hub
 			if not Game_State.is_in_hub:
-				Game_State.tempo_jogador += tile_data.custo_tempo
+				# --- LÓGICA DAS BOTAS (Início) ---
+				var custo_final = tile_data.custo_tempo
 				
-				if tile_data.custo_tempo > 0:
-					var txt = "-%d" % tile_data.custo_tempo
+				# Verifica se o terreno é difícil (> 1) para aplicar a bota
+				if custo_final > 1.0:
+					# 1. Procura a melhor bota no inventário
+					var melhores_botas: ItemData = null
+					var maior_efeito = -1.0
+					
+					for item in Game_State.inventario_jogador.items:
+						if item.efeito == ItemData.EFEITO_PASSIVA_BOTAS: # Certifique-se que essa const existe no ItemData
+							if item.valor_efeito > maior_efeito:
+								maior_efeito = item.valor_efeito
+								melhores_botas = item
+					
+					# 2. Se encontrou, aplica o efeito
+					if melhores_botas:
+						# Fórmula: max(tempo - efeito, 1)
+						custo_final = max(custo_final - melhores_botas.valor_efeito, 1.0)
+						print("Botas reduziram custo para: ", custo_final)
+						
+						# 3. Reduz durabilidade por ter pisado em terreno difícil
+						if melhores_botas.durabilidade > 0:
+							melhores_botas.durabilidade -= 1
+							if melhores_botas.durabilidade <= 0:
+								Game_State.inventario_jogador.remover_item(melhores_botas)
+								if Game_State.item_equipado == melhores_botas:
+									Game_State.equipar_item(null)
+								print("Player: Botas quebraram!")
+
+				# Aplica o tempo calculado
+				Game_State.tempo_jogador += custo_final
+				
+				if custo_final > 0:
+					var txt = "-%d" % custo_final
 					main_script.spawn_floating_text(global_position + Vector2(0, -24), txt, Color.CYAN)
+				# --- LÓGICA DAS BOTAS (Fim) ---
 		
 			if tile_data.dano_hp > 0:
 				Game_State.vida_jogador -= tile_data.dano_hp

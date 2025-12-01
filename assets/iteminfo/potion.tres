@@ -6,10 +6,10 @@
 [resource]
 script = ExtResource("1_qdb6v")
 nome_item = "Patch"
-descricao = "Aplica Patch de Integridade ao recipiente. Cura 20 de vida."
+descricao = "Aplica Patch de Integridade ao recipiente. Cura 50% de vida."
 tipo_item = 5
-preco_base = 20
+preco_base = 50
 efeito = "CURA_HP"
-valor_efeito = 20.0
+valor_efeito = 0.5
 textura_icon = ExtResource("2_718pt")
 metadata/_custom_type_script = "uid://d01dm40km4s0s"

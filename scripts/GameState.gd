@@ -93,7 +93,23 @@ func reset_run_state():
 				print("ERRO: Falha ao carregar recurso em ", path)
 		else:
 			print("ERRO: Arquivo não existe: ", path)
-
+	
+	# === [DEBUG] INJEÇÃO DE ITENS DE TESTE ===
+		# Adiciona Poção e Botas automaticamente para teste
+	var itens_teste = [
+		"res://assets/iteminfo/potion.tres",
+		"res://assets/iteminfo/boots.tres"
+	]
+		
+	for path in itens_teste:
+		if ResourceLoader.exists(path):
+			var res = load(path)
+			var item = res.duplicate()
+			item.arquivo_origem = path # Garante que o ícone funcione no load
+			Game_State.inventario_jogador.adicionar_item(item)
+			print("DEBUG: Item de teste adicionado: ", item.nome_item)
+	# =========================================
+	
 	add_safe.call("res://assets/iteminfo/save_terminal.tres")
 	add_safe.call("res://assets/iteminfo/chave.tres")
 	add_safe.call("res://assets/iteminfo/DroneAStar.tres")

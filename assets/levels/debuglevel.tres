@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="LevelDefinition" load_steps=11 format=3 uid="uid://bwmmq3aapn8pw"]
+
+[ext_resource type="Script" uid="uid://ci6dlknyw5xas" path="res://scripts/EnemySpawnData.gd" id="1_dtdbu"]
+[ext_resource type="PackedScene" uid="uid://wy711p61hc6f" path="res://scenes/Enemy.tscn" id="2_8s2lt"]
+[ext_resource type="Script" uid="uid://c6yn1hesl0qc7" path="res://scripts/NpcSpawnData.gd" id="2_ytii5"]
+[ext_resource type="Script" uid="uid://d34551vbrdkqx" path="res://scripts/LevelDefinition.gd" id="3_8s2lt"]
+[ext_resource type="PackedScene" uid="uid://c7b14t62lbhak" path="res://scenes/EnemyMalware.tscn" id="3_okbqc"]
+[ext_resource type="AudioStream" uid="uid://cesfpsep1gjy" path="res://Audio/music/MoonlightSonata.mp3" id="4_okbqc"]
+
+[sub_resource type="Resource" id="Resource_sjdmy"]
+script = ExtResource("1_dtdbu")
+inimigo_cena = ExtResource("2_8s2lt")
+metadata/_custom_type_script = "uid://ci6dlknyw5xas"
+
+[sub_resource type="Resource" id="Resource_jla0y"]
+script = ExtResource("1_dtdbu")
+inimigo_cena = ExtResource("3_okbqc")
+behavior = 2
+moedas_drop = 10
+metadata/_custom_type_script = "uid://ci6dlknyw5xas"
+
+[sub_resource type="Resource" id="Resource_okbqc"]
+script = ExtResource("1_dtdbu")
+inimigo_cena = ExtResource("2_8s2lt")
+ai_type = 0
+behavior = 1
+metadata/_custom_type_script = "uid://ci6dlknyw5xas"
+
+[sub_resource type="Resource" id="Resource_tsx5m"]
+script = ExtResource("1_dtdbu")
+inimigo_cena = ExtResource("3_okbqc")
+behavior = 3
+raio_deteccao = 4
+cor_modulate = Color(0, 0.8776587, 0, 1)
+hp_maximo = 10
+metadata/_custom_type_script = "uid://ci6dlknyw5xas"
+
+[resource]
+script = ExtResource("3_8s2lt")
+nome_fase = "Debug"
+texto_intro = "fase de testes"
+musica_fundo = ExtResource("4_okbqc")
+tamanho = Vector2i(25, 25)
+cor_tilemap = Color(0.65536743, 0.9970054, 0.99999994, 1)
+intensidade_glow = 10.0
+salas_qtd = 1
+tiles_especiais = {
+"Dano": 20,
+"Lama": 20
+}
+lista_inimigos = Array[ExtResource("1_dtdbu")]([SubResource("Resource_sjdmy"), SubResource("Resource_jla0y"), SubResource("Resource_okbqc"), SubResource("Resource_tsx5m")])
+metadata/_custom_type_script = "uid://d34551vbrdkqx"

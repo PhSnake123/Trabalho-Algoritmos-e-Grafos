@@ -7,6 +7,8 @@ extends Resource
 @export var quantidade: int = 1       
 @export var flag_secreta: String = "" 
 @export var ai_type: Enemy.EnemyAI = Enemy.EnemyAI.SMART
+@export var behavior: Enemy.BehaviorType = Enemy.BehaviorType.PADRAO # Lógica (Sentinela, Turret...)
+@export var raio_deteccao: int = -1 # -1 usa o padrão do script do inimigo
 
 # Economia
 @export_group("Economia")
