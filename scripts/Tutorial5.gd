@@ -34,7 +34,7 @@ func _tocar_dialogo_tutorial():
 		"AVISO: Setor instável. Dados corrompidos detectados.",
 		"Peculiar... Isso não deveria estar aqui. Parece que esse setor foi infectado com programas nocivos.",
 		"Estou anexando um Patch de Integridade ao seu Database. Use isso se você sofrer danos consideráveis. Mas seu Protocolo de Segurança deve ser robusto o suficiente para lidar com uma ameaça tão pequena.",
-		"Você já está equipado com o Executável da Navalha de Occam. Este programa roda um protocolo de ataque contra ameaças próximas.",
+		"Você já está equipado com o Executável SIGKILL. Este programa roda um protocolo de ataque contra ameaças próximas.",
 		"Quando o inimigo estiver à sua frente, simplesmente dê um passo em direção a ele e o Executável será acionado.",
 		"Quanto aos bits flutuantes, ignore-os. São apenas fragmentos de memória corrompida. O Coletor cuidará deles.",
 		"Execute todos os obstáculos e atinja o resultado otimizado. Um bom Agente deve ser adaptável. Este será seu teste final."

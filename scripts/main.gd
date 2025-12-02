@@ -1666,6 +1666,34 @@ func _eh_spawn_valido(pos: Vector2i, raio: int, evitar: Array[Vector2i]) -> bool
 	
 	return true
 
+func criar_projetil_visual(origem: Vector2, destino: Vector2):
+	# 1. Cria o objeto visual na hora
+	var projetil = Sprite2D.new()
+	
+	# 2. Gera uma textura simples (um quadrado/bolinha amarela brilhante)
+	# Se você tiver um sprite de bala, pode usar: projetil.texture = load("res://...")
+	var tex = GradientTexture2D.new()
+	tex.width = 8; tex.height = 8
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(0.5, 0.0)
+	var grad = Gradient.new()
+	grad.colors = [Color.YELLOW, Color(1.0, 0.0, 0.0, 0.576)] # Amarelo -> Transparente
+	tex.gradient = grad
+	projetil.texture = tex
+	
+	# 3. Configura posição inicial
+	add_child(projetil)
+	projetil.global_position = origem
+	projetil.z_index = 10 # Para ficar em cima de tudo
+	
+	# 4. Anima o movimento (Tiro rápido: 0.15 segundos)
+	var t = create_tween()
+	t.tween_property(projetil, "global_position", destino, 0.3)
+	
+	# 5. Quando terminar o movimento, deleta o sprite
+	t.tween_callback(projetil.queue_free)
+
 # --- TESTE TEMPORÁRIO BFS ---
 """func executar_teste_bfs():
 	print("--- INICIANDO TESTE VISUAL DO BFS ---")

@@ -365,6 +365,20 @@ func _unhandled_input(event):
 			# Opcional: Tocar animação ou som
 		else:
 			print("Player: Nenhum item equipado!")
+		
+		# --- QUICK EQUIP (Atalhos Q / E) ---
+	if event is InputEventKey and event.pressed:
+		
+		# Q: Cicla para a Esquerda (Anterior)
+		if event.keycode == KEY_Q:
+			print("Player: Quick Equip Anterior")
+			Game_State.ciclar_item_equipado(-1)
+			
+		# E (ou W): Cicla para a Direita (Próximo)
+		# Mudei para KEY_E para evitar conflito com andar para Cima (W)
+		elif event.keycode == KEY_W: 
+			print("Player: Quick Equip Próximo")
+			Game_State.ciclar_item_equipado(1)
 
 # --- SISTEMA DE DANO E KNOCKBACK DO PLAYER ---
 

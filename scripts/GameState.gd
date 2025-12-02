@@ -236,6 +236,37 @@ func processar_resultado_fase(tolerancia: float):
 		
 	print("Vitória! Lucro: %d. Status: %s" % [moedas_ganhas_na_fase, status_vitoria])
 
+# Adicione no GameState.gd
+
+# Direção: -1 para Esquerda (Anterior), 1 para Direita (Próximo)
+func ciclar_item_equipado(direcao: int):
+	var lista = inventario_jogador.items
+	
+	# 1. Se não tem itens, não faz nada
+	if lista.is_empty():
+		return
+
+	# 2. Se nada equipado, equipa o primeiro da lista
+	if item_equipado == null:
+		equipar_item(lista[0])
+		return
+
+	# 3. Descobre onde estamos na lista
+	var index_atual = lista.find(item_equipado)
+	
+	# Segurança: Se o item equipado não está na lista (bug raro), equipa o primeiro
+	if index_atual == -1:
+		equipar_item(lista[0])
+		return
+
+	# 4. Calcula o novo índice com Loop (Wrap-around)
+	# A fórmula (index + dir + tamanho) % tamanho funciona para ambos os lados
+	var tamanho = lista.size()
+	var novo_index = (index_atual + direcao + tamanho) % tamanho
+	
+	# 5. Equipa o novo item
+	equipar_item(lista[novo_index])
+
 """
 func processar_vitoria_fase():
 	print("Processando vitória...")

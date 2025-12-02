@@ -200,16 +200,25 @@ func _executar_bump_attack(alvo):
 
 func _tentar_ataque_distancia():
 	print("Turret disparando!")
-	# Simula tiro: Dano direto se estiver no alcance (já validado pelo BFS/Alerta)
-	# Opcional: Adicionar checagem de Raycast aqui para ver se tem parede no meio
 	
-	if player_ref.has_method("receber_dano"):
+	# --- EFEITO VISUAL DO TIRO ---
+	if main_ref and main_ref.has_method("criar_projetil_visual"):
+		# Ajuste visual: Se o sprite tiver offset, podemos somar Vector2(0, -8) para sair do "rosto"
+		main_ref.criar_projetil_visual(global_position, player_ref.global_position)
+	
+	# --- DANO (Mantido igual) ---
+	# Pequeno delay para o dano sincronizar com a chegada do projétil (0.15s)
+	await get_tree().create_timer(0.15).timeout
+	
+	# Verifica se o player ainda existe antes de dar dano (segurança)
+	if is_instance_valid(player_ref) and player_ref.has_method("receber_dano"):
 		player_ref.receber_dano(atk, 0, grid_pos)
 		
-	# Feedback visual na Turret
-	var tween = create_tween()
-	tween.tween_property(sprite, "modulate", Color.MAGENTA, 0.1)
-	tween.tween_property(sprite, "modulate", Color.WHITE, 0.1)
+	# Feedback visual na própria Turret (Recuo/Cor)
+	if sprite:
+		var tween = create_tween()
+		tween.tween_property(sprite, "modulate", Color.MAGENTA, 0.1)
+		tween.tween_property(sprite, "modulate", Color.WHITE, 0.1)
 
 # --- COMBATE: RECEBER DANO ---
 func receber_dano(atk_atacante: int, kb_power: int, pos_atacante: Vector2i):
