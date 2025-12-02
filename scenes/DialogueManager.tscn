@@ -1,6 +1,8 @@
-[gd_scene load_steps=7 format=3 uid="uid://cjt0skq1bn241"]
+[gd_scene load_steps=9 format=3 uid="uid://cjt0skq1bn241"]
 
 [ext_resource type="Script" uid="uid://b7ispk76lp5lf" path="res://scripts/DialogueManager.gd" id="1_m70fm"]
+[ext_resource type="FontFile" uid="uid://ct0pe0vtm7kwl" path="res://assets/fonts/Kenney Future.ttf" id="2_cyvvh"]
+[ext_resource type="FontFile" uid="uid://d1qhgw51bhm0g" path="res://assets/fonts/Kenney Future Narrow.ttf" id="3_xi3yh"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_m70fm"]
 bg_color = Color(0, 0, 0, 0.5882353)
@@ -120,11 +122,17 @@ layout_mode = 2
 theme_override_colors/font_color = Color(1, 0, 0, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 5
+theme_override_fonts/font = ExtResource("2_cyvvh")
 theme_override_font_sizes/font_size = 24
 
 [node name="TextLabel" type="RichTextLabel" parent="DialogBox/MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_fonts/normal_font = ExtResource("2_cyvvh")
+theme_override_fonts/bold_font = ExtResource("2_cyvvh")
+theme_override_fonts/bold_italics_font = ExtResource("2_cyvvh")
+theme_override_fonts/italics_font = ExtResource("3_xi3yh")
+theme_override_fonts/mono_font = ExtResource("2_cyvvh")
 theme_override_font_sizes/normal_font_size = 22
 theme_override_font_sizes/bold_font_size = 20
 theme_override_font_sizes/bold_italics_font_size = 20
@@ -139,6 +147,8 @@ theme_override_constants/separation = 40
 
 [node name="Button" type="Button" parent="DialogBox/MarginContainer/VBoxContainer/ButtonsContainer"]
 layout_mode = 2
+theme_override_fonts/font = ExtResource("2_cyvvh")
+theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_cyvvh")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_xi3yh")
 theme_override_styles/hover = SubResource("StyleBoxFlat_ebjfy")
@@ -146,6 +156,8 @@ theme_override_styles/focus = SubResource("StyleBoxFlat_01vcs")
 
 [node name="Button2" type="Button" parent="DialogBox/MarginContainer/VBoxContainer/ButtonsContainer"]
 layout_mode = 2
+theme_override_fonts/font = ExtResource("2_cyvvh")
+theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_cyvvh")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_xi3yh")
 theme_override_styles/hover = SubResource("StyleBoxFlat_ebjfy")

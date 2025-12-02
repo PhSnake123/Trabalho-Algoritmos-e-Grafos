@@ -1,0 +1,23 @@
+[gd_scene load_steps=3 format=3 uid="uid://csyfgkfhlqjur"]
+
+[ext_resource type="Shader" uid="uid://brsxwv8s3qu5b" path="res://scenes/CRT.gdshader" id="1_edea4"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4acyo"]
+shader = ExtResource("1_edea4")
+shader_parameter/scanline_count = 150.000007125
+shader_parameter/scanline_opacity = 0.10000000475
+shader_parameter/warp_amount = 0.10000000475
+shader_parameter/vignette_amount = 0.30000001425
+shader_parameter/chromatic_aberration = 1.0000000475
+
+[node name="CRTLayer" type="CanvasLayer"]
+layer = 200
+
+[node name="ColorRect" type="ColorRect" parent="."]
+z_index = 200
+material = SubResource("ShaderMaterial_4acyo")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
