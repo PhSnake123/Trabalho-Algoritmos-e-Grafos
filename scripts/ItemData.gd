@@ -31,7 +31,15 @@ const EFEITO_DRONE_ANALISE_PONTE = "DRONE_ANALISE_PONTE"
 const EFEITO_SAVE_GAME = "SAVE_GAME"
 const EFEITO_DRONE_SCANNER = "DRONE_SCANNER"
 const EFEITO_DRONE_TERRAFORMER = "DRONE_TERRAFORMER"
+const EFEITO_DRONE_ATK_BFS = "DRONE_ATK_BFS"
+const EFEITO_ESCOPETA = "ESCOPETA"
 const EFEITO_PASSIVA_BOTAS = "PASSIVA_BOTAS"
+const EFEITO_UPGRADE_ATK = "UPGRADE_ATK"
+const EFEITO_UPGRADE_DEF = "UPGRADE_DEF"
+const EFEITO_UPGRADE_MAX_HP = "UPGRADE_MAX_HP"
+const EFEITO_UPGRADE_MAX_DEF = "UPGRADE_MAX_DEF"
+const EFEITO_UPGRADE_KNOCKBACK = "UPGRADE_KNOCKBACK"
+const EFEITO_UPGRADE_KILL9_DMG = "UPGRADE_KILL9_DMG"
 # --- Propriedades do Item ---
 # Estas variáveis aparecerão no Inspetor do Godot
 # quando criarmos os arquivos .tres
@@ -48,6 +56,9 @@ const EFEITO_PASSIVA_BOTAS = "PASSIVA_BOTAS"
 
 # Um valor numérico para o efeito (ex: 20.0 para CURA_HP, ou 5.0 para raio do drone)
 @export var valor_efeito: float = 0.0 
+
+# Força do empurrão. -1 = Padrão do código (ex: 6 para escopeta).
+@export var knockback: int = -1
 
 #Define o comprimento do caminho desenhado (em tiles).
 # -1 = Caminho inteiro até o destino.

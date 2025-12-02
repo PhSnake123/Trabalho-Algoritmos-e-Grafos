@@ -1,7 +1,11 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://wglql1osnai6"]
+[gd_resource type="Resource" script_class="ItemData" load_steps=4 format=3 uid="uid://wglql1osnai6"]
 
 [ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_hboxe"]
-[ext_resource type="Texture2D" uid="uid://b0vd80srvkiq8" path="res://assets/sprites/chave.png" id="2_u2mf3"]
+[ext_resource type="Texture2D" uid="uid://dy5a4km87rkei" path="res://assets/sprites/pixel_icons_by_oceansdream.png" id="2_u2mf3"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rwnqn"]
+atlas = ExtResource("2_u2mf3")
+region = Rect2(27.55568, 51.777893, 15.1111145, 14.222229)
 
 [resource]
 script = ExtResource("1_hboxe")
@@ -9,5 +13,5 @@ nome_item = "Decodificador"
 descricao = "Abre uma porta trancada."
 tipo_item = 1
 efeito = "ABRE_PORTA"
-textura_icon = ExtResource("2_u2mf3")
+textura_icon = SubResource("AtlasTexture_rwnqn")
 metadata/_custom_type_script = "uid://d01dm40km4s0s"

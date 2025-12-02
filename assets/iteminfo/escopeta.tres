@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=4 format=3 uid="uid://d2ft2c4gp0ri7"]
+
+[ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_1c6nv"]
+[ext_resource type="Texture2D" uid="uid://dy5a4km87rkei" path="res://assets/sprites/pixel_icons_by_oceansdream.png" id="2_iytjd"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_frqqs"]
+atlas = ExtResource("2_iytjd")
+region = Rect2(74.666794, 24.666786, 20.888885, 22.666664)
+
+[resource]
+script = ExtResource("1_1c6nv")
+nome_item = "Escopeta"
+descricao = "Lança inimigo pra longe e dá dano."
+preco_base = 10
+efeito = "ESCOPETA"
+valor_efeito = 20.0
+knockback = 10
+alcance_maximo = 3
+durabilidade = 5
+textura_icon = SubResource("AtlasTexture_frqqs")
+metadata/_custom_type_script = "uid://d01dm40km4s0s"

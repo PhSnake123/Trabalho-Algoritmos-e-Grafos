@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=4 format=3 uid="uid://2sehxa2q6el4"]
+
+[ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_hh3nq"]
+[ext_resource type="Texture2D" uid="uid://dy5a4km87rkei" path="res://assets/sprites/pixel_icons_by_oceansdream.png" id="2_kwlly"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_udc56"]
+atlas = ExtResource("2_kwlly")
+region = Rect2(29.777908, 4.2223396, 15.555557, 17.333336)
+
+[resource]
+script = ExtResource("1_hh3nq")
+nome_item = "SIGKILL UPGRADE"
+descricao = "Patch de upgrade para a SIGKILL. Potencial ofensivo aumenta."
+preco_base = 500
+efeito = "UPGRADE_ATK"
+valor_efeito = 10.0
+textura_icon = SubResource("AtlasTexture_udc56")
+metadata/_custom_type_script = "uid://d01dm40km4s0s"

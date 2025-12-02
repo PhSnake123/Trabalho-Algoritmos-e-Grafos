@@ -97,6 +97,7 @@ func _get_current_game_state_dict() -> Dictionary:
 		"tempo_par_level": Game_State.tempo_par_level,
 		"vida_jogador": Game_State.vida_jogador,
 		"moedas": Game_State.moedas,
+		"stats_jogador": Game_State.stats_jogador,
 		"optional_objectives": Game_State.optional_objectives,
 		"terminais_ativos": Game_State.terminais_ativos,
 		"terminais_necessarios": Game_State.terminais_necessarios,
@@ -153,6 +154,14 @@ func _apply_game_state_dict(data: Dictionary):
 	# Restaura Globais
 	Game_State.is_in_hub = gs_data.get("is_in_hub", false)
 	Game_State.moedas = int(gs_data.get("moedas", 0))
+	
+	if gs_data.has("stats_jogador"):
+		Game_State.stats_jogador = gs_data["stats_jogador"]
+		# Segurança para tipos numéricos (JSON às vezes transforma int em float)
+		for key in Game_State.stats_jogador:
+			if typeof(Game_State.stats_jogador[key]) == TYPE_FLOAT:
+				Game_State.stats_jogador[key] = int(Game_State.stats_jogador[key])
+	
 	Game_State.tempo_jogador = float(gs_data.get("tempo_jogador", 0.0))
 	
 	if gs_data.has("caminho_jogador"):

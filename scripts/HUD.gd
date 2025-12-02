@@ -8,6 +8,8 @@ extends CanvasLayer
 @onready var inventory_container = $Control/ContainerInventario
 @onready var container_moedas = $Control/BarraSuperior/HBoxContainer/ContainerMoedas
 @onready var label_moedas = $Control/BarraSuperior/HBoxContainer/ContainerMoedas/LabelMoedas
+@onready var container_kill9 = $Control/BarraSuperior/HBoxContainer/ContainerKill9
+@onready var label_balas = $Control/BarraSuperior/HBoxContainer/ContainerKill9/LabelBalas
 @export var limite_aceitavel_multiplier: float = 2.0
 var total_HP = Game_State.vida_jogador
 
@@ -20,6 +22,9 @@ func _ready():
 	if Game_State.has_signal("moedas_alteradas"):
 		Game_State.moedas_alteradas.connect(_on_moedas_alteradas)
 	
+	if Game_State.has_signal("municao_kill9_alterada"):
+		Game_State.municao_kill9_alterada.connect(_on_municao_kill9_alterada)
+	
 	# Se tiver moedas (ex: load game), mostra e atualiza.
 	if Game_State.moedas > 0:
 		container_moedas.show()
@@ -30,6 +35,8 @@ func _ready():
 	
 	# Atualiza a primeira vez (caso comece com item)
 	_on_item_equipado_mudou(Game_State.item_equipado)
+	
+	_on_municao_kill9_alterada(Game_State.stats_jogador["kill9_ammo"])
 	
 	# Garante que o inventário comece fechado
 	inventory_container.hide()
@@ -145,4 +152,27 @@ func forcar_atualizacao_total():
 	else:
 		container_moedas.hide()	
 	
+	_on_municao_kill9_alterada(Game_State.stats_jogador["kill9_ammo"])
+	
 	print("HUD: Visual atualizado após Load.")
+
+# Função para atualizar o contador de munição
+func _on_municao_kill9_alterada(nova_qtd: int):
+	if label_balas:
+		# Pega o máximo para mostrar "Atual / Max"
+		var maximo = Game_State.stats_jogador["kill9_max_ammo"]
+		label_balas.text = "Munição: %d / %d" % [nova_qtd, maximo]
+		
+		# Feedback Visual: Cor muda quando está acabando
+		if nova_qtd == 0:
+			label_balas.modulate = Color.RED
+		elif nova_qtd <= 3:
+			label_balas.modulate = Color.YELLOW
+		else:
+			label_balas.modulate = Color.CYAN # Ou a cor temática do seu jogo
+			
+		# Efeito de "Pulinho" (Pop) igual ao das moedas
+		if container_kill9.visible:
+			var t = create_tween()
+			t.tween_property(label_balas, "scale", Vector2(1.2, 1.2), 0.1)
+			t.tween_property(label_balas, "scale", Vector2(1.0, 1.0), 0.1)

@@ -24,6 +24,7 @@ extends Resource
 
 # Economia da Fase
 @export_group("Economia e Tesouros")
+@export var lista_baus_especificos: Array[ChestSpawnData] = []
 @export var qtd_baus: int = 0          # Quantos baús spawnar
 @export var moedas_por_bau: int = 50   # Quanto tem dentro de cada baú
 @export var qtd_moedas: int = 0

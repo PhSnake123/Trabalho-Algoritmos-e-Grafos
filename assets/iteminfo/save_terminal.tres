@@ -1,12 +1,16 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://bu1k71g557xsf"]
+[gd_resource type="Resource" script_class="ItemData" load_steps=4 format=3 uid="uid://bu1k71g557xsf"]
 
 [ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_0nno3"]
-[ext_resource type="Texture2D" uid="uid://dgwt66l24lk2r" path="res://assets/sprites/saveterminal.png" id="2_0125m"]
+[ext_resource type="Texture2D" uid="uid://dy5a4km87rkei" path="res://assets/sprites/pixel_icons_by_oceansdream.png" id="2_0125m"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3bk4d"]
+atlas = ExtResource("2_0125m")
+region = Rect2(76.44458, 77.55567, 15.111099, 15.555557)
 
 [resource]
 script = ExtResource("1_0nno3")
 nome_item = "Terminal de Save"
 descricao = "Salva progresso atual. Uso único."
 efeito = "SAVE_GAME"
-textura_icon = ExtResource("2_0125m")
+textura_icon = SubResource("AtlasTexture_3bk4d")
 metadata/_custom_type_script = "uid://d01dm40km4s0s"

@@ -1,7 +1,11 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://d0ut6aj4fpf4s"]
+[gd_resource type="Resource" script_class="ItemData" load_steps=4 format=3 uid="uid://d0ut6aj4fpf4s"]
 
 [ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_k04wo"]
-[ext_resource type="Texture2D" uid="uid://xk13yltsepun" path="res://assets/sprites/drone4.png" id="2_xgh50"]
+[ext_resource type="Texture2D" uid="uid://dy5a4km87rkei" path="res://assets/sprites/pixel_icons_by_oceansdream.png" id="2_xgh50"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3mrqw"]
+atlas = ExtResource("2_xgh50")
+region = Rect2(23.55568, 23.777897, 23.555557, 24.444447)
 
 [resource]
 script = ExtResource("1_k04wo")
@@ -10,5 +14,5 @@ descricao = "Revela parte do caminho mínimo até a saída."
 tipo_item = 5
 efeito = "DRONE_PATH_DIJKSTRA"
 alcance_maximo = 40
-textura_icon = ExtResource("2_xgh50")
+textura_icon = SubResource("AtlasTexture_3mrqw")
 metadata/_custom_type_script = "uid://d01dm40km4s0s"

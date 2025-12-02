@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=4 format=3 uid="uid://88gq5ue0xo3b"]
+
+[ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_j6qh0"]
+[ext_resource type="Texture2D" uid="uid://dy5a4km87rkei" path="res://assets/sprites/pixel_icons_by_oceansdream.png" id="2_7ieoq"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_n7q05"]
+atlas = ExtResource("2_7ieoq")
+region = Rect2(54.666794, 2.8890076, 13.777786, 18.666668)
+
+[resource]
+script = ExtResource("1_j6qh0")
+nome_item = "Virus-Scanner"
+descricao = "Scannea por inimigos ao redor e causa dano."
+tipo_item = 5
+efeito = "DRONE_ATK_BFS"
+valor_efeito = 20.0
+alcance_maximo = 10
+durabilidade = 5
+textura_icon = SubResource("AtlasTexture_n7q05")
+metadata/_custom_type_script = "uid://d01dm40km4s0s"

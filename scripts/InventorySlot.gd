@@ -54,6 +54,10 @@ func clear_slot():
 # AQUI ESTÁ A CORREÇÃO DO ERRO:
 # Detectamos o clique diretamente no Painel
 func _gui_input(event):
+	# DEBUG: Verifica se o mouse está sequer chegando aqui
+	#if event is InputEventMouse:
+	#	print("Slot recebeu evento de mouse: ", event)
+	
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if my_item:
 			accept_event() # Diz para o Godot que consumimos o clique

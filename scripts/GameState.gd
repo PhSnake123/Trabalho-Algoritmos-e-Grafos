@@ -41,6 +41,20 @@ var moedas_ganhas_na_fase: int = 0
 var status_vitoria: String = "" # "PERFEITO", "BOM"
 var falha_por_tempo: bool = false
 
+# SISTEMA DA KILL-9
+var stats_jogador = {
+	"atk": 15,
+	"def": 5,
+	"poise": 3,
+	"knockback": 5,
+	# Status da Kill-9
+	"kill9_dmg": 12,
+	"kill9_kb": 0,
+	"kill9_ammo": 9,
+	"kill9_max_ammo": 9
+}
+signal municao_kill9_alterada(nova_qtd: int)
+
 #(Finais Múltiplos)
 var optional_objectives: Dictionary = {} 
 var bad_ending_count: int = 0
@@ -65,6 +79,7 @@ func reset_run_state():
 	player_action_history.clear()
 	caminho_ideal_level.clear()
 	optional_objectives.clear()
+	recarregar_kill9()
 	
 	heat_map.clear() 
 	terminais_ativos = 0
@@ -98,7 +113,9 @@ func reset_run_state():
 		# Adiciona Poção e Botas automaticamente para teste
 	var itens_teste = [
 		"res://assets/iteminfo/potion.tres",
-		"res://assets/iteminfo/boots.tres"
+		"res://assets/iteminfo/boots.tres",
+		"res://assets/iteminfo/DroneHunter.tres",
+		"res://assets/iteminfo/escopeta.tres"
 	]
 		
 	for path in itens_teste:
@@ -266,6 +283,41 @@ func ciclar_item_equipado(direcao: int):
 	
 	# 5. Equipa o novo item
 	equipar_item(lista[novo_index])
+
+func gastar_municao_kill9() -> bool:
+	if stats_jogador["kill9_ammo"] > 0:
+		stats_jogador["kill9_ammo"] -= 1
+		municao_kill9_alterada.emit(stats_jogador["kill9_ammo"])
+		return true
+	return false
+
+func recarregar_kill9():
+	stats_jogador["kill9_ammo"] = stats_jogador["kill9_max_ammo"]
+	municao_kill9_alterada.emit(stats_jogador["kill9_ammo"])
+	print("GameState: Kill-9 recarregada (9 Balas).")
+
+# Função Universal de Upgrade
+# Ex: upgrade_atributo("atk", 2) -> Aumenta ataque em 2
+# Ex: upgrade_atributo("max_hp", 10) -> Aumenta vida máxima em 10 e cura
+func upgrade_atributo(nome_stat: String, valor: int):
+	print("GameState: Aplicando upgrade '%s' de valor %d..." % [nome_stat, valor])
+	
+	# CASO 1: Vida Máxima (Variável solta)
+	if nome_stat == "max_hp":
+		max_vida_jogador += valor
+		vida_jogador += valor # Geralmente upgrades de vida curam o valor ganho
+		# Avisa a HUD (se necessário) ou deixa o _process atualizar
+		
+	# CASO 2: Atributos no Dicionário (Atk, Def, Kill9, etc)
+	elif stats_jogador.has(nome_stat):
+		stats_jogador[nome_stat] += valor
+	
+	else:
+		print("ERRO: Stat '%s' não encontrado no GameState!" % nome_stat)
+		return
+
+	# Sincronia: Avisa o Player para reler os dados novos
+	get_tree().call_group("player", "sincronizar_stats_com_gamestate")
 
 """
 func processar_vitoria_fase():

@@ -1,15 +1,19 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://b1dmmik5qm0oe"]
+[gd_resource type="Resource" script_class="ItemData" load_steps=4 format=3 uid="uid://b1dmmik5qm0oe"]
 
 [ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_b6p2m"]
-[ext_resource type="Texture2D" uid="uid://rj2yll2pnid7" path="res://assets/sprites/drone6.png" id="2_lvaj3"]
+[ext_resource type="Texture2D" uid="uid://dy5a4km87rkei" path="res://assets/sprites/pixel_icons_by_oceansdream.png" id="2_lvaj3"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_icbyu"]
+atlas = ExtResource("2_lvaj3")
+region = Rect2(100.00014, 75.77789, 16.444443, 16.888885)
 
 [resource]
 script = ExtResource("1_b6p2m")
 nome_item = "Drone de Vanguarda"
-descricao = "Traça caminho temporário até a saída evitando tiles de dano."
+descricao = "Ilumina caminho temporário até a saída evitando tiles de dano."
 tipo_item = 6
 efeito = "DRONE_PATH_ASTAR"
 valor_efeito = 20.0
 alcance_maximo = -1
-textura_icon = ExtResource("2_lvaj3")
+textura_icon = SubResource("AtlasTexture_icbyu")
 metadata/_custom_type_script = "uid://d01dm40km4s0s"

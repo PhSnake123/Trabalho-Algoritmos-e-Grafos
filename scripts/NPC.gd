@@ -64,6 +64,12 @@ func interagir():
 			print("Jogador aceitou!")
 			# Chamamos o diálogo de novo imediatamente com a reação
 			DialogueManager.iniciar_dialogo(dialogo_op1)
+			# Chama direto o GameState. Sem item, sem inventário.
+			Game_State.upgrade_atributo("atk", 100)
+			Game_State.upgrade_atributo("def", 20)
+			Game_State.upgrade_atributo("poise", 2)
+			Game_State.upgrade_atributo("max_hp", 999)
+			Game_State.upgrade_atributo("kill9_dmg", 50)
 			escolhas += 1
 			
 		elif opcao == 1: # Escolheu a segunda (Não)

@@ -1,7 +1,11 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://0qontwq7fugd"]
+[gd_resource type="Resource" script_class="ItemData" load_steps=4 format=3 uid="uid://0qontwq7fugd"]
 
 [ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_kojrh"]
-[ext_resource type="Texture2D" uid="uid://catemvfwwrcr5" path="res://assets/sprites/drone2.png" id="2_ww8tj"]
+[ext_resource type="Texture2D" uid="uid://dy5a4km87rkei" path="res://assets/sprites/pixel_icons_by_oceansdream.png" id="2_ww8tj"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_iglad"]
+atlas = ExtResource("2_ww8tj")
+region = Rect2(97.333466, 48.666786, 22.222229, 21.777779)
 
 [resource]
 script = ExtResource("1_kojrh")
@@ -12,5 +16,5 @@ tipo_item = 5
 efeito = "DRONE_SCANNER"
 valor_efeito = 5.0
 alcance_maximo = 15
-textura_icon = ExtResource("2_ww8tj")
+textura_icon = SubResource("AtlasTexture_iglad")
 metadata/_custom_type_script = "uid://d01dm40km4s0s"

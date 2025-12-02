@@ -20,20 +20,16 @@ var moving := false
 var move_dir := Vector2.ZERO
 var last_facing := "down"
 var target_pos := Vector2.ZERO 
-var stats = {
-		"atk": 15,
-		"def": 5,
-		"poise": 3,
-		"knockback": 5
-	}
+var stats = {}
 
 @onready var main_script = get_parent()
 
 func _ready():
 	add_to_group("player")
 	global_position = (Vector2(grid_pos) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
-	target_pos = global_position 
-	SaveManager.register_player(self) 
+	target_pos = global_position
+	stats = Game_State.stats_jogador.duplicate()
+	SaveManager.register_player(self)
 
 func _physics_process(delta):
 	# Decrementa timers
@@ -233,6 +229,7 @@ func reset_state_on_load():
 	target_pos = global_position
 	move_dir = Vector2.ZERO
 	turn_timer = 0.0
+	stats = Game_State.stats_jogador.duplicate()
 	if is_node_ready() and anim:
 		anim.play("idle_" + last_facing)
 
@@ -279,7 +276,9 @@ func _unhandled_input(event):
 	if event is InputEventKey and event.pressed and event.keycode == KEY_5:
 		_usar_drone_avancado(ItemData.EFEITO_DRONE_TERRAFORMER, ItemData.ItemTipo.DRONE)
 		
-
+	if event.is_action_pressed("atacar_kill9"): # Configure "atacar_arma" no mapa de inputs ou use ui_select
+		tentar_disparar_kill9()
+	
 	# Lógica da Chave
 	if event.is_action_pressed("usar_chave"):
 		var minha_pos = grid_pos
@@ -485,3 +484,53 @@ func _atacar_inimigo_no_tile(pos: Vector2i):
 			print(">>> Player atacou Inimigo!")
 			ini.receber_dano(stats.atk, stats.knockback, grid_pos)
 			break
+
+func tentar_disparar_kill9():
+	# 1. Verifica Munição
+	if stats["kill9_ammo"] > 0:
+		
+		# 2. Define Direção
+		var dir_vec = Vector2i.DOWN
+		match last_facing:
+			"up": dir_vec = Vector2i.UP
+			"down": dir_vec = Vector2i.DOWN
+			"left": dir_vec = Vector2i.LEFT
+			"right": dir_vec = Vector2i.RIGHT
+			
+		# 3. Chama o Main para calcular o tiro (Raycast)
+		# Passamos o DANO e KNOCKBACK dinâmicos do dicionário
+		main_script.disparar_kill9(grid_pos, dir_vec, stats["kill9_dmg"], stats["kill9_kb"])
+		
+		# 4. Consome Munição
+		stats["kill9_ammo"] -= 1
+		
+		# 5. Atualiza o Mestre (GameState) imediatamente para não perder dados
+		Game_State.stats_jogador["kill9_ammo"] = stats["kill9_ammo"]
+		
+		Game_State.municao_kill9_alterada.emit(stats["kill9_ammo"])
+		
+		print("Player: Kill-9 disparada! Restam: ", stats["kill9_ammo"])
+		
+		# Cooldown visual/lógico
+		input_cooldown = ATTACK_COOLDOWN
+		anim.play("attack_" + last_facing) # Ou uma animação de tiro se tiver
+		
+	else:
+		print("Player: Kill-9 sem munição! *Click*")
+		main_script.spawn_floating_text(global_position + Vector2(0, -24), "SEM BALA", Color.GRAY)
+
+# Chamado pelo GameState quando compramos um upgrade
+func sincronizar_stats_com_gamestate():
+	# 1. Atualiza Dicionário
+	stats = Game_State.stats_jogador.duplicate()
+	
+	# Feedback Visual Rápido (Piscar Verde ou Partículas)
+	var t = create_tween()
+	t.tween_property(self, "modulate", Color.GREEN, 0.2)
+	t.tween_property(self, "modulate", Color.WHITE, 0.2)
+	
+	# 2. Atualiza Feedback Visual (Opcional, ex: som de powerup)
+	print("Player: Stats sincronizados. Novo ATK: %d | Kill-9 DMG: %d" % [stats["atk"], stats["kill9_dmg"]])
+	
+	# Se você tiver lógica de HP no Player, atualize aqui também, 
+	# mas geralmente o Player lê direto do Game_State.vida_jogador no _process ou receber_dano.

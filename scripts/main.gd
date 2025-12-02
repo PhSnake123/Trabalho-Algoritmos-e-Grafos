@@ -239,6 +239,8 @@ func _inicializar_novo_jogo(vertice_inicio: Vector2i):
 		#1. Zera o cronômetro.
 		Game_State.tempo_jogador = 0.0
 		
+		Game_State.recarregar_kill9()
+		
 		# 2. Limpa o rastro do grafo (O bug da tela de vitória)
 		Game_State.caminho_jogador.clear()
 		
@@ -728,6 +730,29 @@ func usar_item(item: ItemData):
 			ativar_drone_terraformer(player.grid_pos, item.alcance_maximo)
 			return
 		
+		ItemData.EFEITO_DRONE_ATK_BFS:
+			# O 'valor_efeito' do item será usado como DANO aqui
+			var dano_drone = int(item.valor_efeito)
+			ativar_drone_ataque(player.grid_pos, item.alcance_maximo, dano_drone)
+			return
+		
+		ItemData.EFEITO_ESCOPETA:
+			# 1. Converte a string 'last_facing' do Player para Vector2i
+			var direcao_vetor = Vector2i.DOWN # Padrão
+			match player.last_facing:
+				"up": direcao_vetor = Vector2i.UP
+				"down": direcao_vetor = Vector2i.DOWN
+				"left": direcao_vetor = Vector2i.LEFT
+				"right": direcao_vetor = Vector2i.RIGHT
+			
+			# 2. Executa a lógica
+			# Valor Efeito = Dano (ex: 20)
+			# Alcance Máximo = Distância (ex: 2 tiles)
+			ativar_escopeta(player.grid_pos, direcao_vetor, item.alcance_maximo, int(item.valor_efeito), item.knockback)
+			
+			# NÃO mexemos na durabilidade aqui. O Player.gd cuida disso.
+			return
+		
 		ItemData.EFEITO_CURA_HP:
 			print("Main: Aplicando cura...")
 			var cura_real = 0
@@ -780,6 +805,45 @@ func usar_item(item: ItemData):
 			
 			return
 		
+		# ... dentro do match item.efeito ...
+
+		ItemData.EFEITO_UPGRADE_ATK:
+			# Usa o 'valor_efeito' do item como quantidade
+			Game_State.upgrade_atributo("atk", int(item.valor_efeito))
+			spawn_floating_text(player.global_position, "ATK UP!", Color.GOLD)
+			_consumir_item_upgrade(item)
+			return
+
+		ItemData.EFEITO_UPGRADE_MAX_HP:
+			Game_State.upgrade_atributo("max_hp", int(item.valor_efeito))
+			# Atualiza HUD visualmente se necessário
+			spawn_floating_text(player.global_position, "MAX HP UP!", Color.GOLD)
+			_consumir_item_upgrade(item)
+			return
+			
+		ItemData.EFEITO_UPGRADE_MAX_DEF:
+			Game_State.upgrade_atributo("def", int(item.valor_efeito))
+			Game_State.upgrade_atributo("poise", int(item.valor_efeito/2))
+			# Atualiza HUD visualmente se necessário
+			spawn_floating_text(player.global_position, "DEFENSE & POISE UP!", Color.GOLD)
+			_consumir_item_upgrade(item)
+			return
+		
+		ItemData.EFEITO_UPGRADE_KNOCKBACK:
+			Game_State.upgrade_atributo("knockback", int(item.valor_efeito))
+			# Atualiza HUD visualmente se necessário
+			spawn_floating_text(player.global_position, "KNOCKBACK UP!", Color.GOLD)
+			_consumir_item_upgrade(item)
+			return
+		
+		ItemData.EFEITO_UPGRADE_KILL9_DMG:
+			Game_State.upgrade_atributo("kill9_dmg", int(item.valor_efeito))
+			# Atualiza HUD visualmente se necessário
+			spawn_floating_text(player.global_position, "KILL-9 UPGRADED!", Color.GOLD)
+			_consumir_item_upgrade(item)
+			return
+		# ... faça o mesmo para os outros ...
+		
 		# --- IMPLEMENTAÇÃO DO SAVE TERMINAL ---
 		ItemData.EFEITO_SAVE_GAME:
 			print("Main: Salvando jogo via Terminal Portátil...")
@@ -808,6 +872,11 @@ func usar_item(item: ItemData):
 		var duracao = int(item.valor_efeito) if eh_temporario else -1
 		var alcance = item.alcance_maximo
 		_registrar_novo_caminho(caminho, cor_caminho, alcance, duracao, eh_temporario)
+
+func _consumir_item_upgrade(item: ItemData):
+	print("Main: Upgrade consumido.")
+	Game_State.inventario_jogador.remover_item(item)
+	Game_State.equipar_item(null)
 
 func get_paths_save_data() -> Dictionary:
 	var save_data = {}
@@ -1299,58 +1368,67 @@ func spawn_floating_text(world_pos: Vector2, valor: String, cor: Color):
 # [Main.gd] - Cole isso após as outras funções de spawn, mantendo a identação correta.
 
 func _spawnar_baus(level_data: LevelDefinition):
-	if level_data.qtd_baus <= 0:
-		return
+	print("Main: Iniciando spawn de baús...")
 	
-	print("Main: Spawnando %d baús..." % level_data.qtd_baus)
-	
-	# 1. Instancia o gerador apenas para usar a matemática de encontrar becos
-	# (Assumindo que MapGenerator tem o script que ajustamos)
+	# 1. Prepara os locais (Becos sem saída)
 	var map_gen = MapGenerator.new()
 	map_gen.largura = largura_atual
 	map_gen.altura = altura_atual
-	
-	# Precisamos passar o grid atual, a saída e o player para ele não spawnar neles
 	var becos = map_gen.encontrar_becos_sem_saida(map_data, vertice_fim, player.grid_pos)
-	
-	# 2. Embaralha a lista de becos para variar onde os baús caem a cada run (se a seed permitir)
 	becos.shuffle()
 	
-	var colocados = 0
+	# 2. Monta a fila de "Tarefas" expandindo a quantidade
+	var fila_baus: Array[ChestSpawnData] = []
 	
-	for pos in becos:
-		if colocados >= level_data.qtd_baus:
-			break
+	# A. Processa a lista específica (com multiplicador)
+	for data in level_data.lista_baus_especificos:
+		var qtd_para_spawnar = max(1, data.quantidade) # Garante pelo menos 1
 		
-		# Verificação de segurança: Só coloca se o tile for Chão comum
-		# (Evita colocar em cima de Terminais ou SavePoints que também ficam no chão)
-		var tile = map_data[pos.y][pos.x]
-		if tile.tipo != "Chao":
-			continue
+		for i in range(qtd_para_spawnar):
+			fila_baus.push_back(data)
+	
+	# B. (Opcional) Preenchimento de "Cota Mínima" usando as variáveis antigas
+	# Se a lista específica gerou menos baús do que o 'qtd_baus' pede, completa com genéricos.
+	var total_atual = fila_baus.size()
+	var faltam = level_data.qtd_baus - total_atual
+	
+	if faltam > 0:
+		for i in range(faltam):
+			var bau_generico = ChestSpawnData.new()
+			bau_generico.moedas = level_data.moedas_por_bau
+			bau_generico.item_recompensa = null
+			fila_baus.push_back(bau_generico)
+	
+	# 3. Processa a criação física
+	for data_bau in fila_baus:
+		var pos_final = Vector2i(-1, -1)
 		
-		# Instancia o Baú
-		if cena_bau:
+		# Verifica se tem posição fixa
+		# (Nota: Se Quantidade > 1 e tiver Posição Fixa, vai empilhar. Ideal usar posição fixa com Quantidade=1)
+		if data_bau.posicao_fixa != Vector2i(-1, -1):
+			pos_final = data_bau.posicao_fixa
+		else:
+			# Tenta pegar um beco
+			if not becos.is_empty():
+				pos_final = becos.pop_back()
+			else:
+				# Se acabaram os becos, tenta achar qualquer chão livre
+				pos_final = _encontrar_posicao_spawn_garantida(5, [])
+		
+		# Instancia
+		if pos_final != Vector2i(-1, -1) and cena_bau:
 			var bau = cena_bau.instantiate()
-			# Centraliza no tile: (Coord * 16) + (Metade do Tile 8)
-			bau.position = (Vector2(pos) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
-			
-			# Passa a referência do Main para o Baú poder chamar funções de volta
+			bau.position = (Vector2(pos_final) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
 			bau.main_ref = self
 			add_child(bau)
 			
-			# Configura estado (verificando se já foi aberto neste save)
-			# Se não existir no dicionário, assume false (fechado)
-			var is_aberto = estado_baus.get(pos, false)
+			# Estado Salvo
+			var is_aberto = estado_baus.get(pos_final, false)
 			
-			# Chama a função de configuração do script do Baú
-			bau.configurar(pos, level_data.moedas_por_bau, is_aberto)
+			# Configura
+			bau.configurar(pos_final, data_bau.qtd_moedas, data_bau.item_recompensa, is_aberto)
 			
-			colocados += 1
-		else:
-			print("ERRO: cena_bau não atribuída no Inspector do Main!")
-			break
-	
-	print("Main: %d baús colocados em becos sem saída." % colocados)
+			print("Main: Baú criado em %s (Item: %s)" % [pos_final, data_bau.item_recompensa.nome_item if data_bau.item_recompensa else "Moedas"])
 
 # Chamado pelo script do Baú quando o jogador interage
 func registrar_bau_aberto(pos: Vector2i):
@@ -1693,6 +1771,151 @@ func criar_projetil_visual(origem: Vector2, destino: Vector2):
 	
 	# 5. Quando terminar o movimento, deleta o sprite
 	t.tween_callback(projetil.queue_free)
+
+# Lógica do Drone de Ataque
+func ativar_drone_ataque(origem: Vector2i, alcance: int, dano: int):
+	print("Drone de Ataque: Iniciando varredura em raio %d..." % alcance)
+	
+	# 1. Obtém a área de efeito usando o BFS (igual ao Scanner)
+	var tiles_na_area = bfs.obter_area_alcance(origem, alcance)
+	
+	# 2. Filtra quais inimigos estão dentro dessa área
+	var inimigos_atingidos = []
+	var todos_inimigos = get_tree().get_nodes_in_group("inimigos")
+	
+	for ini in todos_inimigos:
+		# Se o inimigo estiver vivo e sua posição estiver na lista do BFS
+		if is_instance_valid(ini) and ini.grid_pos in tiles_na_area:
+			inimigos_atingidos.append(ini)
+	
+	if inimigos_atingidos.is_empty():
+		spawn_floating_text((Vector2(origem) * TILE_SIZE), "NENHUM ALVO", Color.GRAY)
+		print("Drone de Ataque: Nenhum alvo encontrado.")
+		return
+
+	print("Drone de Ataque: %d alvos localizados! Engajando..." % inimigos_atingidos.size())
+	
+	# 3. Dispara contra todos os alvos encontrados
+	# Posição visual de saída (Centro do Player)
+	var pos_saida_visual = (Vector2(origem) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
+	
+	for inimigo in inimigos_atingidos:
+		if not is_instance_valid(inimigo): continue
+		
+		# A. Feedback Visual (Reutilizando a função da Turret)
+		# Cria um projétil saindo do Player até o Inimigo
+		criar_projetil_visual(pos_saida_visual, inimigo.global_position)
+		
+		# B. Aplica Dano
+		# O knockback é 0 pois é um ataque aéreo/drone, mas mandamos a origem pro inimigo saber de onde veio
+		inimigo.receber_dano(dano, 0, origem)
+		
+		# C. Feedback extra de texto (opcional, mas bom pra ver o dano somado)
+		# (O próprio inimigo já mostra dano, mas aqui confirmamos que o drone funcionou)
+
+# Lógica da Escopeta (Dano em linha + Knockback forte)
+func ativar_escopeta(origem: Vector2i, direcao: Vector2i, alcance: int, dano: int, kb_override: int):
+	print("Main: Escopeta disparada! Direção: ", direcao)
+	
+	var pos_visual_origem = (Vector2(origem) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
+	var atingiu_algo = false
+	
+	# Loop para verificar os tiles na linha de tiro (1 até alcance)
+	for i in range(1, alcance + 1):
+		var tile_alvo = origem + (direcao * i)
+		
+		# 1. Verifica se tem inimigo neste tile
+		# (Temos que procurar o nó do inimigo específico)
+		var inimigo_alvo = null
+		var inimigos_vivos = get_tree().get_nodes_in_group("inimigos")
+		
+		for ini in inimigos_vivos:
+			if is_instance_valid(ini) and ini.grid_pos == tile_alvo:
+				inimigo_alvo = ini
+				break
+		
+		# 2. Se achou inimigo, BUM!
+		if inimigo_alvo:
+			atingiu_algo = true
+			print("Escopeta: Acertou %s em %s" % [inimigo_alvo.name, tile_alvo])
+			
+			# Efeito Visual do Tiro (Do player até o inimigo)
+			criar_projetil_visual(pos_visual_origem, inimigo_alvo.global_position)
+			
+			# DECISÃO DO KNOCKBACK:
+			# Se o override for maior ou igual a 0, usa ele. Se for -1, usa o padrão (6).
+			var forca_kb = kb_override if kb_override >= 0 else 6
+			
+			# Aplica com a força decidida
+			inimigo_alvo.receber_dano(dano, forca_kb, origem)
+			
+			# Opcional: Efeito de 'Flash' na tela ou Shake
+			
+		# 3. Se for parede, o tiro para (não atravessa parede)
+		elif not is_tile_passable(tile_alvo):
+			# Cria uma faísca na parede (opcional, aqui só o visual do tiro batendo)
+			var pos_parede = (Vector2(tile_alvo) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
+			criar_projetil_visual(pos_visual_origem, pos_parede)
+			break # Para o loop, a bala bateu na parede
+	
+	if not atingiu_algo:
+		# Se não acertou nada, dispara um tiro visual até o alcance máximo no ar
+		var pos_final = origem + (direcao * alcance)
+		var pos_visual_final = (Vector2(pos_final) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
+		criar_projetil_visual(pos_visual_origem, pos_visual_final)
+
+# Lógica da Arma Kill-9 (Raycast Instantâneo)
+func disparar_kill9(origem: Vector2i, direcao: Vector2i, dano: int, knockback: int):
+	print("Main: Kill-9 disparada! Direção: ", direcao)
+	
+	# Limite de segurança para não travar o jogo num loop infinito
+	var alcance_maximo = 30 
+	var pos_visual_origem = (Vector2(origem) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
+	
+	var acertou_algo = false
+	
+	# Percorre tile a tile na direção do olhar
+	for i in range(1, alcance_maximo):
+		var tile_atual = origem + (direcao * i)
+		
+		# 1. Verifica Inimigo (Prioridade)
+		var inimigos_vivos = get_tree().get_nodes_in_group("inimigos")
+		var inimigo_alvo = null
+		
+		for ini in inimigos_vivos:
+			if is_instance_valid(ini) and ini.grid_pos == tile_atual:
+				inimigo_alvo = ini
+				break
+		
+		if inimigo_alvo:
+			print("Kill-9: Alvo eliminado em ", tile_atual)
+			
+			# Visual: Tiro até o inimigo
+			criar_projetil_visual(pos_visual_origem, inimigo_alvo.global_position)
+			
+			# Dano: 20, Knockback: 0 (Como solicitado)
+			inimigo_alvo.receber_dano(dano, knockback, origem)
+			
+			acertou_algo = true
+			break # A bala para no primeiro inimigo
+			
+		# 2. Verifica Parede/Obstáculo
+		# Se não é passável e não é porta aberta (ou seja, é parede ou porta trancada)
+		if not is_tile_passable(tile_atual):
+			print("Kill-9: Impacto na parede em ", tile_atual)
+			
+			var pos_parede = (Vector2(tile_atual) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
+			criar_projetil_visual(pos_visual_origem, pos_parede)
+			
+			# Opcional: Efeito de faísca na parede aqui
+			acertou_algo = true
+			break
+			
+	# 3. Se não acertou nada (tiro pro céu/vazio)
+	if not acertou_algo:
+		var pos_final = origem + (direcao * alcance_maximo)
+		var pos_visual_final = (Vector2(pos_final) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
+		criar_projetil_visual(pos_visual_origem, pos_visual_final)
 
 # --- TESTE TEMPORÁRIO BFS ---
 """func executar_teste_bfs():

@@ -1,7 +1,11 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://q6se5t1b7lf0"]
+[gd_resource type="Resource" script_class="ItemData" load_steps=4 format=3 uid="uid://q6se5t1b7lf0"]
 
 [ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_63yxu"]
-[ext_resource type="Texture2D" uid="uid://cjtp6vmvrpnoh" path="res://assets/sprites/drone5.png" id="2_6jyy2"]
+[ext_resource type="Texture2D" uid="uid://dy5a4km87rkei" path="res://assets/sprites/pixel_icons_by_oceansdream.png" id="2_6jyy2"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yjjwk"]
+atlas = ExtResource("2_6jyy2")
+region = Rect2(100.88902, 28.666786, 14.6666565, 16.444443)
 
 [resource]
 script = ExtResource("1_63yxu")
@@ -10,5 +14,5 @@ descricao = "Remove blocos de dano e com custo de tempo maior que 1."
 tipo_item = 5
 efeito = "DRONE_TERRAFORMER"
 alcance_maximo = 10
-textura_icon = ExtResource("2_6jyy2")
+textura_icon = SubResource("AtlasTexture_yjjwk")
 metadata/_custom_type_script = "uid://d01dm40km4s0s"

@@ -1,10 +1,11 @@
-[gd_scene load_steps=8 format=3 uid="uid://cbmsdr2d8wxe7"]
+[gd_scene load_steps=10 format=3 uid="uid://cbmsdr2d8wxe7"]
 
 [ext_resource type="Script" uid="uid://damlo86x86421" path="res://scripts/HUD.gd" id="1_fls4u"]
 [ext_resource type="PackedScene" uid="uid://dppnl5j80bqm0" path="res://scenes/InventoryUI.tscn" id="1_qpvh6"]
 [ext_resource type="Texture2D" uid="uid://c4obbqfms51vu" path="res://assets/sprites/coinhud.png" id="2_7hsmw"]
 [ext_resource type="FontFile" uid="uid://ct0pe0vtm7kwl" path="res://assets/fonts/Kenney Future.ttf" id="2_nysna"]
 [ext_resource type="PackedScene" uid="uid://cbjr3lv1y21tc" path="res://scenes/CustomCursor.tscn" id="3_1etfg"]
+[ext_resource type="Texture2D" uid="uid://dy5a4km87rkei" path="res://assets/sprites/pixel_icons_by_oceansdream.png" id="4_f6qnu"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nysna"]
 bg_color = Color(0, 0, 0, 0.5882353)
@@ -20,6 +21,10 @@ corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 shadow_color = Color(0, 1, 1, 0.5882353)
 shadow_size = 3
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_k4w17"]
+atlas = ExtResource("4_f6qnu")
+region = Rect2(0, 0, 24.222229, 22.333332)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7hsmw"]
 content_margin_left = 4.0
@@ -88,6 +93,21 @@ expand_mode = 2
 stretch_mode = 5
 
 [node name="LabelMoedas" type="Label" parent="Control/BarraSuperior/HBoxContainer/ContainerMoedas"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_nysna")
+theme_override_font_sizes/font_size = 25
+
+[node name="ContainerKill9" type="HBoxContainer" parent="Control/BarraSuperior/HBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Icone_Bala" type="TextureRect" parent="Control/BarraSuperior/HBoxContainer/ContainerKill9"]
+layout_mode = 2
+texture = SubResource("AtlasTexture_k4w17")
+expand_mode = 2
+stretch_mode = 5
+
+[node name="LabelBalas" type="Label" parent="Control/BarraSuperior/HBoxContainer/ContainerKill9"]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_nysna")
 theme_override_font_sizes/font_size = 25
