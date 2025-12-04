@@ -1,11 +1,17 @@
-[gd_resource type="Resource" script_class="LevelDefinition" load_steps=9 format=3 uid="uid://q51cb1cil4og"]
+[gd_resource type="Resource" script_class="LevelDefinition" load_steps=11 format=3 uid="uid://q51cb1cil4og"]
 
+[ext_resource type="Script" uid="uid://d27pbt414f1ro" path="res://scripts/ChestSpawnData.gd" id="1_11fua"]
 [ext_resource type="Script" uid="uid://d34551vbrdkqx" path="res://scripts/LevelDefinition.gd" id="1_obbn4"]
 [ext_resource type="Script" uid="uid://ci6dlknyw5xas" path="res://scripts/EnemySpawnData.gd" id="1_vgqkp"]
 [ext_resource type="Script" uid="uid://c6yn1hesl0qc7" path="res://scripts/NpcSpawnData.gd" id="2_6r273"]
 [ext_resource type="PackedScene" uid="uid://wy711p61hc6f" path="res://scenes/Enemy.tscn" id="2_e23yg"]
 [ext_resource type="PackedScene" uid="uid://bnaq07rewb3r7" path="res://scenes/NPC.tscn" id="4_11fua"]
 [ext_resource type="AudioStream" uid="uid://ipot2bsq2tkp" path="res://Audio/music/Erik_Satie_Gymnopédie_No.1.ogg" id="5_n2dr7"]
+
+[sub_resource type="Resource" id="Resource_n2dr7"]
+script = ExtResource("1_11fua")
+quantidade = 2
+metadata/_custom_type_script = "uid://d27pbt414f1ro"
 
 [sub_resource type="Resource" id="Resource_e23yg"]
 script = ExtResource("1_vgqkp")
@@ -24,7 +30,8 @@ texto_intro = "Sua jornada começa aqui."
 musica_fundo = ExtResource("5_n2dr7")
 tamanho = Vector2i(19, 15)
 fog_enabled = true
-qtd_baus = 2
+lista_baus_especificos = Array[ExtResource("1_11fua")]([SubResource("Resource_n2dr7")])
+qtd_moedas = 10
 modo_jogo = "MST"
 qtd_terminais = 2
 salas_qtd = 1
@@ -35,7 +42,6 @@ tiles_especiais = {
 "Dano": 5,
 "Lama": 5
 }
-qtd_moedas = 10
 lista_inimigos = Array[ExtResource("1_vgqkp")]([SubResource("Resource_e23yg")])
 lista_npcs = Array[ExtResource("2_6r273")]([SubResource("Resource_xbu8s")])
 metadata/_custom_type_script = "uid://d34551vbrdkqx"

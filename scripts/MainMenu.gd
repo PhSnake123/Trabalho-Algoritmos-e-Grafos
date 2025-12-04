@@ -1,6 +1,6 @@
 extends CanvasLayer
 var menu_music = preload("res://Audio/music/Title.mp3")
-	
+
 func _ready():
 	# Conecta os botões
 	if AudioManager:
@@ -16,11 +16,20 @@ func _ready():
 
 func _on_novo_jogo_pressed():
 	print("Menu: Iniciando Novo Jogo...")
-	# 1. Reseta o estado global
+	
+	# 1. Reseta o estado global (Inventário, Vida, Stats)
 	Game_State.reset_run_state()
-	# 2. Garante que NÃO vamos carregar save, queremos um mapa novo
+	
+	# 2. [INTEGRAÇÃO] Reseta o progresso de fases no LevelManager
+	# Isso garante que o jogo comece do Tutorial (0) e não da última fase jogada
+	if LevelManager:
+		LevelManager.indice_fase_atual = 0
+	
+	# 3. Garante que NÃO vamos carregar save, queremos um mapa novo
 	Game_State.carregar_save_ao_iniciar = false
-	# 3. Vai para o jogo
+	Game_State.carregar_auto_save_ao_iniciar = false # Garante que não puxe checkpoint
+	
+	# 4. Vai para o jogo
 	get_tree().change_scene_to_file("res://scenes/Main.tscn")
 
 func _on_carregar_pressed():

@@ -416,9 +416,17 @@ func _morrer():
 	set_physics_process(false)
 	set_process_unhandled_input(false)
 	
+	if main_script.script_fase_atual and main_script.script_fase_atual.has_method("on_game_over"):
+		print("Main: Script da fase assumiu o Game Over.")
+		await main_script.script_fase_atual.on_game_over() # <--- AQUI A MÁGICA ACONTECE
+	else:
+		# Comportamento padrão (Game Over normal)
+		await get_tree().create_timer(1.0).timeout
+		get_tree().change_scene_to_file("res://scenes/GameOver.tscn")
+	
 	# Carrega a cena de Game Over
 	# Opção A: carregar como uma cena nova (substitui o jogo):
-	get_tree().change_scene_to_file("res://scenes/GameOver.tscn")
+	#get_tree().change_scene_to_file("res://scenes/GameOver.tscn")
 	
 	# Opção B: Instancia a tela por cima de tudo sem fechar o Main
 	# var game_over_screen = load("res://scenes/ui/GameOver.tscn").instantiate()

@@ -33,7 +33,6 @@ func setup_fase(_main_ref):
 	_tocar_dialogo_tutorial()
 
 func _tocar_dialogo_tutorial():
-	await get_tree().create_timer(1.0).timeout
 	var dados = DialogueData.new()
 	dados.nome_npc = "Admin"
 	var textos: Array[String] = [

@@ -8,6 +8,9 @@ const FLOATING_LABEL_SCENE = preload("res://scenes/FloatingLabel.tscn")
 @export var cena_moeda: PackedScene # <--- ARRASTE A CENA DA MOEDA AQUI
 @export var cena_bau: PackedScene   # <--- ARRASTE A CENA DO BAÚ AQUI
 
+const PAUSE_MENU_SCENE = preload("res://scenes/PauseMenu.tscn")
+var pause_menu_ref: Control = null
+
 # 1. Carrega o script de lógica
 const TILE_SIZE := 16
 const SAVE_POINT_TILE = preload("res://assets/tileinfo/savepoint.tres")
@@ -94,7 +97,20 @@ func _ready():
 	var hud = HUD_SCENE.instantiate()
 	hud.name = "HUD" # Nomeamos para facilitar encontrar depois
 	add_child(hud)
-
+	
+# --- CORREÇÃO DO MENU DE PAUSA ---
+	# 1. Criamos uma "Camada de UI" invisível que gruda na tela
+	var layer_pause = CanvasLayer.new()
+	layer_pause.layer = 100 # Garante que fique por cima de tudo (até do HUD)
+	add_child(layer_pause)
+	
+	# 2. Instanciamos o menu
+	var menu = PAUSE_MENU_SCENE.instantiate()
+	
+	# 3. Adicionamos o menu COMO FILHO DO CANVASLAYER, e não do Main
+	layer_pause.add_child(menu)
+	pause_menu_ref = menu
+	
 	# 2. DECISÃO: QUAL TIPO DE INICIALIZAÇÃO?
 	
 	# CASO A: LOAD MANUAL (Player clicou em Carregar no Menu)
@@ -362,6 +378,12 @@ func _inicializar_novo_jogo(vertice_inicio: Vector2i):
 				script_fase_atual.setup_fase(self)
 		
 		SaveManager.save_auto_game()
+		
+		# Salva no slot principal para aparecer no botão "Carregar" do menu.
+		# A condição garante que não sobrescrevemos saves se for um tutorial (Nível 0).
+		if LevelManager.indice_fase_atual > 1:
+			print("Main: Salvando estado inicial da fase no Slot Principal.")
+			SaveManager.save_player_game()
 
 # --- [ALTERADO] LÓGICA DO DRONE SCANNER PERMANENTE ---
 func _process(delta):
@@ -565,6 +587,18 @@ func _unhandled_input(event):
 		if item_para_usar:
 			Game_State.inventario_jogador.remover_item(item_para_usar)
 			SaveManager.save_player_game()
+	
+	if event.is_action_pressed("ui_cancel") or (event is InputEventKey and event.pressed and event.keycode == KEY_P):
+		
+		# Se tiver diálogo rolando, ignoramos o ESC. O jogador é obrigado a terminar de ler.
+		if Game_State.is_dialogue_active:
+			return
+		
+		if pause_menu_ref:
+			if get_tree().paused:
+				pause_menu_ref.fechar_menu()
+			else:
+				pause_menu_ref.abrir_menu()
 
 # --- FUNÇÕES DE UTILIDADE E DRONES ---
 
@@ -756,7 +790,13 @@ func usar_item(item: ItemData):
 		ItemData.EFEITO_CURA_HP:
 			print("Main: Aplicando cura...")
 			var cura_real = 0
-			var max_vida = Game_State.max_vida_jogador
+			var max_vida = Game_State.stats_jogador["max_hp"]
+			var vida_atual = Game_State.vida_jogador
+			
+			# Se já está cheio, não gasta o item
+			if vida_atual >= max_vida:
+				spawn_floating_text(player.global_position + Vector2(0, -20), "HP CHEIO", Color.WHITE)
+				return # Sai da função sem gastar durabilidade
 			
 			# Lógica Híbrida: Se valor <= 1.0, trata como porcentagem. Se > 1.0, trata como valor fixo.
 			if item.valor_efeito <= 1.0 and item.valor_efeito > 0.0:
@@ -1916,6 +1956,7 @@ func disparar_kill9(origem: Vector2i, direcao: Vector2i, dano: int, knockback: i
 		var pos_final = origem + (direcao * alcance_maximo)
 		var pos_visual_final = (Vector2(pos_final) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
 		criar_projetil_visual(pos_visual_origem, pos_visual_final)
+
 
 # --- TESTE TEMPORÁRIO BFS ---
 """func executar_teste_bfs():

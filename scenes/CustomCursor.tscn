@@ -92,10 +92,12 @@ animations = [{
 }]
 
 [node name="CustomCursor" type="CanvasLayer"]
-layer = 128
+process_mode = 3
+layer = 180
 script = ExtResource("1_klu8y")
 
 [node name="CursorSprite" type="AnimatedSprite2D" parent="."]
+z_index = 190
 sprite_frames = SubResource("SpriteFrames_q603j")
 animation = &"click"
 autoplay = "default"

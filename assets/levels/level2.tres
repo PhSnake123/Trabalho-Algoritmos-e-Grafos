@@ -1,10 +1,18 @@
-[gd_resource type="Resource" script_class="LevelDefinition" load_steps=7 format=3 uid="uid://hpclyoa85v7f"]
+[gd_resource type="Resource" script_class="LevelDefinition" load_steps=10 format=3 uid="uid://hpclyoa85v7f"]
 
+[ext_resource type="Script" uid="uid://d27pbt414f1ro" path="res://scripts/ChestSpawnData.gd" id="1_i85ca"]
 [ext_resource type="Script" uid="uid://ci6dlknyw5xas" path="res://scripts/EnemySpawnData.gd" id="1_svxy5"]
 [ext_resource type="PackedScene" uid="uid://wy711p61hc6f" path="res://scenes/Enemy.tscn" id="2_e3j6l"]
 [ext_resource type="Script" uid="uid://c6yn1hesl0qc7" path="res://scripts/NpcSpawnData.gd" id="2_ggai6"]
+[ext_resource type="Resource" uid="uid://d0ut6aj4fpf4s" path="res://assets/iteminfo/DroneDJKISTRA.tres" id="2_nfkyw"]
 [ext_resource type="Script" uid="uid://d34551vbrdkqx" path="res://scripts/LevelDefinition.gd" id="3_e3j6l"]
 [ext_resource type="AudioStream" uid="uid://cshl547waearf" path="res://Audio/music/adventurous.mp3" id="3_ggai6"]
+
+[sub_resource type="Resource" id="Resource_ypae1"]
+script = ExtResource("1_i85ca")
+item_recompensa = ExtResource("2_nfkyw")
+qtd_moedas = 0
+metadata/_custom_type_script = "uid://d27pbt414f1ro"
 
 [sub_resource type="Resource" id="Resource_5qlb5"]
 script = ExtResource("1_svxy5")
@@ -21,10 +29,11 @@ musica_fundo = ExtResource("3_ggai6")
 tamanho = Vector2i(21, 21)
 fog_enabled = true
 cor_tilemap = Color(2.0696223e-06, 0.65925884, 0.4492271, 1)
+lista_baus_especificos = Array[ExtResource("1_i85ca")]([SubResource("Resource_ypae1")])
+qtd_moedas = 5
 tiles_especiais = {
 "Dano": 10,
 "Lama": 0
 }
-qtd_moedas = 5
 lista_inimigos = Array[ExtResource("1_svxy5")]([SubResource("Resource_5qlb5")])
 metadata/_custom_type_script = "uid://d34551vbrdkqx"

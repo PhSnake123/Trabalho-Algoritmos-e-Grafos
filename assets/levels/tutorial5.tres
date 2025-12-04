@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="LevelDefinition" load_steps=10 format=3 uid="uid://bjkhjhpcgucf1"]
+[gd_resource type="Resource" script_class="LevelDefinition" load_steps=11 format=3 uid="uid://bjkhjhpcgucf1"]
 
 [ext_resource type="Script" uid="uid://ci6dlknyw5xas" path="res://scripts/EnemySpawnData.gd" id="1_42c8x"]
+[ext_resource type="Script" uid="uid://d27pbt414f1ro" path="res://scripts/ChestSpawnData.gd" id="1_ed447"]
 [ext_resource type="Script" uid="uid://c6yn1hesl0qc7" path="res://scripts/NpcSpawnData.gd" id="2_ftp41"]
 [ext_resource type="PackedScene" uid="uid://wy711p61hc6f" path="res://scenes/Enemy.tscn" id="2_vf5js"]
 [ext_resource type="AudioStream" uid="uid://cesfpsep1gjy" path="res://Audio/music/MoonlightSonata.mp3" id="3_ftp41"]

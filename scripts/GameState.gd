@@ -9,7 +9,7 @@ var musica_atual_path: String = ""
 var tempo_jogador: float = 0.0
 var tempo_par_level: float = 0.0 
 var vida_jogador: int
-var max_vida_jogador: int
+#var max_vida_jogador: int
 const SAVE_TERMINAL_ITEM = preload("res://assets/iteminfo/save_terminal.tres") 
 
 var inventario_jogador: Inventory
@@ -43,6 +43,7 @@ var falha_por_tempo: bool = false
 
 # SISTEMA DA KILL-9
 var stats_jogador = {
+	"max_hp": 50,
 	"atk": 15,
 	"def": 5,
 	"poise": 3,
@@ -70,16 +71,29 @@ func _ready():
 
 func reset_run_state():
 	tempo_jogador = 0.0
-	tempo_par_level = 0.0 
-	max_vida_jogador = 50
-	vida_jogador = max_vida_jogador
+	tempo_par_level = 0.0
+	
+	# Reseta Status de Combate para o padrão inicial
+	stats_jogador = {
+		"atk": 15,
+		"def": 5,
+		"poise": 3,
+		"knockback": 5,
+		"max_hp": 50, # Resetando o HP Máximo
+		"kill9_dmg": 12,
+		"kill9_kb": 0,
+		"kill9_ammo": 9,
+		"kill9_max_ammo": 9
+	}
+	
+	vida_jogador = stats_jogador["max_hp"]
 	moedas = 0
 
 	caminho_jogador.clear()
 	player_action_history.clear()
 	caminho_ideal_level.clear()
 	optional_objectives.clear()
-	recarregar_kill9()
+	#recarregar_kill9()
 	
 	heat_map.clear() 
 	terminais_ativos = 0
@@ -302,15 +316,14 @@ func recarregar_kill9():
 func upgrade_atributo(nome_stat: String, valor: int):
 	print("GameState: Aplicando upgrade '%s' de valor %d..." % [nome_stat, valor])
 	
-	# CASO 1: Vida Máxima (Variável solta)
-	if nome_stat == "max_hp":
-		max_vida_jogador += valor
-		vida_jogador += valor # Geralmente upgrades de vida curam o valor ganho
-		# Avisa a HUD (se necessário) ou deixa o _process atualizar
-		
-	# CASO 2: Atributos no Dicionário (Atk, Def, Kill9, etc)
-	elif stats_jogador.has(nome_stat):
+	# Verifica se o atributo existe no dicionário
+	if stats_jogador.has(nome_stat):
 		stats_jogador[nome_stat] += valor
+		
+		# CASO ESPECIAL: Se aumentou Max HP, cura o jogador na mesma quantidade
+		if nome_stat == "max_hp":
+			vida_jogador += valor
+			print("GameState: Vida Máxima aumentada para %d. Vida Atual: %d" % [stats_jogador["max_hp"], vida_jogador])
 	
 	else:
 		print("ERRO: Stat '%s' não encontrado no GameState!" % nome_stat)

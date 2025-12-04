@@ -1,8 +1,10 @@
 # res://scripts/levels/Tutorial2.gd
 extends Node
+var main_ref = null
 
-func setup_fase(_main_ref):
+func setup_fase(main):
 	print("Tutorial 4: Iniciado.")
+	main_ref = main
 	Game_State.is_dialogue_active = true
 	var defrag = load("res://assets/iteminfo/DroneTerraformer.tres")
 	if defrag:
@@ -41,7 +43,6 @@ func setup_fase(_main_ref):
 	_tocar_dialogo_tutorial()
 
 func _tocar_dialogo_tutorial():
-	await get_tree().create_timer(1.0).timeout
 	var dados = DialogueData.new()
 	dados.nome_npc = "Admin"
 	var textos: Array[String] = [
@@ -74,3 +75,36 @@ func on_level_complete() -> bool:
 	await DialogueManager.dialogo_finalizado
 	LevelManager.forcar_proxima_fase_direto()
 	return true
+
+func on_game_over():
+	print("Tutorial 4: Falha detectada. Iniciando protocolo de descarte.")
+	
+	# 1. Diálogo do Admin "Decepcionado"
+	var dados = DialogueData.new()
+	dados.nome_npc = "Admin"
+	var textos: Array[String] = [
+		"CRÍTICO: Sinais vitais do Agente interrompidos.",
+		"Análise: Falha em transpor obstáculo básico de navegação.",
+		"Veredito: Ineficiência inaceitável. O Agente não possui os requisitos mínimos.",
+		"Executando limpeza de sistema... Adeus."
+	]
+	dados.falas= textos
+	
+	DialogueManager.iniciar_dialogo(dados)
+	await DialogueManager.dialogo_finalizado
+	
+	# 2. Efeito Dramático (Tela preta ou som sumindo)
+	if main_ref:
+		var t = main_ref.create_tween()
+		if main_ref.canvas_modulate:
+			t.tween_property(main_ref.canvas_modulate, "color", Color.BLACK, 1.5)
+		await t.finished
+	
+	# 3. PUNIÇÃO: Deleta o Save (Simula ser "Deletado" do sistema)
+	# Removemos tanto o save manual quanto o auto save para ele não conseguir voltar
+	# DirAccess.remove_absolute(SaveManager.SAVE_PATH_PLAYER)
+	# DirAccess.remove_absolute(SaveManager.SAVE_PATH_AUTO)
+	
+	# 4. Chuta para o Menu Principal
+	LevelManager.indice_fase_atual = 0
+	get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")

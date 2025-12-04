@@ -35,5 +35,5 @@ func atualizar_estado_hub():
 	#		charles.queue_free()
 
 	# 4. CURA O JOGADOR AO ENTRAR NO HUB
-	Game_State.vida_jogador = Game_State.max_vida_jogador
+	Game_State.vida_jogador = Game_State.stats_jogador["max_hp"]
 	print("HubLogic: Jogador curado e estado atualizado.")
