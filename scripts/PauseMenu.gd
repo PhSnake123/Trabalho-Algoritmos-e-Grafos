@@ -38,6 +38,7 @@ func _on_btn_continuar_pressed():
 func _on_btn_carregar_pressed():
 	# Confirmação simples: só carrega o último save manual
 	print("PauseMenu: Carregando último save...")
+	Game_State.equipar_item(null)
 	fechar_menu() # Despausa antes de carregar pra evitar bugs
 	SaveManager.load_player_game()
 
@@ -56,9 +57,9 @@ func _on_btn_hub_pressed():
 func _on_btn_titulo_pressed():
 	fechar_menu()
 	# Garante que despausou antes de sair
+	Game_State.equipar_item(null)
 	if ArcadeManager.is_arcade_mode:
 		ArcadeManager.finalizar_run()
-	
 	get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
 
 func _on_btn_sair_pressed():

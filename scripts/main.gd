@@ -379,6 +379,9 @@ func _inicializar_novo_jogo(vertice_inicio: Vector2i):
 		
 		if not ArcadeManager.is_arcade_mode:
 			
+			# Isso garante que 'add_child' terminou e os grupos (inimigos/baús) estão populados.
+			await get_tree().process_frame
+			
 			# 1. Salva o Checkpoint (Auto)
 			SaveManager.save_auto_game()
 			

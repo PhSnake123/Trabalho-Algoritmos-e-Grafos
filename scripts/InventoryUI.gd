@@ -11,6 +11,9 @@ func _ready():
 	Game_State.inventario_jogador.item_adicionado.connect(_on_inventory_updated)
 	Game_State.inventario_jogador.item_removido.connect(_on_inventory_updated)
 	
+	# Quando o SaveManager carregar um jogo, atualizamos a grade à força
+	Game_State.inventario_jogador.inventario_resincronizado.connect(_atualizar_grid)
+	
 	# Renderiza a primeira vez
 	_atualizar_grid()
 

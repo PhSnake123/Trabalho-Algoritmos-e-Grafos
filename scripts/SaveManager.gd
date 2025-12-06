@@ -190,8 +190,9 @@ func _apply_game_state_dict(data: Dictionary):
 	Game_State.enemy_states = gs_data.get("enemy_states", {})
 	Game_State.npc_states = gs_data.get("npc_states", {})
 	Game_State.interactable_states = gs_data.get("interactable_states", {})
-	
-	Game_State.inventario_jogador.items.assign(_deserialize_inventory(gs_data["inventory"]))
+
+	var itens_carregados = _deserialize_inventory(gs_data["inventory"])
+	Game_State.inventario_jogador.resincronizar_itens(itens_carregados)	
 	
 	# Posiciona Jogador
 	var p_data = data["player"]
@@ -316,8 +317,8 @@ func _deserialize_map(serialized_map: Array) -> Array:
 
 # Em SaveManager.gd
 
-func _deserialize_inventory(serialized_items: Array) -> Array:
-	var items = []
+func _deserialize_inventory(serialized_items: Array) -> Array[ItemData]:
+	var items: Array[ItemData] = []
 	for item_data in serialized_items:
 		var new_item: ItemData
 		

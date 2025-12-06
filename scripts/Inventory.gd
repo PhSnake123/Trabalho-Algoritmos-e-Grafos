@@ -8,6 +8,7 @@ extends Resource
 # e adicionar um ícone novo na tela.
 signal item_adicionado(item: ItemData)
 signal item_removido(item: ItemData)
+signal inventario_resincronizado
 
 # O array que armazena os dados dos nossos itens.
 # Ao usar @export, poderemos ver os itens no Inspetor (ótimo para debug).
@@ -96,3 +97,9 @@ func get_item_especifico(efeito: String, tipo: ItemData.ItemTipo) -> ItemData:
 		if item.efeito == efeito and item.tipo_item == tipo:
 			return item
 	return null
+	
+func resincronizar_itens(novos_itens: Array[ItemData]):
+	items = novos_itens
+	# Avisa quem estiver ouvindo (UI) que a lista foi totalmente trocada
+	inventario_resincronizado.emit()
+	print("Inventory: Lista de itens resincronizada via Load.")

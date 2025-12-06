@@ -17,6 +17,7 @@ func _ready():
 	AudioManager.stop_music()
 	musica_game_over.play()
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	Game_State.equipar_item(null)
 	
 	# --- DECISÃO DE MODO ---
 	if ArcadeManager.is_arcade_mode:
