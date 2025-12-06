@@ -5,6 +5,7 @@ extends Node
 const SAVE_PATH_AUTO = "user://grafos_quest_auto.json"
 const SAVE_PATH_PLAYER = "user://grafos_quest_player.json"
 const SAVE_PATH_HUB_BACKUP = "user://grafos_quest_hub_backup.json"
+const LEADERBOARD_PATH = "user://leaderboard.json"
 
 # Configuração do Rewind Global (Item 1)
 @export var snapshot_interval: float = 120.0 
@@ -490,3 +491,49 @@ func _deserialize_path(data: Array) -> Array[Vector2i]:
 		# p é [x, y]
 		result.push_back(Vector2i(int(p[0]), int(p[1])))
 	return result
+
+# --- LEADERBOARD SYSTEM (Cole no final do SaveManager.gd) ---
+
+func get_leaderboard_data() -> Array:
+	# Verifica se a constante LEADERBOARD_PATH existe. 
+	# (Ela já estava definida no topo do seu arquivo original, linha 7 do source 150)
+	if not FileAccess.file_exists(LEADERBOARD_PATH):
+		return [] # Retorna lista vazia se não existir arquivo
+		
+	var file = FileAccess.open(LEADERBOARD_PATH, FileAccess.READ)
+	if file:
+		var text = file.get_as_text()
+		file.close()
+		
+		var json = JSON.new()
+		var error = json.parse(text)
+		if error == OK:
+			var data = json.data
+			if typeof(data) == TYPE_ARRAY:
+				return data
+	return []
+
+func save_score_to_leaderboard(player_name: String, score: int):
+	var board = get_leaderboard_data()
+	
+	# Cria a entrada
+	var entry = {
+		"name": player_name.substr(0, 3).to_upper(),
+		"score": score
+	}
+	
+	board.append(entry)
+	
+	# Ordena: Maior pontuação primeiro
+	board.sort_custom(func(a, b): return a["score"] > b["score"])
+	
+	# Corta para manter apenas Top 10
+	if board.size() > 10:
+		board.resize(10)
+	
+	# Salva no disco
+	var file = FileAccess.open(LEADERBOARD_PATH, FileAccess.WRITE)
+	if file:
+		file.store_string(JSON.stringify(board, "\t"))
+		file.close()
+		print("Leaderboard atualizado com sucesso!")

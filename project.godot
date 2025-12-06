@@ -22,6 +22,7 @@ AudioManager="*res://scenes/AudioManager.tscn"
 SaveManager="*res://scripts/SaveManager.gd"
 DialogueManager="*res://scenes/DialogueManager.tscn"
 LevelManager="*res://scripts/LevelManager.gd"
+ArcadeManager="*res://scripts/ArcadeManager.gd"
 
 [display]
 

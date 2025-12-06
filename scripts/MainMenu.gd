@@ -2,44 +2,65 @@ extends CanvasLayer
 var menu_music = preload("res://Audio/music/Title.mp3")
 
 func _ready():
-	# Conecta os botões
 	if AudioManager:
 		AudioManager.play_music(menu_music)
+	
 	var vbox = $CenterContainer/VBoxContainer
+	
+	# Conexões
 	vbox.get_node("BtnNovoJogo").pressed.connect(_on_novo_jogo_pressed)
 	vbox.get_node("BtnCarregar").pressed.connect(_on_carregar_pressed)
 	vbox.get_node("BtnSair").pressed.connect(_on_sair_pressed)
 	
-	# Opcional: Verifica se existe save para habilitar o botão Carregar
+	if vbox.has_node("BtnArcade"):
+		vbox.get_node("BtnArcade").pressed.connect(_on_arcade_pressed)
+		
+	# --- NOVO BOTÃO ---
+	if vbox.has_node("BtnLeaderboard"):
+		vbox.get_node("BtnLeaderboard").pressed.connect(_on_leaderboard_pressed)
+	
 	if not FileAccess.file_exists(SaveManager.SAVE_PATH_PLAYER):
 		vbox.get_node("BtnCarregar").disabled = true
 
 func _on_novo_jogo_pressed():
-	print("Menu: Iniciando Novo Jogo...")
-	
-	# 1. Reseta o estado global (Inventário, Vida, Stats)
 	Game_State.reset_run_state()
-	
-	# 2. [INTEGRAÇÃO] Reseta o progresso de fases no LevelManager
-	# Isso garante que o jogo comece do Tutorial (0) e não da última fase jogada
-	if LevelManager:
-		LevelManager.indice_fase_atual = 0
-	
-	# 3. Garante que NÃO vamos carregar save, queremos um mapa novo
+	if LevelManager: LevelManager.indice_fase_atual = 0
 	Game_State.carregar_save_ao_iniciar = false
-	Game_State.carregar_auto_save_ao_iniciar = false # Garante que não puxe checkpoint
-	
-	# 4. Vai para o jogo
+	Game_State.carregar_auto_save_ao_iniciar = false
 	get_tree().change_scene_to_file("res://scenes/Main.tscn")
 
 func _on_carregar_pressed():
-	print("Menu: Carregando Jogo Salvo...")
-	# 1. Reseta o estado (por segurança)
 	Game_State.reset_run_state()
-	# 2. Levanta a bandeira: "Main, por favor carregue o disco quando acordar"
 	Game_State.carregar_save_ao_iniciar = true
-	# 3. Vai para o jogo
 	get_tree().change_scene_to_file("res://scenes/Main.tscn")
+
+func _on_arcade_pressed():
+	Game_State.reset_run_state()
+	ArcadeManager.iniciar_run()
+	Game_State.carregar_save_ao_iniciar = false
+	Game_State.carregar_auto_save_ao_iniciar = false
+	Game_State.is_in_hub = false
+	get_tree().change_scene_to_file("res://scenes/Main.tscn")
+
+# --- FUNÇÃO DO LEADERBOARD ---
+func _on_leaderboard_pressed():
+	# Cria um Popup simples via código para não precisar editar a cena demais
+	var popup = AcceptDialog.new()
+	popup.title = "RANKING ARCADE (TOP 10)"
+	add_child(popup)
+	
+	var data = SaveManager.get_leaderboard_data()
+	var texto = ""
+	
+	if data.is_empty():
+		texto = "Nenhum registro encontrado."
+	else:
+		for i in range(data.size()):
+			var e = data[i]
+			texto += "%d. %s ...... %d\n" % [i+1, e["name"], e["score"]]
+			
+	popup.dialog_text = texto
+	popup.popup_centered()
 
 func _on_sair_pressed():
 	get_tree().quit()

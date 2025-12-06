@@ -7,7 +7,11 @@ extends CanvasLayer
 var tempo_leitura_base = 4.0
 
 func _ready():
+	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	_iniciar_sequencia_punicao()
+
+func _input(event):
+	get_viewport().set_input_as_handled()
 
 func _iniciar_sequencia_punicao():
 	var texto = ""

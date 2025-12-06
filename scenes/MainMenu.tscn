@@ -44,6 +44,14 @@ text = "Novo Jogo"
 layout_mode = 2
 text = "Carregar Jogo"
 
+[node name="BtnArcade" type="Button" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "Modo Arcade"
+
+[node name="BtnLeaderboard" type="Button" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "Ver Leaderboard"
+
 [node name="BtnSair" type="Button" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
 text = "Sair do jogo"

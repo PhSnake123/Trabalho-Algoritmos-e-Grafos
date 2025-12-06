@@ -28,6 +28,7 @@ func _ready():
 	add_to_group("player")
 	global_position = (Vector2(grid_pos) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
 	target_pos = global_position
+	await get_tree().process_frame
 	stats = Game_State.stats_jogador.duplicate()
 	SaveManager.register_player(self)
 

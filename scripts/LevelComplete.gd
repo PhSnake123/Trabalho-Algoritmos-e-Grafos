@@ -8,7 +8,7 @@ extends CanvasLayer
 @export var dialogo_admin: DialogueData
 
 func _ready():
-	# 1. Configura UI
+	# 1. Configura UI (Texto e Cores) - Mantém igual
 	lbl_status.text = Game_State.status_vitoria
 	lbl_tempo.text = "Tempo: %d / %d" % [Game_State.tempo_jogador, Game_State.tempo_par_level]
 	lbl_moedas.text = "Ganhos: $%d" % Game_State.moedas_ganhas_na_fase
@@ -17,29 +17,42 @@ func _ready():
 	elif Game_State.status_vitoria == "ROTA INEFICIENTE": lbl_status.modulate = Color.RED
 	else: lbl_status.modulate = Color.YELLOW
 	
-	# --- LÓGICA DE SELEÇÃO DE DIÁLOGO ---
-	var fase_atual = LevelManager.indice_fase_atual + 1
-	
-	# Tenta carregar um diálogo específico para esta fase
-	# Ex: "res://assets/dialogues/admin_fase_1.tres"
-	var path_especifico = "res://assets/dialogue/admin_fases/admin_fase_%d.tres" % fase_atual
-	
-	if ResourceLoader.exists(path_especifico):
-		dialogo_admin = load(path_especifico)
-		print("LevelComplete: Carregado diálogo específico da Fase ", fase_atual)
-	else:
-		dialogo_admin = null
-		print("LevelComplete: Nenhum diálogo configurado.")
-	
-	# 2. Trava o botão inicialmente
-	btn_prosseguir.disabled = true
+	# Conecta o botão (agora fazemos isso antes do if/else para garantir)
 	btn_prosseguir.pressed.connect(_on_prosseguir)
 	
-	# 3. Desenha o Grafo
+	# 3. Desenha o Grafo (Mantém igual)
 	_desenhar_caminho_jogador()
+
+	# --- LÓGICA DE COMPORTAMENTO (ARCADE vs HISTÓRIA) ---
 	
-	# 4. Inicia o Diálogo (com um pequeno delay para a transição terminar)
-	get_tree().create_timer(0.5).timeout.connect(_iniciar_dialogo)
+	if ArcadeManager.is_arcade_mode:
+		# >>> MODO ARCADE <<<
+		print("LevelComplete: Modo Arcade. Pulando diálogos.")
+		dialogo_admin = null
+		
+		# Botão já começa destravado e focado para agilizar
+		btn_prosseguir.disabled = false
+		btn_prosseguir.grab_focus()
+		
+	else:
+		# >>> MODO HISTÓRIA <<<
+		
+		# 1. Trava o botão inicialmente
+		btn_prosseguir.disabled = true
+		
+		# 2. Tenta carregar diálogo da fase
+		var fase_atual = LevelManager.indice_fase_atual + 1
+		var path_especifico = "res://assets/dialogue/admin_fases/admin_fase_%d.tres" % fase_atual
+		
+		if ResourceLoader.exists(path_especifico):
+			dialogo_admin = load(path_especifico)
+			print("LevelComplete: Carregado diálogo específico da Fase ", fase_atual)
+		else:
+			dialogo_admin = null
+			print("LevelComplete: Nenhum diálogo configurado.")
+		
+		# 3. Inicia o Timer para começar o diálogo
+		get_tree().create_timer(0.5).timeout.connect(_iniciar_dialogo)
 
 func _iniciar_dialogo():
 	if dialogo_admin:
@@ -55,7 +68,33 @@ func _on_dialogo_terminou():
 	btn_prosseguir.grab_focus()
 
 func _on_prosseguir():
-	LevelManager.avancar_para_proxima_fase()
+	# Verifica se estamos no Arcade
+	if ArcadeManager.is_arcade_mode:
+		print("LevelComplete: Modo Arcade - Calculando Bônus...")
+		
+		# --- CORREÇÃO: REMOVEMOS O CÁLCULO DE MOEDAS DAQUI ---
+		# Os fragmentos já foram somados no GameState.adicionar_moedas()
+		# Agora só calculamos o Bônus de Tempo/Velocidade.
+		
+		var bonus_tempo = 0
+		if Game_State.tempo_jogador < Game_State.tempo_par_level:
+			var diff = Game_State.tempo_par_level - Game_State.tempo_jogador
+			# Exemplo: 50 pontos por segundo economizado
+			bonus_tempo = int(diff * 50) 
+			
+		if bonus_tempo > 0:
+			ArcadeManager.add_score(bonus_tempo)
+			print("Arcade: Bônus de Tempo aplicado: +%d pts" % bonus_tempo)
+		else:
+			print("Arcade: Sem bônus de tempo.")
+		
+		# Avança nível
+		ArcadeManager.avancar_nivel()
+		get_tree().reload_current_scene()
+		
+	else:
+		# Modo História Normal (Mantém original)
+		LevelManager.avancar_para_proxima_fase()
 
 # --- DESENHO DO GRAFO ---
 func _desenhar_caminho_jogador():

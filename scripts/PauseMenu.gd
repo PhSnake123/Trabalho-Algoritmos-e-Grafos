@@ -15,6 +15,13 @@ func abrir_menu():
 	# Pausa a árvore de jogo
 	get_tree().paused = true
 	
+	# --- LÓGICA ARCADE ---
+	# Procura o botão de carregar (certifique-se que o nome do nó no editor é "BtnCarregar")
+	var btn_carregar = find_child("BtnCarregar", true, false)
+	if btn_carregar:
+		# Se for arcade, esconde. Se não, mostra.
+		btn_carregar.visible = not ArcadeManager.is_arcade_mode
+	
 	# Foca no primeiro botão para navegar com teclado/controle
 	var primeiro_botao = find_child("BtnContinuar", true, false)
 	if primeiro_botao: primeiro_botao.grab_focus()
@@ -49,6 +56,9 @@ func _on_btn_hub_pressed():
 func _on_btn_titulo_pressed():
 	fechar_menu()
 	# Garante que despausou antes de sair
+	if ArcadeManager.is_arcade_mode:
+		ArcadeManager.finalizar_run()
+	
 	get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
 
 func _on_btn_sair_pressed():

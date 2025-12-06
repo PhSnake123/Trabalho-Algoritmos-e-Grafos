@@ -377,13 +377,26 @@ func _inicializar_novo_jogo(vertice_inicio: Vector2i):
 			if script_fase_atual.has_method("setup_fase"):
 				script_fase_atual.setup_fase(self)
 		
-		SaveManager.save_auto_game()
+		if not ArcadeManager.is_arcade_mode:
+			
+			# 1. Salva o Checkpoint (Auto)
+			SaveManager.save_auto_game()
+			
+			# 2. Aguarda um frame para garantir que GameState esteja sincronizado
+			await get_tree().process_frame
+			
+			# 3. Salva no Slot Principal (Manual) se não for tutorial
+			print("Main: Tentando salvar início da fase. Índice Atual: ", LevelManager.indice_fase_atual)
+			
+			if LevelManager.indice_fase_atual > 0:
+				print("Main: Condição Aceita (>0). Salvando no Slot do Player...")
+				SaveManager.save_player_game()
+			else:
+				print("Main: Condição Recusada (É Tutorial). Save pulado.")
 		
-		# Salva no slot principal para aparecer no botão "Carregar" do menu.
-		# A condição garante que não sobrescrevemos saves se for um tutorial (Nível 0).
-		if LevelManager.indice_fase_atual > 1:
-			print("Main: Salvando estado inicial da fase no Slot Principal.")
-			SaveManager.save_player_game()
+		else:
+			print("Main: Modo Arcade ativo. Saves desabilitados.")
+		# ----------------------------------
 
 # --- [ALTERADO] LÓGICA DO DRONE SCANNER PERMANENTE ---
 func _process(delta):
@@ -1707,15 +1720,23 @@ func chegou_saida(player_grid_pos: Vector2i):
 		# 1. Processa o resultado
 		Game_State.processar_resultado_fase(tolerancia)
 		
-		# 2. Decide qual tela mostrar
-		if Game_State.falha_por_tempo:
-			# BAD ENDING: Instancia a tela de punição
+	# 2. Decide qual tela mostrar
+	if Game_State.falha_por_tempo:
+		
+		if ArcadeManager.is_arcade_mode:
+			print("Main: Tempo esgotado no Arcade. Game Over.")
+			# No Arcade, estourar o tempo é Fim de Jogo direto (Leaderboard)
+			# Não mostramos a tela de punição narrativa (BadEndingScreen)
+			get_tree().change_scene_to_file("res://scenes/GameOver.tscn")
+		else:
+			# Modo História: Mostra a tela de punição narrativa
 			var tela_bad = load("res://scenes/BadEndingScreen.tscn").instantiate()
 			add_child(tela_bad)
-		else:
-			# VITÓRIA: Instancia a tela de sucesso
-			var tela_vitoria = load("res://scenes/LevelComplete.tscn").instantiate()
-			add_child(tela_vitoria)
+			
+	else:
+		# VITÓRIA: Instancia a tela de sucesso
+		var tela_vitoria = load("res://scenes/LevelComplete.tscn").instantiate()
+		add_child(tela_vitoria)
 		
 		# 3. Trava o Player
 		player.set_physics_process(false)

@@ -1,92 +1,146 @@
 extends CanvasLayer
+
 @onready var musica_game_over: AudioStreamPlayer2D = $AudioStreamPlayer2D
 
+# Referências da UI NORMAL (O CenterContainer que já existia)
+@onready var container_normal = $ContainerNormal
+
+# Referências da UI ARCADE (O Panel que criamos agora)
+@onready var panel_arcade = $PanelArcade
+@onready var lbl_score = $PanelArcade/VBoxContainer/LblScore
+@onready var input_name = $PanelArcade/VBoxContainer/HBoxContainer/InputName
+@onready var btn_submit = $PanelArcade/VBoxContainer/HBoxContainer/BtnSubmit
+@onready var vbox_lista = $PanelArcade/VBoxContainer/VBoxListaLeaderboard
+@onready var btn_voltar_menu = $PanelArcade/VBoxContainer/BtnVoltarMenu
 
 func _ready():
 	AudioManager.stop_music()
 	musica_game_over.play()
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	
-	# Conexões existentes
-	$CenterContainer/VBoxContainer/BtnTentar.pressed.connect(_on_tentar_pressed)
-	$CenterContainer/VBoxContainer/BtnSair.pressed.connect(_on_sair_pressed)
+	# --- DECISÃO DE MODO ---
+	if ArcadeManager.is_arcade_mode:
+		_setup_arcade_mode()
+	else:
+		_setup_normal_mode()
+
+func _setup_normal_mode():
+	# Esconde Arcade, Mostra Normal
+	if panel_arcade: panel_arcade.hide()
+	container_normal.show()
 	
-	# NOVAS CONEXÕES
-	# (Verifique se os nomes dos nós batem com o que você criou na cena)
-	$CenterContainer/VBoxContainer/BtnCarregar.pressed.connect(_on_carregar_pressed)
-	$CenterContainer/VBoxContainer/BtnMenu.pressed.connect(_on_menu_pressed)
+	# Conexões Normais (Reutilizando seus nós existentes)
+	# Nota: Ajuste os caminhos abaixo se você mudou a estrutura do ContainerNormal
+	var vbox = $ContainerNormal/VBoxContainer
+	vbox.get_node("BtnTentar").pressed.connect(_on_tentar_pressed)
+	vbox.get_node("BtnSair").pressed.connect(_on_sair_pressed)
+	vbox.get_node("BtnCarregar").pressed.connect(_on_carregar_pressed)
+	vbox.get_node("BtnMenu").pressed.connect(_on_menu_pressed)
 	
-	var btn_hub: Button = $CenterContainer/VBoxContainer/BtnHub
+	# Lógica do Hub e Load Button
+	if not FileAccess.file_exists(SaveManager.SAVE_PATH_PLAYER):
+		vbox.get_node("BtnCarregar").disabled = true
+		
+	var btn_hub = vbox.get_node("BtnHub")
 	if btn_hub:
 		btn_hub.pressed.connect(_on_hub_pressed)
-		
-		# Desabilita se não existir backup
 		if not FileAccess.file_exists(SaveManager.SAVE_PATH_HUB_BACKUP):
 			btn_hub.disabled = true
+
+func _setup_arcade_mode():
+	# Esconde Normal, Mostra Arcade
+	container_normal.hide()
+	panel_arcade.show()
 	
-	# Opcional: Desabilita o botão Carregar se não tiver save (Reutilizando lógica do Menu)
-	if not FileAccess.file_exists(SaveManager.SAVE_PATH_PLAYER):
-		$CenterContainer/VBoxContainer/BtnCarregar.disabled = true
+	# Atualiza Texto de Pontuação
+	lbl_score.text = "PONTUAÇÃO FINAL: %d" % ArcadeManager.pontuacao_acumulada
+	
+	# Configura Input
+	input_name.text = "AAA"
+	input_name.grab_focus()
+	
+	# Conecta Botões Arcade
+	btn_submit.pressed.connect(_on_submit_pressed)
+	btn_voltar_menu.pressed.connect(_on_menu_pressed)
+	
+	# Mostra a lista atual
+	_atualizar_lista_visual()
+
+func _on_submit_pressed():
+	var nome = input_name.text.strip_edges()
+	if nome == "": nome = "UNK"
+	
+	# Salva
+	SaveManager.save_score_to_leaderboard(nome, ArcadeManager.pontuacao_acumulada)
+	
+	# Atualiza visual e trava
+	_atualizar_lista_visual()
+	input_name.editable = false
+	btn_submit.disabled = true
+	btn_submit.text = "SALVO!"
+
+func _atualizar_lista_visual():
+	# Limpa filhos antigos
+	for child in vbox_lista.get_children():
+		child.queue_free()
+		
+	var data = SaveManager.get_leaderboard_data()
+	
+	if data.is_empty():
+		var l = Label.new()
+		l.text = "Sem pontuações ainda."
+		vbox_lista.add_child(l)
+		return
+		
+	# Cria Labels
+	for i in range(data.size()):
+		var entry = data[i]
+		var l = Label.new()
+		l.text = "%d. %s  -  %d" % [i+1, entry["name"], entry["score"]]
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		
+		# Destaca o jogador atual
+		if entry["score"] == ArcadeManager.pontuacao_acumulada and entry["name"] == input_name.text.to_upper():
+			l.modulate = Color.YELLOW
+			
+		vbox_lista.add_child(l)
+
+# --- FUNÇÕES DE AÇÃO (Reutilizadas) ---
 
 func _on_tentar_pressed():
-	print("GameOver: Tentando novamente (Novo Jogo)...")
+	print("GameOver: Tentando novamente...")
 	Engine.time_scale = 1.0
-	
-	if FileAccess.file_exists(SaveManager.SAVE_PATH_AUTO):
-		Game_State.reset_run_state() # Limpa memória suja
-		Game_State.carregar_auto_save_ao_iniciar = true
-		get_tree().change_scene_to_file("res://scenes/Main.tscn")
-	else:
-		# Fallback: Se não tem auto-save, começa tudo do zero (Novo Jogo)
-		print("GameOver: AutoSave não encontrado. Iniciando nova run do zero.")
-		Game_State.reset_run_state()
-		Game_State.carregar_save_ao_iniciar = false
-		get_tree().change_scene_to_file("res://scenes/Main.tscn")
+	Game_State.reset_run_state()
+	Game_State.carregar_auto_save_ao_iniciar = true
+	get_tree().change_scene_to_file("res://scenes/Main.tscn")
 
-# --- NOVO: Lógica Reutilizada do Menu Principal ---
 func _on_carregar_pressed():
 	print("GameOver: Carregando último save...")
 	Engine.time_scale = 1.0
-	
-	# 1. Limpa tudo
 	Game_State.reset_run_state()
-	
-	# 2. Levanta a bandeira para o Main.gd saber o que fazer
 	Game_State.carregar_save_ao_iniciar = true
-	
-	# 3. Vai para o Main (ele vai ler a bandeira e puxar o SaveManager sozinho)
 	get_tree().change_scene_to_file("res://scenes/Main.tscn")
 
-# --- NOVO: Voltar pro Menu ---
 func _on_menu_pressed():
-	print("GameOver: Voltando para o Menu...")
 	Engine.time_scale = 1.0
-	# Ajuste o caminho se seu menu estiver em outra pasta
+	ArcadeManager.finalizar_run() # Limpa o modo arcade
 	get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
 
 func _on_sair_pressed():
 	get_tree().quit()
 
 func _on_hub_pressed():
-	print("GameOver: Retornando ao Hub (Restaurando Backup)...")
-	Engine.time_scale = 1.0 # Garante que o jogo despause
+	print("GameOver: Restaurando Hub...")
+	Engine.time_scale = 1.0
 	Game_State.reset_run_state()
-	
-	# Verifica se o backup existe
 	if FileAccess.file_exists(SaveManager.SAVE_PATH_HUB_BACKUP):
-		# 1. Lê o conteúdo do arquivo de Backup do Hub
 		var file_backup = FileAccess.open(SaveManager.SAVE_PATH_HUB_BACKUP, FileAccess.READ)
 		var json_content = file_backup.get_as_text()
 		file_backup.close()
 		
-		# 2. Sobrescreve o Save Principal (Player) com o conteúdo do Backup
-		# Isso efetivamente "volta no tempo" para o estado do Hub
 		var file_player = FileAccess.open(SaveManager.SAVE_PATH_PLAYER, FileAccess.WRITE)
 		file_player.store_string(json_content)
 		file_player.close()
 		
-		# 3. Configura para carregar o save normal (que agora contém os dados do Hub)
 		Game_State.carregar_save_ao_iniciar = true
 		get_tree().change_scene_to_file("res://scenes/Main.tscn")
-	else:
-		print("ERRO: Arquivo de backup não encontrado!")

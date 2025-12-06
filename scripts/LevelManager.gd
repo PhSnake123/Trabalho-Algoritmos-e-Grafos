@@ -16,7 +16,7 @@ func _ready():
 	#lista_fases.append(load("res://assets/levels/tutorial1.tres"))
 	#lista_fases.append(load("res://assets/levels/tutorial2.tres"))
 	#lista_fases.append(load("res://assets/levels/tutorial3.tres"))
-	lista_fases.append(load("res://assets/levels/tutorial4.tres"))
+	#lista_fases.append(load("res://assets/levels/tutorial4.tres"))
 	lista_fases.append(load("res://assets/levels/tutorial5.tres"))
 	lista_fases.append(load("res://assets/levels/level1.tres"))
 	lista_fases.append(load("res://assets/levels/level2.tres"))
@@ -26,6 +26,15 @@ func _ready():
 
 # Chamado pelo Main para saber o que carregar
 func get_dados_fase_atual() -> LevelDefinition:
+	
+	# 1. Prioridade: Modo Arcade Ativo?
+	if ArcadeManager.is_arcade_mode:
+		if ArcadeManager.current_level_resource != null:
+			return ArcadeManager.current_level_resource
+		else:
+			print("ERRO CRÍTICO: Arcade Mode ativo mas sem resource gerado!")
+			return null
+	
 	# 1. Se estamos no Hub, retorna a definição do Hub
 	if Game_State.is_in_hub:
 		if hub_definition:
@@ -34,6 +43,14 @@ func get_dados_fase_atual() -> LevelDefinition:
 			print("ERRO: HubDef não carregado no LevelManager!")
 			return null
 			
+	# 3. Modo História (Fases Normais) [Deletar ou comentar o código depois do else, se for usar
+	# essa versão aqui debaixo. No momento, estamos usando o outro método.
+	#if indice_fase_atual >= 0 and indice_fase_atual < lista_fases.size():
+	#	return lista_fases[indice_fase_atual]
+	#else:
+	#	print("ERRO: Índice de fase inválido: ", indice_fase_atual)
+	#	return null
+	
 	# 2. Se não, retorna a fase da lista
 	if lista_fases.is_empty():
 		return null

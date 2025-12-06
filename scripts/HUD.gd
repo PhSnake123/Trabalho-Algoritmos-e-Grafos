@@ -142,7 +142,7 @@ func forcar_atualizacao_total():
 		inventory_ui._atualizar_grid()
 	
 	# Atualiza o texto
-	label_moedas.text = "Moedas: %d" % Game_State.moedas
+	label_moedas.text = "Fragmentos: %d" % Game_State.moedas
 	label_moedas.modulate = Color.DARK_ORANGE
 	
 	# Decide se mostra ou esconde (sem animação, direto ao ponto)

@@ -3,6 +3,7 @@ extends Node
 class_name GameState
 
 # --- Responsabilidade (Estado da Run) - Fase 1.3 ---
+var is_arcade_mode: bool = false
 var carregar_save_ao_iniciar: bool = false # Load Manual (Player)
 var carregar_auto_save_ao_iniciar: bool = false # Load Auto (Checkpoint)
 var musica_atual_path: String = ""
@@ -141,7 +142,6 @@ func reset_run_state():
 			print("DEBUG: Item de teste adicionado: ", item.nome_item)
 	# =========================================
 	
-	add_safe.call("res://assets/iteminfo/save_terminal.tres")
 	add_safe.call("res://assets/iteminfo/chave.tres")
 	add_safe.call("res://assets/iteminfo/DroneAStar.tres")
 	add_safe.call("res://assets/iteminfo/DroneDJKISTRA.tres")
@@ -153,10 +153,18 @@ func reset_run_state():
 	carregar_auto_save_ao_iniciar = false
 	print("GameState: Estado da run resetado.")
 	
-# [NOVO] Helper Functions para Economia
 func adicionar_moedas(qtd: int):
 	moedas += qtd
 	emit_signal("moedas_alteradas", moedas)
+	
+	# --- CORREÇÃO ARCADE: Pontuação em Tempo Real ---
+	if ArcadeManager.is_arcade_mode:
+		# Se você quer que o score seja EXATAMENTE a quantidade de fragmentos:
+		# Use: ArcadeManager.add_score(qtd)
+		
+		# Se você quer manter a regra de "+10 pontos por fragmento":
+		ArcadeManager.add_score(qtd) 
+		
 	print("GameState: +%d Moedas. Saldo: %d" % [qtd, moedas])
 
 func gastar_moedas(qtd: int) -> bool:
