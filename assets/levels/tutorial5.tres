@@ -23,7 +23,7 @@ metadata/_custom_type_script = "uid://c6yn1hesl0qc7"
 script = ExtResource("3_joqio")
 nome_fase = "Tutorial Final"
 musica_fundo = ExtResource("3_ftp41")
-tamanho = Vector2i(23, 19)
+tamanho = Vector2i(19, 19)
 cor_ambiente = Color(0.6039216, 1, 0.57254905, 1)
 qtd_moedas = 100
 modo_jogo = "MST"
@@ -32,7 +32,7 @@ gerar_save_point = false
 salas_qtd = 1
 qtd_portas = 20
 tiles_especiais = {
-"Dano": 20,
+"Dano": 10,
 "Lama": 10
 }
 lista_inimigos = Array[ExtResource("1_42c8x")]([SubResource("Resource_ed447")])

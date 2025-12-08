@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=4 format=3 uid="uid://ctq1bdfb4ucm5"]
+
+[ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_8q8d3"]
+[ext_resource type="Texture2D" uid="uid://dy5a4km87rkei" path="res://assets/sprites/pixel_icons_by_oceansdream.png" id="2_r4ffy"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sgudd"]
+atlas = ExtResource("2_r4ffy")
+region = Rect2(0, 0, 24, 24)
+
+[resource]
+script = ExtResource("1_8q8d3")
+nome_item = "Kill-9 Upgrade Patch"
+descricao = "Aumenta o dano da Kill-9."
+preco_base = 150
+efeito = "UPGRADE_KILL9_DMG"
+valor_efeito = 5.0
+textura_icon = SubResource("AtlasTexture_sgudd")
+metadata/_custom_type_script = "uid://d01dm40km4s0s"

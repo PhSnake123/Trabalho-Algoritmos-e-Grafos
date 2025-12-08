@@ -1,10 +1,21 @@
-[gd_scene load_steps=10 format=4 uid="uid://cjfowd1wr0k68"]
+[gd_scene load_steps=21 format=4 uid="uid://cjfowd1wr0k68"]
 
 [ext_resource type="Texture2D" uid="uid://bduaxm2n1e5vl" path="res://assets/tiles/colored_tilemap_packed.png" id="1_6d2pq"]
 [ext_resource type="Script" uid="uid://di8bclwurui43" path="res://scripts/HubLogic.gd" id="1_phje6"]
 [ext_resource type="PackedScene" uid="uid://b03360n2oiwpt" path="res://scenes/ShopSpot.tscn" id="2_0pmew"]
 [ext_resource type="Resource" uid="uid://cow4da02a7s" path="res://assets/iteminfo/potion.tres" id="3_phje6"]
 [ext_resource type="Resource" uid="uid://wglql1osnai6" path="res://assets/iteminfo/chave.tres" id="4_0pmew"]
+[ext_resource type="Resource" uid="uid://xq4yfeancap" path="res://assets/iteminfo/DroneAStarPerm.tres" id="6_uyke1"]
+[ext_resource type="Resource" uid="uid://bu1k71g557xsf" path="res://assets/iteminfo/save_terminal.tres" id="6_yjy8j"]
+[ext_resource type="Resource" uid="uid://20bwobltdapx" path="res://assets/iteminfo/boots.tres" id="7_d7uy3"]
+[ext_resource type="Resource" uid="uid://d2ft2c4gp0ri7" path="res://assets/iteminfo/escopeta.tres" id="8_d7uy3"]
+[ext_resource type="Resource" uid="uid://q6se5t1b7lf0" path="res://assets/iteminfo/DroneTerraformer.tres" id="8_hnguc"]
+[ext_resource type="Resource" uid="uid://0qontwq7fugd" path="res://assets/iteminfo/DRONE_SCANNER.tres" id="9_24b74"]
+[ext_resource type="Resource" uid="uid://88gq5ue0xo3b" path="res://assets/iteminfo/DroneHunter.tres" id="9_sqs58"]
+[ext_resource type="Resource" uid="uid://d0ut6aj4fpf4s" path="res://assets/iteminfo/DroneDJKISTRA.tres" id="10_elltj"]
+[ext_resource type="Resource" uid="uid://e40kfemlsx3d" path="res://assets/iteminfo/SUPERpotion.tres" id="10_hnguc"]
+[ext_resource type="Resource" uid="uid://cdk77w1m3eqeg" path="res://assets/iteminfo/PrimTEMP.tres" id="11_24b74"]
+[ext_resource type="Resource" uid="uid://b1dmmik5qm0oe" path="res://assets/iteminfo/DroneAStar.tres" id="12_v2qdr"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_rsiwu"]
 texture = ExtResource("1_6d2pq")
@@ -439,11 +450,73 @@ tile_set = SubResource("TileSet_t7xoe")
 
 [node name="ShopSpot" parent="." instance=ExtResource("2_0pmew")]
 z_index = 5
-position = Vector2(120, 104)
+position = Vector2(72, 104)
 item_a_venda = ExtResource("3_phje6")
 infinito = true
 
-[node name="ShopSpot2" parent="." instance=ExtResource("2_0pmew")]
-position = Vector2(152, 104)
+[node name="ShopSpot7" parent="." instance=ExtResource("2_0pmew")]
+z_index = 5
+position = Vector2(40, 104)
 item_a_venda = ExtResource("4_0pmew")
-preco_override = 50
+infinito = true
+
+[node name="ShopSpot8" parent="." instance=ExtResource("2_0pmew")]
+z_index = 5
+position = Vector2(40, 152)
+item_a_venda = ExtResource("6_yjy8j")
+infinito = true
+
+[node name="ShopSpot9" parent="." instance=ExtResource("2_0pmew")]
+z_index = 5
+position = Vector2(72, 152)
+item_a_venda = ExtResource("7_d7uy3")
+infinito = true
+
+[node name="ShopSpot10" parent="." instance=ExtResource("2_0pmew")]
+z_index = 5
+position = Vector2(104, 152)
+item_a_venda = ExtResource("8_hnguc")
+infinito = true
+
+[node name="ShopSpot11" parent="." instance=ExtResource("2_0pmew")]
+z_index = 5
+position = Vector2(136, 152)
+item_a_venda = ExtResource("9_24b74")
+infinito = true
+
+[node name="ShopSpot12" parent="." instance=ExtResource("2_0pmew")]
+z_index = 5
+position = Vector2(168, 152)
+item_a_venda = ExtResource("10_hnguc")
+infinito = true
+
+[node name="ShopSpot13" parent="." instance=ExtResource("2_0pmew")]
+z_index = 5
+position = Vector2(200, 152)
+item_a_venda = ExtResource("11_24b74")
+infinito = true
+
+[node name="ShopSpot2" parent="." instance=ExtResource("2_0pmew")]
+position = Vector2(104, 104)
+item_a_venda = ExtResource("10_elltj")
+infinito = true
+
+[node name="ShopSpot3" parent="." instance=ExtResource("2_0pmew")]
+position = Vector2(136, 104)
+item_a_venda = ExtResource("6_uyke1")
+infinito = true
+
+[node name="ShopSpot4" parent="." instance=ExtResource("2_0pmew")]
+position = Vector2(168, 104)
+item_a_venda = ExtResource("12_v2qdr")
+infinito = true
+
+[node name="ShopSpot5" parent="." instance=ExtResource("2_0pmew")]
+position = Vector2(200, 104)
+item_a_venda = ExtResource("8_d7uy3")
+infinito = true
+
+[node name="ShopSpot6" parent="." instance=ExtResource("2_0pmew")]
+position = Vector2(232, 104)
+item_a_venda = ExtResource("9_sqs58")
+infinito = true

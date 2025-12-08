@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://drlwblaox1vja"
+path="res://.godot/imported/Alexander Ehlers - Doomed.mp3-9bbcac06dbf2407302b5389c283517ef.mp3str"
+
+[deps]
+
+source_file="res://Audio/music/Alexander Ehlers - Doomed.mp3"
+dest_files=["res://.godot/imported/Alexander Ehlers - Doomed.mp3-9bbcac06dbf2407302b5389c283517ef.mp3str"]
+
+[params]
+
+loop=true
+loop_offset=0.0
+bpm=0.0
+beat_count=0
+bar_beats=4

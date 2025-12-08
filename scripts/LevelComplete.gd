@@ -27,7 +27,6 @@ func _ready():
 	
 	if ArcadeManager.is_arcade_mode:
 		# >>> MODO ARCADE <<<
-		print("LevelComplete: Modo Arcade. Pulando diálogos.")
 		dialogo_admin = null
 		
 		# Botão já começa destravado e focado para agilizar
@@ -41,7 +40,7 @@ func _ready():
 		btn_prosseguir.disabled = true
 		
 		# 2. Tenta carregar diálogo da fase
-		var fase_atual = LevelManager.indice_fase_atual + 1
+		var fase_atual = LevelManager.indice_fase_atual
 		var path_especifico = "res://assets/dialogue/admin_fases/admin_fase_%d.tres" % fase_atual
 		
 		if ResourceLoader.exists(path_especifico):

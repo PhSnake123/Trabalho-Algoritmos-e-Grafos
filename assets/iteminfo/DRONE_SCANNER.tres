@@ -10,9 +10,9 @@ region = Rect2(97.333466, 48.666786, 22.222229, 21.777779)
 [resource]
 script = ExtResource("1_kojrh")
 nome_item = "Indexador"
-descricao = "Revela uma parte do mapa afetada por entropia.
-"
+descricao = "Revela uma parte do mapa afetada por entropia."
 tipo_item = 5
+preco_base = 20
 efeito = "DRONE_SCANNER"
 valor_efeito = 5.0
 alcance_maximo = 40

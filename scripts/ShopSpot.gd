@@ -49,21 +49,46 @@ func atualizar_visual():
 func interagir():
 	if not item_a_venda: return
 	
+	# 1. Cria os dados do diálogo dinamicamente
+	var dialogo_compra = DialogueData.new()
+	dialogo_compra.nome_npc = "Loja"
+	
+	var texto_desc = item_a_venda.descricao
+	if texto_desc == "":
+		texto_desc = "Item sem descrição."
+		
+	var texto_final = "%s\nPreço: %d Fragmentos." % [texto_desc, preco_final]
+	
+	# Configura o texto
+	dialogo_compra.falas.clear()
+	dialogo_compra.falas.append(texto_final)
+	
+	# --- CORREÇÃO: ADICIONAR AS OPÇÕES ---
+	# Sem isso, o DialogueManager acha que é apenas um texto informativo e fecha.
+	dialogo_compra.opcoes.clear()
+	dialogo_compra.opcoes.append("Comprar")  # Índice 0
+	dialogo_compra.opcoes.append("Cancelar") # Índice 1
+	# -------------------------------------
+	
+	# 2. Inicia o Diálogo
+	DialogueManager.iniciar_dialogo(dialogo_compra)
+	
+	# Aguarda a resposta (sinal escolha_feita do DialogueManager)
+	var opcao = await DialogueManager.escolha_feita
+	
+	if opcao == 0: # COMPRAR (Primeira opção adicionada)
+		_executar_compra()
+	else: # CANCELAR (Segunda opção adicionada)
+		print("Shop: Compra cancelada pelo jogador.")
+
+func _executar_compra():
 	print("Shop: Tentando comprar %s por %d moedas." % [item_a_venda.nome_item, preco_final])
 	
-	# 1. Verifica Saldo (Usando a função que vimos no GameState.gd)
 	if Game_State.moedas >= preco_final:
-		
-		# 2. Tenta Gastar
 		var sucesso = Game_State.gastar_moedas(preco_final)
-		
 		if sucesso:
-			# 3. Entrega o Item
-			# Importante: duplicate() para não alterar o recurso original se tiver durabilidade
 			var item_novo = item_a_venda.duplicate()
 			
-			# 2. Garante que o item saiba qual é seu arquivo original
-			# Se o item à venda tem um arquivo de origem, passamos para a cópia.
 			if item_a_venda.resource_path != "":
 				item_novo.arquivo_origem = item_a_venda.resource_path
 			elif item_a_venda.arquivo_origem != "":
@@ -73,11 +98,9 @@ func interagir():
 			
 			print("Shop: Compra realizada!")
 			
-			# Feedback Visual (Som pode vir aqui depois)
 			if main_ref and main_ref.has_method("spawn_floating_text"):
 				main_ref.spawn_floating_text(global_position + Vector2(0, -20), "COMPROU!", Color.GREEN)
 			
-			# 4. Remove da loja (se não for infinito)
 			if not infinito:
 				queue_free()
 	else:
@@ -85,7 +108,7 @@ func interagir():
 		if main_ref and main_ref.has_method("spawn_floating_text"):
 			main_ref.spawn_floating_text(global_position + Vector2(0, -20), "SEM GRANA", Color.RED)
 
-# Para o sistema de Save/Load do Main (Faremos a integração depois)
+# Para o sistema de Save/Load do Main
 func get_save_data():
 	return {
 		"filename": get_scene_file_path(),

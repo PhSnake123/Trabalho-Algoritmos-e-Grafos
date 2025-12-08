@@ -1,0 +1,78 @@
+[gd_scene load_steps=10 format=3 uid="uid://bl47f6jwx1ctn"]
+
+[ext_resource type="Script" uid="uid://bdh138ekbaa42" path="res://scripts/enemy.gd" id="1_4s6ea"]
+[ext_resource type="Texture2D" uid="uid://f7m3hrolfuv3" path="res://assets/sprites/LEVEL_2_BOSS.png" id="2_4s6ea"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_55jtl"]
+bg_color = Color(0, 0.5411765, 0.019607844, 0.43137255)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mpr68"]
+size = Vector2(10, 11)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rdw5s"]
+atlas = ExtResource("2_4s6ea")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ln4gw"]
+atlas = ExtResource("2_4s6ea")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kqr8b"]
+atlas = ExtResource("2_4s6ea")
+region = Rect2(64, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_03umu"]
+atlas = ExtResource("2_4s6ea")
+region = Rect2(96, 0, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_1vja8"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rdw5s")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ln4gw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_kqr8b")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_03umu")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[node name="CharacterBody2D" type="CharacterBody2D"]
+script = ExtResource("1_4s6ea")
+ai_type = 0
+max_hp = 80
+atk = 15
+def = 5
+poise = 6
+knockback_power = 5
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+z_index = 90
+offset_left = -16.0
+offset_top = -39.0
+offset_right = 16.0
+offset_bottom = -23.0
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 8
+theme_override_styles/fill = SubResource("StyleBoxFlat_55jtl")
+value = 100.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+z_index = 1
+position = Vector2(0, -1.5)
+shape = SubResource("RectangleShape2D_mpr68")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+z_index = 10
+position = Vector2(1, -8)
+sprite_frames = SubResource("SpriteFrames_1vja8")
+autoplay = "default"
+frame_progress = 0.42954823

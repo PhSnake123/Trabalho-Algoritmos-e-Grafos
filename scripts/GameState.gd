@@ -58,7 +58,7 @@ var stats_jogador = {
 signal municao_kill9_alterada(nova_qtd: int)
 
 #(Finais Múltiplos)
-var optional_objectives: Dictionary = {} 
+var optional_objectives: Dictionary = {}
 var bad_ending_count: int = 0
 
 #Estado de entidades para save/load
@@ -94,6 +94,10 @@ func reset_run_state():
 	player_action_history.clear()
 	caminho_ideal_level.clear()
 	optional_objectives.clear()
+	optional_objectives["salvou_cavaleiro"] = false
+	optional_objectives["true_ending_count"] = 0
+	optional_objectives["admin_ending_count"] = 0
+	
 	#recarregar_kill9()
 	
 	heat_map.clear() 
@@ -148,7 +152,7 @@ func reset_run_state():
 	add_safe.call("res://assets/iteminfo/DroneAStarPerm.tres")
 	add_safe.call("res://assets/iteminfo/DRONE_SCANNER.tres")
 	add_safe.call("res://assets/iteminfo/DroneTerraformer.tres")
-	
+	add_safe.call("res://assets/iteminfo/PrimTEMP.tres")
 	carregar_save_ao_iniciar = false
 	carregar_auto_save_ao_iniciar = false
 	print("GameState: Estado da run resetado.")

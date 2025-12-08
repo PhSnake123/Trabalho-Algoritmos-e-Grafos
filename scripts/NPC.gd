@@ -47,33 +47,75 @@ func _ready():
 
 # Função chamada pelo Player (Input Interagir)
 func interagir():
-	print("NPC: Olá!")
 	Game_State.registrar_interacao_npc()
-	if escolhas == 1:
+	
+	if Game_State.is_in_hub:
+			if LevelManager.indice_fase_atual > 4:
+				var dialogo_simples = DialogueData.new()
+				dialogo_simples.falas.clear()
+				dialogo_simples.nome_npc = "Cavaleiro"
+				dialogo_simples.falas.append("Eu me pergunto se ele ainda está por aí, em algum lugar...")
+				dialogo_simples.falas.append("Boa sorte na próxima zona, Agente.")
+				DialogueManager.iniciar_dialogo(dialogo_simples)
+				return
+			
+			if escolhas == 0:
+				var interagiu = DialogueData.new()
+				interagiu.nome_npc = "Cavaleiro"
+				interagiu.falas.clear()
+				interagiu.falas.append("Obrigado, Agente. Se não fosse por você, temo em pensar o que teria acontecido.")
+				interagiu.falas.append("Mas... Onde nós estamos, exatamente? Algo sobre esse setor é diferente...")
+				interagiu.falas.append("Bom, de qualquer forma, tome cuidado em sua jornada. O Admin não gosta quando Agentes começam a agir de forma autônoma.")
+				interagiu.falas.append("Se quiser permanecer em suas boas graças, é melhor não perder tempo com dados errantes como eu. Sem dúvidas há outros nos setores adiante.")
+				interagiu.opcoes.clear()
+				interagiu.opcoes.append("Gostaria de salvá-los também, se possível.")
+				interagiu.opcoes.append("Entendido. Meu trabalho é otimizar.")
+				DialogueManager.iniciar_dialogo(interagiu)
+				var opcao = await DialogueManager.escolha_feita
+				if opcao == 0:
+					interagiu.falas.clear()
+					interagiu.opcoes.clear()
+					interagiu.falas.append("Hum... Não é que eu não admire sua dedicação, mas tenha cautela, ok?")
+					interagiu.falas.append("Você me lembra de um outro agente... De um ciclo passado...\nNão gostaria que você sumisse como ele.")
+					interagiu.falas.append("Mesmo que você não siga o caminho da otimização, pelo menos tente não irritá-lo. Se você conseguir equilibrar o objetivo com seu altruísmo, deve dar tudo bem.")
+					interagiu.falas.append("Eu espero...")
+					DialogueManager.iniciar_dialogo(interagiu)
+					var count_atual = Game_State.optional_objectives.get("true_ending_count", 0)
+					Game_State.optional_objectives["true_ending_count"] = count_atual + 1
+					escolhas += 1
+				else:
+					interagiu.falas.clear()
+					interagiu.opcoes.clear()
+					interagiu.falas.append("Sim. É melhor desse jeito...")
+					DialogueManager.iniciar_dialogo(interagiu)
+					escolhas += 1
+			else:
+				var interagiu = DialogueData.new()
+				interagiu.nome_npc = "Cavaleiro"
+				interagiu.falas.clear()
+				interagiu.falas.append("Vá, Agente. Não me deixe distraí-lo de sua missão.")
+				DialogueManager.iniciar_dialogo(interagiu)
+				
+	
+	elif escolhas == 1:
 		var interagiu = DialogueData.new()
-		interagiu.nome_npc = "Solaire"
+		interagiu.nome_npc = "Cavaleiro"
 		interagiu.falas.clear()
-		interagiu.falas.append("Eu menti pra você. Eu sou o Solaire! Praise the sun.")
+		interagiu.falas.append("Não se preocupe comigo. Seguirei para a saída assim que puder.")
 		DialogueManager.iniciar_dialogo(interagiu)
 		
 	elif dialogo_data:
 		DialogueManager.iniciar_dialogo(dialogo_data)
 		var opcao = await DialogueManager.escolha_feita
 		
-		if opcao == 0: # Escolheu a primeira (Sim)
-			print("Jogador aceitou!")
-			# Chamamos o diálogo de novo imediatamente com a reação
+		if opcao == 0: #Salvou o cavaleiro
+			Game_State.optional_objectives["salvou_cavaleiro"] = true
 			DialogueManager.iniciar_dialogo(dialogo_op1)
-			# Chama direto o GameState. Sem item, sem inventário.
-			Game_State.upgrade_atributo("atk", 100)
-			Game_State.upgrade_atributo("def", 20)
-			Game_State.upgrade_atributo("poise", 2)
-			Game_State.upgrade_atributo("max_hp", 999)
-			Game_State.upgrade_atributo("kill9_dmg", 50)
+			var count_atual = Game_State.optional_objectives.get("true_ending_count", 0)
+			Game_State.optional_objectives["true_ending_count"] = count_atual + 1
 			escolhas += 1
 			
 		elif opcao == 1: # Escolheu a segunda (Não)
-			print("Jogador recusou.")
 			DialogueManager.iniciar_dialogo(dialogo_op2)
 			await DialogueManager.dialogo_finalizado
 			_morrer()

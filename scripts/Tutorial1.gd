@@ -6,6 +6,13 @@ func setup_fase(_main_ref):
 	# 1. Limpa o inventário (Começa do zero)
 	Game_State.is_dialogue_active = true
 	Game_State.inventario_jogador.clear_items()
+	if _main_ref:
+		var hud = _main_ref.get_node_or_null("HUD")
+		if hud and hud.has_method("forcar_atualizacao_total"):
+			hud.forcar_atualizacao_total()
+			
+			# Garante que o item equipado (mão do jogador) também visualmente suma
+			Game_State.equipar_item(null)
 	
 	# 2. Admin instrui (via DialogueManager)
 	# Aqui você pode criar um DialogueData via código ou carregar um .tres

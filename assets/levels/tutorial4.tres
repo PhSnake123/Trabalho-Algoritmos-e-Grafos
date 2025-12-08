@@ -11,7 +11,7 @@
 script = ExtResource("3_n0eog")
 nome_fase = "Tutorial 4"
 musica_fundo = ExtResource("3_0fg8c")
-tamanho = Vector2i(23, 17)
+tamanho = Vector2i(19, 17)
 modo_jogo = "MST"
 qtd_terminais = 1
 gerar_save_point = false
@@ -19,7 +19,7 @@ salas_qtd = 1
 qtd_portas = 15
 tiles_especiais = {
 "Dano": 10,
-"Lama": 10
+"Lama": 5
 }
 script_logico = ExtResource("5_n0eog")
 metadata/_custom_type_script = "uid://d34551vbrdkqx"

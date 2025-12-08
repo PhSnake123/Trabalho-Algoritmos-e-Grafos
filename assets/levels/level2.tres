@@ -1,39 +1,60 @@
-[gd_resource type="Resource" script_class="LevelDefinition" load_steps=10 format=3 uid="uid://hpclyoa85v7f"]
+[gd_resource type="Resource" script_class="LevelDefinition" load_steps=16 format=3 uid="uid://hpclyoa85v7f"]
 
 [ext_resource type="Script" uid="uid://d27pbt414f1ro" path="res://scripts/ChestSpawnData.gd" id="1_i85ca"]
 [ext_resource type="Script" uid="uid://ci6dlknyw5xas" path="res://scripts/EnemySpawnData.gd" id="1_svxy5"]
-[ext_resource type="PackedScene" uid="uid://wy711p61hc6f" path="res://scenes/Enemy.tscn" id="2_e3j6l"]
 [ext_resource type="Script" uid="uid://c6yn1hesl0qc7" path="res://scripts/NpcSpawnData.gd" id="2_ggai6"]
-[ext_resource type="Resource" uid="uid://d0ut6aj4fpf4s" path="res://assets/iteminfo/DroneDJKISTRA.tres" id="2_nfkyw"]
+[ext_resource type="Resource" uid="uid://2sehxa2q6el4" path="res://assets/iteminfo/SIGKILLUP.tres" id="2_ypae1"]
 [ext_resource type="Script" uid="uid://d34551vbrdkqx" path="res://scripts/LevelDefinition.gd" id="3_e3j6l"]
 [ext_resource type="AudioStream" uid="uid://cshl547waearf" path="res://Audio/music/adventurous.mp3" id="3_ggai6"]
+[ext_resource type="Resource" uid="uid://ctq1bdfb4ucm5" path="res://assets/iteminfo/KILL9UP.tres" id="3_v3u0o"]
+[ext_resource type="PackedScene" uid="uid://ceutwua1e5yey" path="res://scenes/EnemyTurret.tscn" id="5_3rnq8"]
+[ext_resource type="PackedScene" uid="uid://bl47f6jwx1ctn" path="res://scenes/EnemyStalker.tscn" id="6_gm7p6"]
+[ext_resource type="Script" uid="uid://c3gg5ncd3wjqb" path="res://scripts/contador_de_final.gd" id="10_v3u0o"]
 
 [sub_resource type="Resource" id="Resource_ypae1"]
 script = ExtResource("1_i85ca")
-item_recompensa = ExtResource("2_nfkyw")
+item_recompensa = ExtResource("2_ypae1")
 qtd_moedas = 0
+metadata/_custom_type_script = "uid://d27pbt414f1ro"
+
+[sub_resource type="Resource" id="Resource_8pux2"]
+script = ExtResource("1_i85ca")
+item_recompensa = ExtResource("3_v3u0o")
+metadata/_custom_type_script = "uid://d27pbt414f1ro"
+
+[sub_resource type="Resource" id="Resource_1pofa"]
+script = ExtResource("1_i85ca")
+qtd_moedas = 150
+quantidade = 2
 metadata/_custom_type_script = "uid://d27pbt414f1ro"
 
 [sub_resource type="Resource" id="Resource_5qlb5"]
 script = ExtResource("1_svxy5")
-inimigo_cena = ExtResource("2_e3j6l")
-ai_type = 0
+inimigo_cena = ExtResource("5_3rnq8")
+quantidade = 4
 moedas_drop = 10
-cor_modulate = Color(0.48254538, 0.00019358189, 0.49328822, 1)
+metadata/_custom_type_script = "uid://ci6dlknyw5xas"
+
+[sub_resource type="Resource" id="Resource_a66o3"]
+script = ExtResource("1_svxy5")
+inimigo_cena = ExtResource("6_gm7p6")
+hp_maximo = 100
+knockback = 6
 metadata/_custom_type_script = "uid://ci6dlknyw5xas"
 
 [resource]
 script = ExtResource("3_e3j6l")
-nome_fase = "Fase 2"
+nome_fase = "Danger Node"
 musica_fundo = ExtResource("3_ggai6")
-tamanho = Vector2i(21, 21)
-fog_enabled = true
-cor_tilemap = Color(2.0696223e-06, 0.65925884, 0.4492271, 1)
-lista_baus_especificos = Array[ExtResource("1_i85ca")]([SubResource("Resource_ypae1")])
+tamanho = Vector2i(25, 25)
+cor_ambiente = Color(0.71271974, 0.70520234, 1, 1)
+lista_baus_especificos = Array[ExtResource("1_i85ca")]([SubResource("Resource_ypae1"), SubResource("Resource_8pux2"), SubResource("Resource_1pofa")])
 qtd_moedas = 5
+salas_qtd = 2
 tiles_especiais = {
-"Dano": 10,
-"Lama": 0
+"Dano": 20,
+"Lama": 10
 }
-lista_inimigos = Array[ExtResource("1_svxy5")]([SubResource("Resource_5qlb5")])
+lista_inimigos = Array[ExtResource("1_svxy5")]([SubResource("Resource_5qlb5"), SubResource("Resource_a66o3")])
+script_logico = ExtResource("10_v3u0o")
 metadata/_custom_type_script = "uid://d34551vbrdkqx"

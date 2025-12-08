@@ -201,7 +201,32 @@ func _apply_game_state_dict(data: Dictionary):
 	player_ref.last_facing = p_data["last_facing"]
 	player_ref.global_position = (Vector2(new_grid_pos) * main_ref.TILE_SIZE) + (Vector2.ONE * main_ref.TILE_SIZE / 2.0)
 	player_ref.reset_state_on_load()
-
+	
+	var level_def = LevelManager.get_dados_fase_atual()
+	
+	# Se a fase tem um script lógico (ex: ending_demo.gd), precisamos recriá-lo!
+	if level_def and level_def.script_logico:
+		print("SaveManager: Restaurando Script Lógico (Eventos)...")
+		
+		# Remove script antigo se houver (para evitar duplicatas em loads seguidos)
+		if main_ref.script_fase_atual and is_instance_valid(main_ref.script_fase_atual):
+			main_ref.script_fase_atual.queue_free()
+		
+		# Instancia o nó novamente
+		var script_node = level_def.script_logico.new()
+		script_node.name = "LevelScript"
+		main_ref.add_child(script_node)
+		
+		# Reconecta a referência na Main
+		main_ref.script_fase_atual = script_node
+		
+		# (Opcional) Executa o setup novamente para reconectar variáveis internas do script
+		if script_node.has_method("setup_fase"):
+			script_node.setup_fase(main_ref)
+	else:
+		# Se não tem script, garante que a variável na Main seja null
+		main_ref.script_fase_atual = null
+	
 	# ========================================================
 	# ROTA A: CARREGAMENTO DO HUB
 	# ========================================================
@@ -235,7 +260,9 @@ func _apply_game_state_dict(data: Dictionary):
 		# Tenta carregar Baús do save
 		if w_data.has("chests_data"):
 			main_ref.load_chests_state_data(w_data["chests_data"])
-
+		
+		_forcar_atualizacao_hud_geral()
+		
 		print("SaveManager: Hub restaurado com NPCs.")
 		return 
 
@@ -290,9 +317,28 @@ func _apply_game_state_dict(data: Dictionary):
 	main_ref._draw_map()
 	main_ref.update_fog(player_ref.grid_pos)
 	main_ref._setup_camera()
-	
+	_forcar_atualizacao_hud_geral()
+		
 	# Game_State.caminho_jogador.clear()
 	Game_State.log_player_position(player_ref.grid_pos)
+
+func _forcar_atualizacao_hud_geral():
+	# 1. Emite sinais para quem estiver ouvindo (HUD)
+	if Game_State.has_signal("moedas_alteradas"):
+		Game_State.moedas_alteradas.emit(Game_State.moedas)
+		
+	if Game_State.has_signal("municao_kill9_alterada"):
+		Game_State.municao_kill9_alterada.emit(Game_State.stats_jogador["kill9_ammo"])
+
+	if Game_State.has_signal("item_equipado_alterado"):
+		Game_State.item_equipado_alterado.emit(Game_State.item_equipado)
+
+	# 2. Busca a HUD e manda ela se redesenhar do zero
+	if main_ref:
+		var hud = main_ref.get_node_or_null("HUD")
+		if hud and hud.has_method("forcar_atualizacao_total"):
+			hud.forcar_atualizacao_total()
+			print("SaveManager: HUD atualizada com sucesso.")
 
 # ===============================================
 # 2. FUNÇÕES DE "DESEMPACOTAR" (DESERIALIZAÇÃO)

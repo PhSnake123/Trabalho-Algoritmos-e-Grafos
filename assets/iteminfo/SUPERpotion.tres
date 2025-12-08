@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=4 format=3 uid="uid://e40kfemlsx3d"]
+
+[ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_t6qfy"]
+[ext_resource type="Texture2D" uid="uid://733pxjr5deme" path="res://assets/UI/Potions.png" id="2_t6qfy"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4h47m"]
+atlas = ExtResource("2_t6qfy")
+region = Rect2(16, 0, 16, 16)
+
+[resource]
+script = ExtResource("1_t6qfy")
+nome_item = "Patch 2.0"
+descricao = "Patch de Integridade otimizado. Cura 100% de vida."
+tipo_item = 5
+preco_base = 50
+efeito = "CURA_HP"
+valor_efeito = 1.0
+textura_icon = SubResource("AtlasTexture_4h47m")
+metadata/_custom_type_script = "uid://d01dm40km4s0s"

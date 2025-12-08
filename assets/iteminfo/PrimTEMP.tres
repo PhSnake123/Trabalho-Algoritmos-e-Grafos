@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=4 format=3 uid="uid://cdk77w1m3eqeg"]
+
+[ext_resource type="Script" uid="uid://d01dm40km4s0s" path="res://scripts/ItemData.gd" id="1_sdbtj"]
+[ext_resource type="Texture2D" uid="uid://dy5a4km87rkei" path="res://assets/sprites/pixel_icons_by_oceansdream.png" id="2_n0hwm"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_op8te"]
+atlas = ExtResource("2_n0hwm")
+region = Rect2(120, 72, 24, 24)
+
+[resource]
+script = ExtResource("1_sdbtj")
+nome_item = "Prim"
+descricao = "Utiliza ondas eletromagnéticas para achar o caminho ótimo para as Flags."
+tipo_item = 6
+preco_base = 50
+efeito = "DRONE_MST"
+valor_efeito = 30.0
+alcance_maximo = -1
+textura_icon = SubResource("AtlasTexture_op8te")
+metadata/_custom_type_script = "uid://d01dm40km4s0s"

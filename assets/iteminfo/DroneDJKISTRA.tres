@@ -12,6 +12,7 @@ script = ExtResource("1_k04wo")
 nome_item = "Drone de Caminho Mínimo"
 descricao = "Revela parte do caminho mínimo até a saída."
 tipo_item = 5
+preco_base = 50
 efeito = "DRONE_PATH_DIJKSTRA"
 alcance_maximo = 40
 textura_icon = SubResource("AtlasTexture_3mrqw")

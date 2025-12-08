@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="LevelDefinition" load_steps=19 format=3 uid="uid://bwmmq3aapn8pw"]
+[gd_resource type="Resource" script_class="LevelDefinition" load_steps=20 format=3 uid="uid://bwmmq3aapn8pw"]
 
 [ext_resource type="Script" uid="uid://ci6dlknyw5xas" path="res://scripts/EnemySpawnData.gd" id="1_dtdbu"]
 [ext_resource type="Script" uid="uid://d27pbt414f1ro" path="res://scripts/ChestSpawnData.gd" id="1_mc7dd"]
@@ -54,6 +54,11 @@ cor_modulate = Color(0, 0.8776587, 0, 1)
 hp_maximo = 11
 metadata/_custom_type_script = "uid://ci6dlknyw5xas"
 
+[sub_resource type="Resource" id="Resource_txt1o"]
+script = ExtResource("1_dtdbu")
+inimigo_cena = ExtResource("3_okbqc")
+metadata/_custom_type_script = "uid://ci6dlknyw5xas"
+
 [sub_resource type="Resource" id="Resource_mc7dd"]
 script = ExtResource("2_ytii5")
 npc_cena = ExtResource("5_sjdmy")
@@ -74,6 +79,6 @@ tiles_especiais = {
 "Dano": 20,
 "Lama": 20
 }
-lista_inimigos = Array[ExtResource("1_dtdbu")]([SubResource("Resource_sjdmy"), SubResource("Resource_jla0y"), SubResource("Resource_okbqc"), SubResource("Resource_tsx5m")])
+lista_inimigos = Array[ExtResource("1_dtdbu")]([SubResource("Resource_sjdmy"), SubResource("Resource_jla0y"), SubResource("Resource_okbqc"), SubResource("Resource_tsx5m"), SubResource("Resource_txt1o")])
 lista_npcs = Array[ExtResource("2_ytii5")]([SubResource("Resource_mc7dd")])
 metadata/_custom_type_script = "uid://d34551vbrdkqx"

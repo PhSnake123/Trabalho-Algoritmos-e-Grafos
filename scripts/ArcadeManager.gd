@@ -21,15 +21,26 @@ const TILES_DANO_MAX = 100
 
 # Arrays de Assets
 const INIMIGOS_FACEIS = ["res://scenes/Enemy.tscn"]
-const INIMIGOS_DIFICEIS = ["res://scenes/EnemyMalware.tscn"]
+const INIMIGOS_DIFICEIS = ["res://scenes/EnemyMalware.tscn",
+	"res://scenes/EnemyTurret.tscn"]
+const BOSS_MONSTER = ["res://scenes/EnemyStalker.tscn"]
 const MUSICAS_DISPONIVEIS = [
 	"res://Audio/music/Erik_Satie_Gymnopédie_No.1.ogg",
 	"res://Audio/music/MoonlightSonata.mp3",
 	"res://Audio/music/icy.mp3",
-	"res://Audio/music/adventurous.mp3"	
+	"res://Audio/music/adventurous.mp3",
+	"res://Audio/music/Alexander Ehlers - Doomed.mp3",
+	"res://Audio/music/Alexander Ehlers - Warped.mp3",
+	"res://Audio/music/BossMain.wav",
+	"res://Audio/music/Map.wav",
+	"res://Audio/music/Mars.wav",
+	"res://Audio/music/Mercury.wav",
+	"res://Audio/music/Venus.wav",
+	"res://Audio/music/Theme Crystalized .mp3"
 ]
 const ITENS_PERMITIDOS = [
 	"res://assets/iteminfo/potion.tres",
+	"res://assets/iteminfo/SUPERpotion.tres",
 	"res://assets/iteminfo/chave.tres",
 	"res://assets/iteminfo/DroneTerraformer.tres",
 	"res://assets/iteminfo/DroneDJKISTRA.tres",
@@ -45,6 +56,7 @@ const ITENS_PERMITIDOS = [
 	"res://assets/iteminfo/DroneDJKISTRA.tres",
 	"res://assets/iteminfo/DroneAStar.tres",
 	"res://assets/iteminfo/DroneAStarPerm.tres",
+	"res://assets/iteminfo/PrimTEMP.tres",
 	"res://assets/iteminfo/chave.tres",
 	"res://assets/iteminfo/DroneHunter.tres",
 	"res://assets/iteminfo/escopeta.tres",
@@ -52,6 +64,7 @@ const ITENS_PERMITIDOS = [
 	"res://assets/iteminfo/DroneDJKISTRA.tres",
 	"res://assets/iteminfo/DroneAStar.tres",
 	"res://assets/iteminfo/DroneAStarPerm.tres",
+	"res://assets/iteminfo/PrimTEMP.tres"
 ]
 
 # --- ESTADO ATUAL ---
@@ -170,6 +183,12 @@ func _gerar_lista_inimigos(nivel: int) -> Array[EnemySpawnData]:
 	for i in range(qtd):
 		var data = EnemySpawnData.new()
 		var path = INIMIGOS_FACEIS.pick_random() if nivel < 3 or randf() <= 0.7 else INIMIGOS_DIFICEIS.pick_random()
+		data.inimigo_cena = load(path)
+		data.quantidade = 1
+		lista.append(data)
+	if nivel > 6 and randf() >= 0.8:
+		var data = EnemySpawnData.new()
+		var path = BOSS_MONSTER.pick_random()
 		data.inimigo_cena = load(path)
 		data.quantidade = 1
 		lista.append(data)

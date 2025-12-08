@@ -15,10 +15,14 @@ func _ready():
 	dialogo_inicial.nome_npc = "Daikstra"
 	dialogo_inicial.falas = [
 		"Curioso...", 
-		"Você é a segunda pessoa a chegar aqui desde a criação do Setor Defeituoso..."
+		"Você é a segunda pessoa a chegar aqui desde a criação do Setor Defeituoso.",
+		"Seja bem vindo. Meu nome é Daikstra, acho que você pode me chamar de um vendedor ou algo do tipo.",
+		"Sinta-se a vontade para examinar meus itens. Tenho certeza que encontrará algo útil.",
+		"Hum? Você quer saber como eu cheguei aqui? É uma longa história, e não muito importante...",
+		"De qualquer forma, me avise quando quiser sair. Passar bem, Agente."
 	]
 	# Define as opções [0 = Ir, 1 = Ficar]
-	dialogo_inicial.opcoes = ["Quero ir pra próxima fase", "Quero ficar aqui"]
+	dialogo_inicial.opcoes = ["Preciso ir ao próximo setor.", "Quero ficar aqui um pouco mais."]
 
 	# 2. Diálogo Repetido (Segunda vez em diante)
 	dialogo_repetido = DialogueData.new()
@@ -27,7 +31,7 @@ func _ready():
 		"Ainda por aqui?",
 		"O Admin não espera por ninguém. Otimize seu tempo."
 	]
-	dialogo_repetido.opcoes = ["Quero ir pra próxima fase", "Quero ficar aqui"]
+	dialogo_repetido.opcoes = ["Preciso ir ao próximo setor.", "Quero ficar aqui."]
 
 # Sobrescrevemos a função interagir do NPC.gd
 func interagir():
@@ -38,10 +42,10 @@ func interagir():
 	# 1. Decide qual diálogo usar baseado na variável 'escolhas' (que vem do NPC.gd)
 	var dialogo_atual: DialogueData
 	
-	if escolhas == 0:
-		dialogo_atual = dialogo_inicial
-	else:
+	if LevelManager.indice_fase_atual > 4 or escolhas > 0:
 		dialogo_atual = dialogo_repetido
+	else:
+		dialogo_atual = dialogo_inicial
 	
 	# 2. Inicia o diálogo usando seu DialogueManager
 	DialogueManager.iniciar_dialogo(dialogo_atual)

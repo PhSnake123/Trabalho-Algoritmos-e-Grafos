@@ -12,6 +12,7 @@ script = ExtResource("1_j6qh0")
 nome_item = "Virus-Scanner"
 descricao = "Procura por inimigos ao redor e causa dano."
 tipo_item = 5
+preco_base = 60
 efeito = "DRONE_ATK_BFS"
 valor_efeito = 20.0
 alcance_maximo = 15

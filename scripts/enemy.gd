@@ -70,6 +70,32 @@ func tomar_turno():
 	if current_hp <= 0: return
 	if not main_ref or not player_ref: return
 	
+	# --- EFEITO VISUAL BFS ---
+	# 1. PADRAO: Nunca toca (pois usa pathfinding global, não radar).
+	# 2. TURRET: Sempre toca (para mostrar o alcance do tiro).
+	# 3. SENTINELA/PATRULHEIRO: Só toca se estiver PROCURANDO (não alertado).
+
+	var tocar_onda = false
+	var cor_onda = Color(1, 0.2, 0.2) # Vermelho Padrão
+
+	# Se for PADRAO, ignoramos tudo e nem entramos na lógica de onda
+	if behavior != BehaviorType.PADRAO:
+		
+		if behavior == BehaviorType.TURRET:
+			tocar_onda = true
+			# Turret muda de cor se já travou a mira
+			cor_onda = Color.RED if _alerta_ativado else Color(1, 0.5, 0)
+			
+		elif not _alerta_ativado: 
+			# Sentinela ou Patrulheiro que ainda não viu o jogador
+			tocar_onda = true
+			cor_onda = Color(1, 0.2, 0.2, 0.4) # Vermelho mais discreto (Radar)
+	
+	# Dispara o efeito visual se as condições forem atendidas
+	if tocar_onda and main_ref.has_method("criar_onda_bfs_visual"):
+		main_ref.criar_onda_bfs_visual(grid_pos, raio_deteccao_bfs, cor_onda)
+	# -------------------------------
+	
 	# 1. Fase de Detecção (Sensor BFS)
 	# Só roda se não estiver em alerta e não for o padrão (que sempre sabe onde o player tá)
 	if not _alerta_ativado and behavior != BehaviorType.PADRAO:
@@ -80,8 +106,11 @@ func tomar_turno():
 		
 		# A. Turret tem lógica única (não se move)
 		if behavior == BehaviorType.TURRET:
-			if _alerta_ativado:
+			if _verificar_jogador_no_alcance_turret():
+				_alerta_ativado = true
 				_tentar_ataque_distancia()
+			else:
+				_alerta_ativado = false
 			break # Turret não anda, encerra o turno
 		
 		# B. Verifica ataque corpo-a-corpo antes de andar
@@ -94,7 +123,7 @@ func tomar_turno():
 		if behavior == BehaviorType.PADRAO or (behavior != BehaviorType.TURRET and _alerta_ativado):
 			# Modo Perseguição (Stalker/Smart)
 			moveu = _tentar_mover_perseguicao()
-			if moveu: _checar_dano_terreno()
+			if ai_type == EnemyAI.SMART: _checar_dano_terreno()
 			
 		elif behavior == BehaviorType.PATRULHEIRO and not _alerta_ativado:
 			# Modo Patrulha (Aleatório)
@@ -368,3 +397,22 @@ func load_save_data(data: Dictionary):
 		
 	if current_hp < max_hp and sprite:
 		sprite.modulate = Color(1, 0.8, 0.8)
+
+func _verificar_jogador_no_alcance_turret() -> bool:
+	if not main_ref or not player_ref:
+		return false
+
+	# 1. Otimização: Distância Manhattan rápida antes de rodar o BFS pesado
+	# Se estiver muito longe matematicamente, nem gasta processamento rodando BFS
+	var dist_aprox = abs(grid_pos.x - player_ref.grid_pos.x) + abs(grid_pos.y - player_ref.grid_pos.y)
+	if dist_aprox > raio_deteccao_bfs:
+		return false 
+
+	# 2. Roda o BFS real para ver se o player está alcançável/visível no grafo
+	# (Respeita paredes e buracos dependendo da sua lógica de grafo)
+	var area = main_ref.bfs.obter_area_alcance(grid_pos, raio_deteccao_bfs)
+	
+	if player_ref.grid_pos in area:
+		return true
+		
+	return false

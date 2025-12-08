@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://dq1mnjosagy5v"
+path="res://.godot/imported/Theme Crystalized .mp3-67a07d969a6665932a5a9fd7d044991d.mp3str"
+
+[deps]
+
+source_file="res://Audio/music/Theme Crystalized .mp3"
+dest_files=["res://.godot/imported/Theme Crystalized .mp3-67a07d969a6665932a5a9fd7d044991d.mp3str"]
+
+[params]
+
+loop=true
+loop_offset=0.0
+bpm=0.0
+beat_count=0
+bar_beats=4

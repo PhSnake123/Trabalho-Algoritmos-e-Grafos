@@ -12,6 +12,7 @@ script = ExtResource("1_hboxe")
 nome_item = "Decodificador"
 descricao = "Abre uma porta trancada."
 tipo_item = 1
+preco_base = 30
 efeito = "ABRE_PORTA"
 textura_icon = SubResource("AtlasTexture_rwnqn")
 metadata/_custom_type_script = "uid://d01dm40km4s0s"

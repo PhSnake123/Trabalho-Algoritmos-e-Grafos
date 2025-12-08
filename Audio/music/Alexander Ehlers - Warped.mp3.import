@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://bbytbk8anh8j7"
+path="res://.godot/imported/Alexander Ehlers - Warped.mp3-cc1baf5d71019ba372ec451cb9b30ceb.mp3str"
+
+[deps]
+
+source_file="res://Audio/music/Alexander Ehlers - Warped.mp3"
+dest_files=["res://.godot/imported/Alexander Ehlers - Warped.mp3-cc1baf5d71019ba372ec451cb9b30ceb.mp3str"]
+
+[params]
+
+loop=true
+loop_offset=0.0
+bpm=0.0
+beat_count=0
+bar_beats=4

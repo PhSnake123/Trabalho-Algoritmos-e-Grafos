@@ -11,6 +11,7 @@ region = Rect2(76.44458, 77.55567, 15.111099, 15.555557)
 script = ExtResource("1_0nno3")
 nome_item = "Terminal de Save"
 descricao = "Salva progresso atual. Uso único."
+preco_base = 150
 efeito = "SAVE_GAME"
 textura_icon = SubResource("AtlasTexture_3bk4d")
 metadata/_custom_type_script = "uid://d01dm40km4s0s"

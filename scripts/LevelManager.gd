@@ -13,13 +13,15 @@ var hub_definition: LevelDefinition
 func _ready():
 	# Carregue suas fases
 	#lista_fases.append(load("res://assets/levels/debuglevel.tres"))
-	#lista_fases.append(load("res://assets/levels/tutorial1.tres"))
-	#lista_fases.append(load("res://assets/levels/tutorial2.tres"))
-	#lista_fases.append(load("res://assets/levels/tutorial3.tres"))
-	#lista_fases.append(load("res://assets/levels/tutorial4.tres"))
+	lista_fases.append(load("res://assets/levels/tutorial1.tres"))
+	lista_fases.append(load("res://assets/levels/tutorial2.tres"))
+	lista_fases.append(load("res://assets/levels/tutorial3.tres"))
+	lista_fases.append(load("res://assets/levels/tutorial4.tres"))
 	lista_fases.append(load("res://assets/levels/tutorial5.tres"))
 	lista_fases.append(load("res://assets/levels/level1.tres"))
 	lista_fases.append(load("res://assets/levels/level2.tres"))
+	lista_fases.append(load("res://assets/levels/level3.tres"))
+	
 	
 	# Carregue a definição do Hub
 	hub_definition = load("res://assets/levels/HubMap.tres")

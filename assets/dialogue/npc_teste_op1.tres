@@ -4,6 +4,6 @@
 
 [resource]
 script = ExtResource("1_ilwqi")
-nome_npc = "Shovel Knight"
-falas = Array[String](["É, que bom pra mim..."])
+nome_npc = "Cavaleiro"
+falas = Array[String](["Uma saída...? Então talvez ainda haja esperança para mim.", "Obrigado, Agente. Partirei assim que terminar meu objetivo aqui."])
 metadata/_custom_type_script = "uid://bl6aav0wcfwrm"

@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_dcw6r")
-nome_npc = "Shovel Knight"
-falas = Array[String](["Olá, eu sou o Hollow Knight.", "Desculpa, quis dizer Shovel Knight. Eu não mordo.", "Não ocupo mais a tela inteira! Aprendi humildade."])
-opcoes = Array[String](["Que bom pra você.", "Morra!"])
+nome_npc = "Cavaleiro"
+falas = Array[String](["Hum? Você não deveria estar indo para a saída? O Admin não tolera divergências.", "Sou apenas um resquício de dados defasados, meu propósito já foi cumprido há muito tempo atrás. Agora vago entre setores de dado.", "Ah, mas esse setor parece estar condenado... Seria indigno partir dessa forma.", "Se não fôr muito incômodo, Agente, você poderia me dar um fim honrável?"])
+opcoes = Array[String](["Há uma saída por perto.", "Eliminar."])
 metadata/_custom_type_script = "uid://bl6aav0wcfwrm"

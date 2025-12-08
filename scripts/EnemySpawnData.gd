@@ -6,8 +6,8 @@ extends Resource
 @export var inimigo_cena: PackedScene 
 @export var quantidade: int = 1       
 @export var flag_secreta: String = "" 
-@export var ai_type: Enemy.EnemyAI = Enemy.EnemyAI.SMART
-@export var behavior: Enemy.BehaviorType = Enemy.BehaviorType.PADRAO # Lógica (Sentinela, Turret...)
+@export_enum("Padrão da Cena:-1", "Stalker (Dijkstra):0", "Smart (A*):1") var ai_type: int = -1
+@export_enum("Padrão da Cena:-1", "Padrão:0", "Sentinela:1", "Patrulheiro:2", "Turret:3") var behavior: int = -1
 @export var raio_deteccao: int = -1 # -1 usa o padrão do script do inimigo
 
 # Economia

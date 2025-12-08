@@ -391,7 +391,7 @@ func _inicializar_novo_jogo(vertice_inicio: Vector2i):
 			# 3. Salva no Slot Principal (Manual) se não for tutorial
 			print("Main: Tentando salvar início da fase. Índice Atual: ", LevelManager.indice_fase_atual)
 			
-			if LevelManager.indice_fase_atual > 0:
+			if LevelManager.indice_fase_atual > 4:
 				print("Main: Condição Aceita (>0). Salvando no Slot do Player...")
 				SaveManager.save_player_game()
 			else:
@@ -760,6 +760,7 @@ func usar_item(item: ItemData):
 		ItemData.EFEITO_DRONE_PATH_ASTAR:
 			algoritmo_para_usar = astar
 			cor_caminho = Color.CYAN 
+		
 		ItemData.EFEITO_DRONE_PATH_DIJKSTRA:
 			var caminho = dijkstra.calcular_caminho_rapido(player.grid_pos, vertice_fim)
 			if not caminho.is_empty():
@@ -767,6 +768,11 @@ func usar_item(item: ItemData):
 				var eh_temporario = (item.tipo_item == ItemData.ItemTipo.DRONE_TEMPORARIO)
 				var duracao = int(item.valor_efeito) if eh_temporario else -1
 				_registrar_novo_caminho(caminho, Color.GREEN, item.alcance_maximo, duracao, eh_temporario)
+		
+		ItemData.EFEITO_DRONE_MST:
+			# Usa 'valor_efeito' como duração (ex: 15 turnos)
+			ativar_drone_mst(item.alcance_maximo, int(item.valor_efeito))
+			return
 		
 		# --- DRONE SCANNER (Permanente) ---
 		ItemData.EFEITO_DRONE_SCANNER:
@@ -1106,11 +1112,16 @@ func _spawnar_inimigos(level_data: LevelDefinition):
 					if "grid_pos" in novo_inimigo:
 						novo_inimigo.grid_pos = pos_final
 					
-					# --- 1. APLICA A INTELIGÊNCIA E COMPORTAMENTO (ATUALIZADO) ---
-					novo_inimigo.ai_type = spawn_data.ai_type
-					novo_inimigo.behavior = spawn_data.behavior # [NOVO] Aplica Sentinela/Turret/Etc
+					# APLICA A INTELIGÊNCIA E COMPORTAMENTO
+					# Só aplica o override se o valor for diferente de -1 (Padrão da Cena)
 					
-					# [NOVO] Aplica Raio de Detecção se foi configurado (> -1)
+					if spawn_data.ai_type != -1:
+						novo_inimigo.ai_type = spawn_data.ai_type as Enemy.EnemyAI
+					
+					if spawn_data.behavior != -1:
+						novo_inimigo.behavior = spawn_data.behavior as Enemy.BehaviorType
+					
+					# Aplica Raio de Detecção se foi configurado (> -1)
 					if spawn_data.raio_deteccao > -1:
 						novo_inimigo.raio_deteccao_bfs = spawn_data.raio_deteccao
 					
@@ -1836,8 +1847,141 @@ func criar_projetil_visual(origem: Vector2, destino: Vector2):
 	# 5. Quando terminar o movimento, deleta o sprite
 	t.tween_callback(projetil.queue_free)
 
+func criar_onda_bfs_visual(origem: Vector2i, alcance: int, cor: Color):
+	# 1. Pega os tiles ordenados (o BFS naturalmente retorna em espiral/camadas)
+	var tiles = bfs.obter_area_alcance(origem, alcance)
+	
+	# 2. Cria o objeto visual temporário (cópia do Path para manter configurações)
+	var onda_visual = tile_map_path.duplicate()
+	onda_visual.name = "Onda_BFS_Temp"
+	onda_visual.modulate = cor
+	onda_visual.modulate.a = 0.5 # Transparência inicial
+	onda_visual.clear()
+	add_child(onda_visual)
+	
+	# 3. Dispara a animação independente (não trava o jogo)
+	_animar_onda_rotina(onda_visual, tiles)
+
+# Rotina interna: Desenha passo a passo e deleta no final
+func _animar_onda_rotina(node: Node2D, tiles: Array):
+	# Configuração de velocidade
+	var tiles_por_frame = 2 # Quantos tiles desenhar antes de esperar (Aumente para acelerar)
+	
+	# FASE 1: EXPANSÃO (Desenha a onda)
+	for i in range(tiles.size()):
+		var pos = tiles[i]
+		
+		# Verifica se o nó ainda existe (caso troque de cena no meio da animação)
+		if not is_instance_valid(node): return
+		
+		# Desenha o tile visual (usando o ID do caminho ou um quadrado sólido)
+		# Ajuste o ID_CAMINHO (0) se necessário
+		node.set_cell(0, pos, ID_CAMINHO, Vector2i(0, 0))
+		
+		# A cada X tiles, espera um frame do processador.
+		# Isso cria o efeito visual de "propagação" sem usar Timers complexos.
+		if i % tiles_por_frame == 0:
+			await get_tree().process_frame
+			
+	# FASE 2: FADE OUT (Desaparecer suavemente)
+	if is_instance_valid(node):
+		var tween = create_tween()
+		tween.tween_property(node, "modulate:a", 0.0, 0.5) # Some em 0.5s
+		tween.tween_callback(node.queue_free) # Deleta o nó ao terminar
+
+# --- EFEITOS VISUAIS: EXPLOSÃO ---
+func criar_efeito_explosao(pos_world: Vector2):
+	# 1. Cria o emissor de partículas via código
+	var particles = CPUParticles2D.new()
+	
+	# 2. Configuração de "Explosão Única" (Boom!)
+	particles.emitting = false
+	particles.amount = 32          # Quantidade de partículas
+	particles.one_shot = true      # Emite apenas uma vez e para
+	particles.explosiveness = 1.0  # Todas saem ao mesmo tempo (Explosão)
+	particles.lifetime = 0.8       # Duração do efeito em segundos
+	particles.speed_scale = 1.5
+	
+	# 3. Física (Espalhar em todas as direções)
+	particles.spread = 180.0
+	particles.gravity = Vector2(0, -20) # Sobe levemente (fumaça)
+	particles.initial_velocity_min = 50.0
+	particles.initial_velocity_max = 100.0
+	particles.damping_min = 50.0   # Freia as partículas no ar
+	particles.damping_max = 100.0
+	
+	# 4. Visual (Quadrados de Pixel Art)
+	# Como não temos textura, o Godot usa quadrados brancos por padrão (perfeito pra pixel art)
+	particles.scale_amount_min = 3.0 # Tamanho inicial grande
+	particles.scale_amount_max = 6.0
+	
+	# 5. Cores (Gradiente: Branco -> Amarelo -> Vermelho -> Cinza -> Transparente)
+	var gradient = Gradient.new()
+	gradient.set_color(0, Color(1, 1, 0.5, 1)) # Branco/Amarelo (Início)
+	gradient.add_point(0.2, Color(1, 0.6, 0, 1)) # Laranja
+	gradient.add_point(0.5, Color(0.8, 0.2, 0.2, 0.8)) # Vermelho
+	gradient.add_point(0.8, Color(0.3, 0.3, 0.3, 0.5)) # Cinza (Fumaça)
+	gradient.set_color(1, Color(0.3, 0.3, 0.3, 0)) # Transparente (Fim)
+	particles.color_ramp = gradient
+	
+	# 6. Adiciona à cena
+	add_child(particles)
+	particles.global_position = pos_world
+	particles.z_index = 20 # Fica acima de tudo
+	
+	# 7. Dispara
+	particles.emitting = true
+	
+	# 8. Limpeza automática
+	await particles.finished
+	particles.queue_free()
+
 # Lógica do Drone de Ataque
 func ativar_drone_ataque(origem: Vector2i, alcance: int, dano: int):
+	print("Granada/Drone: Iniciando explosão em raio %d..." % alcance)
+	
+	# --- 1. EFEITOS VISUAIS (O "Juice") ---
+	# Posição central da explosão (mundo)
+	var pos_visual_centro = (Vector2(origem) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
+	
+	# A. Onda BFS (Laranja avermelhado para indicar perigo/fogo)
+	# Reutilizamos a função que você já tem!
+	criar_onda_bfs_visual(origem, alcance, Color.BEIGE)
+	
+	# B. Partículas de Explosão (Fogo e Fumaça)
+	criar_efeito_explosao(pos_visual_centro)
+	
+	# C. (Opcional) Shake na Câmera?
+	# Se tiver um script de camera shake, chame aqui.
+	# -------------------------------------
+	
+	# 2. Lógica de Dano (BFS)
+	var tiles_na_area = bfs.obter_area_alcance(origem, alcance)
+	var inimigos_atingidos = []
+	var todos_inimigos = get_tree().get_nodes_in_group("inimigos")
+	
+	for ini in todos_inimigos:
+		if is_instance_valid(ini) and ini.grid_pos in tiles_na_area:
+			inimigos_atingidos.append(ini)
+	
+	if inimigos_atingidos.is_empty():
+		spawn_floating_text(pos_visual_centro, "ERROU!", Color.GRAY)
+		return
+
+	print("Explosão: %d alvos atingidos!" % inimigos_atingidos.size())
+	
+	# 3. Aplica Dano
+	for inimigo in inimigos_atingidos:
+		if not is_instance_valid(inimigo): continue
+		
+		# Feedback visual extra: Um pequeno "bang" em cima de cada inimigo atingido também?
+		# criar_projetil_visual(pos_visual_centro, inimigo.global_position)
+		
+		# Aplica Dano e Empurrão
+		# (Passamos 'origem' para o empurrão ser para fora do centro da explosão)
+		inimigo.receber_dano(dano, 0, origem)
+
+"""func ativar_drone_ataque(origem: Vector2i, alcance: int, dano: int):
 	print("Drone de Ataque: Iniciando varredura em raio %d..." % alcance)
 	
 	# 1. Obtém a área de efeito usando o BFS (igual ao Scanner)
@@ -1876,7 +2020,7 @@ func ativar_drone_ataque(origem: Vector2i, alcance: int, dano: int):
 		
 		# C. Feedback extra de texto (opcional, mas bom pra ver o dano somado)
 		# (O próprio inimigo já mostra dano, mas aqui confirmamos que o drone funcionou)
-
+"""
 # Lógica da Escopeta (Dano em linha + Knockback forte)
 func ativar_escopeta(origem: Vector2i, direcao: Vector2i, alcance: int, dano: int, kb_override: int):
 	print("Main: Escopeta disparada! Direção: ", direcao)
@@ -1981,29 +2125,62 @@ func disparar_kill9(origem: Vector2i, direcao: Vector2i, dano: int, knockback: i
 		var pos_visual_final = (Vector2(pos_final) * TILE_SIZE) + (Vector2.ONE * TILE_SIZE / 2.0)
 		criar_projetil_visual(pos_visual_origem, pos_visual_final)
 
+# Calcula e desenha a MST atual baseada na posição do jogador
+func ativar_drone_mst(alcance_visual: int, duracao: int):
+	print("Drone MST: Calculando rota otimizada...")
+	
+	# 1. Define os Pontos de Interesse
+	# O Player + Terminais que faltam + Saída
+	var pontos_interesse = [player.grid_pos] + terminais_pos + [vertice_fim]
+	
+	# Se só sobrou a saída (terminais_pos vazio), vira um Dijkstra comum
+	if terminais_pos.is_empty():
+		var item_fake = ItemData.new()
+		item_fake.tipo_item = ItemData.ItemTipo.DRONE_TEMPORARIO
+		item_fake.alcance_maximo = alcance_visual
+		item_fake.valor_efeito = duracao
+		item_fake.efeito = ItemData.EFEITO_DRONE_PATH_DIJKSTRA
+		usar_item(item_fake) # Reutiliza a lógica existente
+		return
 
-# --- TESTE TEMPORÁRIO BFS ---
-"""func executar_teste_bfs():
-	print("--- INICIANDO TESTE VISUAL DO BFS ---")
+	# 2. Monta o Grafo Abstrato (Dijkstra múltiplo)
+	var grafo_abstrato = {}
 	
-	# 1. Define origem e alcance
-	var centro = Vector2i(1, 1) # Começa onde o player nasce
-	var raio_teste = 20
+	# Precisamos calcular as distâncias reais de cada ponto para cada outro ponto
+	for origem in pontos_interesse:
+		grafo_abstrato[origem] = {}
+		# Otimização: Dijkstra roda uma vez por origem e pega todos os destinos
+		var resultado = dijkstra.calcular_caminho_minimo(origem)
+		var dists = resultado["distancias"]
+		
+		for destino in pontos_interesse:
+			if origem == destino: continue
+			
+			# Só adiciona aresta se o destino for alcançável
+			if dists.has(destino) and dists[destino] != INF:
+				grafo_abstrato[origem][destino] = dists[destino]
 	
-	# 2. Roda o algoritmo
-	var tiles_alcance = bfs.obter_area_alcance(centro, raio_teste)
-	print("BFS: Encontrados ", tiles_alcance.size(), " tiles num raio de ", raio_teste)
+	# 3. Roda o Prim (Algoritmo Leve)
+	# Retorna { "custo": float, "arestas": [[A,B], [C,D]] }
+	var resultado_mst = Prim.calcular_mst(grafo_abstrato)
 	
-	# 3. Desenha visualmente para conferirmos (usando o TileMap de Path)
-	# Vamos usar uma cor Magenta para diferenciar dos caminhos normais
-	var debug_node = tile_map_path.duplicate()
-	debug_node.name = "Debug_BFS_Area"
-	debug_node.modulate = Color.MAGENTA
-	debug_node.modulate.a = 0.6 # Transparente
-	add_child(debug_node)
+	# 4. Reconstrói o Caminho Visual (Transforma arestas abstratas em tiles)
+	var todos_tiles_caminho: Array[Vector2i] = []
 	
-	for pos in tiles_alcance:
-		# Usamos o ID 0 (Caminho) apenas para marcar o tile
-		debug_node.set_cell(0, pos, ID_CAMINHO, Vector2i(0,0))
-
-	print("BFS: Área desenhada em Magenta.")"""
+	for aresta in resultado_mst["arestas"]:
+		var p1 = aresta[0]
+		var p2 = aresta[1]
+		
+		# Recalcula o caminho físico (grid) entre esses dois pontos
+		dijkstra.calcular_caminho_minimo(p1)
+		var segmento = dijkstra.reconstruir_caminho(p1, p2)
+		
+		todos_tiles_caminho.append_array(segmento)
+	
+	# 5. Registra Visualmente
+	# Usamos Dourado (Gold) para representar a "Rota Ouro/Perfeita"
+	if not todos_tiles_caminho.is_empty():
+		_registrar_novo_caminho(todos_tiles_caminho, Color.GOLD, alcance_visual, duracao, true)
+		spawn_floating_text(player.global_position, "ROTA OTIMIZADA", Color.GOLD)
+	else:
+		spawn_floating_text(player.global_position, "ERRO DE ROTA", Color.RED)

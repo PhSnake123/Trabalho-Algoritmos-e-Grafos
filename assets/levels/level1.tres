@@ -1,47 +1,68 @@
-[gd_resource type="Resource" script_class="LevelDefinition" load_steps=11 format=3 uid="uid://q51cb1cil4og"]
+[gd_resource type="Resource" script_class="LevelDefinition" load_steps=16 format=3 uid="uid://q51cb1cil4og"]
 
 [ext_resource type="Script" uid="uid://d27pbt414f1ro" path="res://scripts/ChestSpawnData.gd" id="1_11fua"]
 [ext_resource type="Script" uid="uid://d34551vbrdkqx" path="res://scripts/LevelDefinition.gd" id="1_obbn4"]
 [ext_resource type="Script" uid="uid://ci6dlknyw5xas" path="res://scripts/EnemySpawnData.gd" id="1_vgqkp"]
 [ext_resource type="Script" uid="uid://c6yn1hesl0qc7" path="res://scripts/NpcSpawnData.gd" id="2_6r273"]
 [ext_resource type="PackedScene" uid="uid://wy711p61hc6f" path="res://scenes/Enemy.tscn" id="2_e23yg"]
-[ext_resource type="PackedScene" uid="uid://bnaq07rewb3r7" path="res://scenes/NPC.tscn" id="4_11fua"]
-[ext_resource type="AudioStream" uid="uid://ipot2bsq2tkp" path="res://Audio/music/Erik_Satie_Gymnopédie_No.1.ogg" id="5_n2dr7"]
+[ext_resource type="Resource" uid="uid://cw72mdc5lk4ab" path="res://assets/iteminfo/HPup.tres" id="2_xbu8s"]
+[ext_resource type="Resource" uid="uid://dw8acft16nuye" path="res://assets/iteminfo/DEFUp.tres" id="3_x7rjk"]
+[ext_resource type="PackedScene" uid="uid://c7b14t62lbhak" path="res://scenes/EnemyMalware.tscn" id="5_5r8d4"]
+[ext_resource type="AudioStream" uid="uid://dsmv5ehn11k3x" path="res://Audio/music/Mercury.wav" id="9_e5mh7"]
+[ext_resource type="Script" uid="uid://c3gg5ncd3wjqb" path="res://scripts/contador_de_final.gd" id="11_x7rjk"]
 
 [sub_resource type="Resource" id="Resource_n2dr7"]
 script = ExtResource("1_11fua")
-quantidade = 2
+item_recompensa = ExtResource("2_xbu8s")
+qtd_moedas = 0
+metadata/_custom_type_script = "uid://d27pbt414f1ro"
+
+[sub_resource type="Resource" id="Resource_4m703"]
+script = ExtResource("1_11fua")
+qtd_moedas = 100
+metadata/_custom_type_script = "uid://d27pbt414f1ro"
+
+[sub_resource type="Resource" id="Resource_bin7k"]
+script = ExtResource("1_11fua")
+item_recompensa = ExtResource("3_x7rjk")
 metadata/_custom_type_script = "uid://d27pbt414f1ro"
 
 [sub_resource type="Resource" id="Resource_e23yg"]
 script = ExtResource("1_vgqkp")
-inimigo_cena = ExtResource("2_e23yg")
+inimigo_cena = ExtResource("5_5r8d4")
+quantidade = 2
 metadata/_custom_type_script = "uid://ci6dlknyw5xas"
 
-[sub_resource type="Resource" id="Resource_xbu8s"]
-script = ExtResource("2_6r273")
-npc_cena = ExtResource("4_11fua")
-metadata/_custom_type_script = "uid://c6yn1hesl0qc7"
+[sub_resource type="Resource" id="Resource_w4eao"]
+script = ExtResource("1_vgqkp")
+inimigo_cena = ExtResource("2_e23yg")
+cor_modulate = Color(0.72156864, 0.5254902, 1, 1)
+hp_maximo = 50
+metadata/_custom_type_script = "uid://ci6dlknyw5xas"
 
 [resource]
 script = ExtResource("1_obbn4")
 nome_fase = "Starting Node"
 texto_intro = "Sua jornada começa aqui."
-musica_fundo = ExtResource("5_n2dr7")
-tamanho = Vector2i(19, 15)
+musica_fundo = ExtResource("9_e5mh7")
+tamanho = Vector2i(19, 19)
 fog_enabled = true
-lista_baus_especificos = Array[ExtResource("1_11fua")]([SubResource("Resource_n2dr7")])
+cor_tilemap = Color(0.65122104, 0.9979519, 0.9999997, 1)
+intensidade_glow = 5.0
+lista_baus_especificos = Array[ExtResource("1_11fua")]([SubResource("Resource_n2dr7"), SubResource("Resource_4m703"), SubResource("Resource_bin7k")])
 qtd_moedas = 10
 modo_jogo = "MST"
+tempo_par_tolerancia = 2.5
 qtd_terminais = 2
 salas_qtd = 1
 salas_tamanho_min = 3
 salas_tamanho_max = 5
-chance_quebra_paredes = 0.3
+chance_quebra_paredes = 0.2
+qtd_portas = 15
 tiles_especiais = {
-"Dano": 5,
-"Lama": 5
+"Dano": 15,
+"Lama": 10
 }
-lista_inimigos = Array[ExtResource("1_vgqkp")]([SubResource("Resource_e23yg")])
-lista_npcs = Array[ExtResource("2_6r273")]([SubResource("Resource_xbu8s")])
+lista_inimigos = Array[ExtResource("1_vgqkp")]([SubResource("Resource_e23yg"), SubResource("Resource_w4eao")])
+script_logico = ExtResource("11_x7rjk")
 metadata/_custom_type_script = "uid://d34551vbrdkqx"
