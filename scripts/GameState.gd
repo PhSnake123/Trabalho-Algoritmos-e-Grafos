@@ -97,6 +97,7 @@ func reset_run_state():
 	optional_objectives["salvou_cavaleiro"] = false
 	optional_objectives["true_ending_count"] = 0
 	optional_objectives["admin_ending_count"] = 0
+	optional_objectives["estado_de_falas"] = 0
 	
 	#recarregar_kill9()
 	

@@ -342,11 +342,11 @@ func _unhandled_input(event):
 			if current_tile.tipo == "SavePoint":
 				SaveManager.save_player_game()
 				print("JOGO SALVO (Save Point)!")
-			
+				main_script.spawn_floating_text(global_position + Vector2(0, -32), "JOGO SALVO!", Color.GREEN)
 			elif current_tile.tipo == "Terminal":
 				# Chama a nova função pública do Main
 				main_script.tentar_ativar_terminal(grid_pos)
-		
+
 # NOVO: Usar Item Equipado
 	if event.is_action_pressed("usar_item_equipado"):
 		var item = Game_State.item_equipado

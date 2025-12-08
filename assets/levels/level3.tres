@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="LevelDefinition" load_steps=15 format=3 uid="uid://1bdpkl7abbml"]
+[gd_resource type="Resource" script_class="LevelDefinition" load_steps=17 format=3 uid="uid://1bdpkl7abbml"]
 
 [ext_resource type="Script" uid="uid://d27pbt414f1ro" path="res://scripts/ChestSpawnData.gd" id="1_5j0i0"]
 [ext_resource type="Script" uid="uid://ci6dlknyw5xas" path="res://scripts/EnemySpawnData.gd" id="2_34nd1"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://c7b14t62lbhak" path="res://scenes/EnemyMalware.tscn" id="4_5842n"]
 [ext_resource type="PackedScene" uid="uid://ceutwua1e5yey" path="res://scenes/EnemyTurret.tscn" id="5_1l8vr"]
 [ext_resource type="PackedScene" uid="uid://bl47f6jwx1ctn" path="res://scenes/EnemyStalker.tscn" id="6_370vy"]
+[ext_resource type="PackedScene" uid="uid://bilwutnq4s2t" path="res://scenes/EnemyCoward.tscn" id="7_1l8vr"]
 [ext_resource type="AudioStream" uid="uid://b7mp0h03cmxle" path="res://Audio/music/Mars.wav" id="8_tqlvy"]
 [ext_resource type="Script" uid="uid://r0gkvhmuehk" path="res://scripts/ending_demo.gd" id="10_5842n"]
 
@@ -38,6 +39,11 @@ ataque = 20
 passos_por_turno = 2
 metadata/_custom_type_script = "uid://ci6dlknyw5xas"
 
+[sub_resource type="Resource" id="Resource_370vy"]
+script = ExtResource("2_34nd1")
+inimigo_cena = ExtResource("7_1l8vr")
+metadata/_custom_type_script = "uid://ci6dlknyw5xas"
+
 [resource]
 script = ExtResource("4_644os")
 nome_fase = "Final Node"
@@ -57,6 +63,6 @@ tiles_especiais = {
 "Dano": 30,
 "Lama": 10
 }
-lista_inimigos = Array[ExtResource("2_34nd1")]([SubResource("Resource_iighk"), SubResource("Resource_g0abo"), SubResource("Resource_u3kte"), SubResource("Resource_hssuc")])
+lista_inimigos = Array[ExtResource("2_34nd1")]([SubResource("Resource_iighk"), SubResource("Resource_g0abo"), SubResource("Resource_u3kte"), SubResource("Resource_hssuc"), SubResource("Resource_370vy")])
 script_logico = ExtResource("10_5842n")
 metadata/_custom_type_script = "uid://d34551vbrdkqx"

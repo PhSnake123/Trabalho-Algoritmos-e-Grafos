@@ -3,8 +3,9 @@ var main_ref = null
 
 func setup_fase(main):
 	main_ref = main
-	Game_State.is_dialogue_active = true	
-	_tocar_dialogo_tutorial()
+	if Game_State.optional_objectives["estado_de_falas"] == 0:
+		Game_State.is_dialogue_active = true
+		_tocar_dialogo_tutorial()
 
 func _tocar_dialogo_tutorial():
 	var dados = DialogueData.new()
@@ -12,6 +13,7 @@ func _tocar_dialogo_tutorial():
 	var textos: Array[String] = ["Fico tímido na frente de uma audiência ._."]
 	dados.falas = textos
 	DialogueManager.iniciar_dialogo(dados)
+	Game_State.optional_objectives["estado_de_falas"] = 1
 
 func on_level_complete() -> bool:
 	if Game_State.tempo_jogador <= Game_State.tempo_par_level:

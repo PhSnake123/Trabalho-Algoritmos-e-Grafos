@@ -49,7 +49,7 @@ func _tocar_dialogo_tutorial():
 		"Algumas estruturas possuem blocos de memória fragmentados. Pisar nesses blocos irá danificá-lo ou atrasá-lo.",
 		"Estou te enviando um Desfragmentador. Utilize-o para desfragmentar os blocos de memória afetados numa área ao seu redor.",
 		"Esta estrutura de dados é um pouco diferente comparada aos testes anteriores. A saída se encontra fechada.",
-		"Para destrancá-la, você precisar ativar todas as Flags. Seu visor indica quantas Flags existem na estrutura vigente, e quantas você já ativou.",
+		"Para destrancá-la, você precisar ativar todas as Flags. Pise no bloco da Flag e interaja pressionando ESPAÇO. Seu visor indica quantas Flags existem na estrutura vigente, e quantas você já ativou.",
 		"Errar é humano, otimizar é divino."
 	]
 	dados.falas = textos

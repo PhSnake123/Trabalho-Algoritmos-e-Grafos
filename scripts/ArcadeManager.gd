@@ -20,7 +20,7 @@ const TILES_DANO_MIN = 3
 const TILES_DANO_MAX = 100
 
 # Arrays de Assets
-const INIMIGOS_FACEIS = ["res://scenes/Enemy.tscn"]
+const INIMIGOS_FACEIS = ["res://scenes/Enemy.tscn", "res://scenes/EnemyCoward.tscn"]
 const INIMIGOS_DIFICEIS = ["res://scenes/EnemyMalware.tscn",
 	"res://scenes/EnemyTurret.tscn"]
 const BOSS_MONSTER = ["res://scenes/EnemyStalker.tscn"]

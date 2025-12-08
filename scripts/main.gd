@@ -593,9 +593,9 @@ func update_fog(player_grid_pos: Vector2i):
 # --- INPUTS DE AÇÃO ---
 func _unhandled_input(event):
 	# Atalhos de Sistema (Debug/Menu)
-	if event.is_action_pressed("save"): SaveManager.save_player_game()
-	if event.is_action_pressed("load"): SaveManager.load_player_game()
-	if event.is_action_pressed("load_start"): SaveManager.load_auto_game()
+	# if event.is_action_pressed("save"): SaveManager.save_player_game()
+	# if event.is_action_pressed("load"): SaveManager.load_player_game()
+	# if event.is_action_pressed("load_start"): SaveManager.load_auto_game()
 
 	# Atalho do Item Save Terminal
 	if event.is_action_pressed("save_terminal"):

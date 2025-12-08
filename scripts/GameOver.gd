@@ -64,8 +64,17 @@ func _setup_arcade_mode():
 	btn_submit.pressed.connect(_on_submit_pressed)
 	btn_voltar_menu.pressed.connect(_on_menu_pressed)
 	
+	# Conecta o sinal de quando aperta Enter no campo de texto
+	if not input_name.text_submitted.is_connected(_on_input_text_submitted):
+		input_name.text_submitted.connect(_on_input_text_submitted)
+	
 	# Mostra a lista atual
 	_atualizar_lista_visual()
+
+func _on_input_text_submitted(_new_text: String):
+	# [cite_start]Se o botão de enviar ainda estiver ativo, simula o clique dele [cite: 3]
+	if not btn_submit.disabled:
+		_on_submit_pressed()
 
 func _on_submit_pressed():
 	var nome = input_name.text.strip_edges()

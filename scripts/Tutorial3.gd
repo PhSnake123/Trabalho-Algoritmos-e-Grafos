@@ -38,7 +38,8 @@ func _tocar_dialogo_tutorial():
 	var textos: Array[String] = [
 		"Algumas estruturas estão obscurecidas. Áreas de memória de alta entropia.",
 		"Explore-as para ordenar as partes da estrutura. Estou te enviando um Indexador.",
-		"Use-o para revelar parte do caminho e auxiliá-lo a otimizar o tempo de passagem."
+		"Use-o para revelar parte do caminho e auxiliá-lo a otimizar o tempo de passagem.",
+		"Você pode percorrer rapidamente pelos itens no seu inventário pressionando as teclas Q e W em seu terminal."
 	]
 	dados.falas = textos
 	DialogueManager.iniciar_dialogo(dados)
