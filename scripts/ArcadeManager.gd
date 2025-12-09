@@ -177,6 +177,8 @@ func _gerar_e_armazenar_nivel():
 
 # --- MÉTODOS AUXILIARES ---
 
+var spawn_boss = 0.7
+
 func _gerar_lista_inimigos(nivel: int) -> Array[EnemySpawnData]:
 	var lista: Array[EnemySpawnData] = []
 	var qtd = int(nivel)
@@ -186,7 +188,7 @@ func _gerar_lista_inimigos(nivel: int) -> Array[EnemySpawnData]:
 		data.inimigo_cena = load(path)
 		data.quantidade = 1
 		lista.append(data)
-	if nivel > 6 and randf() >= 0.8:
+	if nivel > 6 and randf() >= spawn_boss:
 		var data = EnemySpawnData.new()
 		var path = BOSS_MONSTER.pick_random()
 		data.inimigo_cena = load(path)

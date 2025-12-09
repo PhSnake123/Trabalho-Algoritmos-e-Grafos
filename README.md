@@ -9,10 +9,13 @@
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 <div align="center">
-  <img src="https://private-user-images.githubusercontent.com/96603651/520536576-675bf009-7a60-420c-a9de-92e7bbaa86cf.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NjQ1NDI2MTUsIm5iZiI6MTc2NDU0MjMxNSwicGF0aCI6Ii85NjYwMzY1MS81MjA1MzY1NzYtNjc1YmYwMDktN2E2MC00MjBjLWE5ZGUtOTJlN2JiYWE4NmNmLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTExMzAlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUxMTMwVDIyMzgzNVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTBjMzYyNDQzN2IzMWQzZTZlMWUyZTljNGE3YzM0NzAyMTY0ZGY1MTEyYjkyZTViMDc3MGVhMTNiNzZkOWZmOWMmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.PuY_MVeQe9BCZaXYJgYuN_-WV8hgc7UQV4sAeS_rWXE" alt="logo" width="600">
+<!-- Referência local para a logo na raiz -->
+<img src="grafos_logo2.png" alt="logo" width="600">
 </div>
 
-> *Logo provisório gerado pelo Gemini.*
+</div>
+
+> *Logo gerado pelo Gemini.*
 </div>
 
 ---
@@ -57,7 +60,8 @@ Os algoritmos de grafo acima são utilizados em quase todos os aspectos do jogo:
 ## Como Jogar
 
 <div align="center">
-  <img src="https://private-user-images.githubusercontent.com/96603651/520537072-3ca98b91-3f18-49fb-b47b-b31c38a803b1.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NjQ1NDI2MTUsIm5iZiI6MTc2NDU0MjMxNSwicGF0aCI6Ii85NjYwMzY1MS81MjA1MzcwNzItM2NhOThiOTEtM2YxOC00OWZiLWI0N2ItYjMxYzM4YTgwM2IxLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTExMzAlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUxMTMwVDIyMzgzNVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTE3MWNmN2VkYmNkOWRhZjFjZTFiOTI5MjNmMWE2ODI0M2YxMWY2OTgzODhiNDI3ZDczYjY4ZjY4NjJhMDRkMGUmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.Jj-j4HWuELuR9aKO6WcLAyS08LsEXD93lbNrzlTuJN8" alt="Gameplay Demo" width="800">
+<!-- Referência local para o screenshot na raiz -->
+<img src="screenshot.png" alt="Gameplay Demo" width="800">
 </div>
 
 1.  **Mova-se:** Use as setas ou `WASD`. O jogo é baseado em turnos: inimigos só se movem quando você se move.
@@ -65,6 +69,14 @@ Os algoritmos de grafo acima são utilizados em quase todos os aspectos do jogo:
 3.  **Sobreviva:** Inimigos possuem IAs distintas. Use o terreno e itens disponíveis ao seu favor.
 4.  **Hackeie:** Use seu inventário de Drones para revelar caminhos, limpar terrenos perigosos, calcular rotas de fuga e mais.
 5.  **Escolhas:** Salvar NPCs custa tempo e eficiência. Você buscará otimizar o caminho ou salvar os necessitados?
+
+**COMANDOS**
+**ATIRAR**: Tecla F
+**INVENTÁRIO**: TAB ou I
+**INTERAGIR**: Tecla de Espaço
+**USAR ITEM EQUIPADO**: Tecla E
+**QUICK-EQUIP DE ITENS NO INVENTÁRIO**: Teclas Q e W
+**MOVIMENTAÇÃO**: Direcionais
 
 ---
 

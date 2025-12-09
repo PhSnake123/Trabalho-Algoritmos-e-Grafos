@@ -122,14 +122,14 @@ func _on_tentar_pressed():
 	Engine.time_scale = 1.0
 	Game_State.reset_run_state()
 	Game_State.carregar_auto_save_ao_iniciar = true
-	get_tree().change_scene_to_file("res://scenes/Main.tscn")
+	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 func _on_carregar_pressed():
 	print("GameOver: Carregando último save...")
 	Engine.time_scale = 1.0
 	Game_State.reset_run_state()
 	Game_State.carregar_save_ao_iniciar = true
-	get_tree().change_scene_to_file("res://scenes/Main.tscn")
+	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 func _on_menu_pressed():
 	Engine.time_scale = 1.0
@@ -153,4 +153,4 @@ func _on_hub_pressed():
 		file_player.close()
 		
 		Game_State.carregar_save_ao_iniciar = true
-		get_tree().change_scene_to_file("res://scenes/Main.tscn")
+		get_tree().change_scene_to_file("res://scenes/main.tscn")

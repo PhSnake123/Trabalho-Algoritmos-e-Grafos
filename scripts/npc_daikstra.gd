@@ -15,12 +15,13 @@ func _ready():
 	dialogo_inicial.nome_npc = "Daikstra"
 	dialogo_inicial.falas = [
 		"Curioso...", 
-		"Você é a segunda pessoa a chegar aqui desde a criação do Setor Defeituoso.",
-		"Seja bem vindo. Meu nome é Daikstra, acho que você pode me chamar de um vendedor ou algo do tipo.",
+		"Você é a segunda pessoa a chegar aqui desde a criação do Setor Defeituoso."]
+	if Game_State.optional_objectives["salvou_cavaleiro"] == true:
+		dialogo_inicial.falas = ["Ou talvez o terceiro? Aquele cavaleiro também acabou de chegar aqui. Enfim..."]
+	dialogo_inicial.falas = ["Seja bem vindo. Meu nome é Daikstra, acho que você pode me chamar de um vendedor ou algo do tipo.",
 		"Sinta-se a vontade para examinar meus itens. Tenho certeza que encontrará algo útil.",
 		"Hum? Você quer saber como eu cheguei aqui? É uma longa história, e não muito importante...",
-		"De qualquer forma, me avise quando quiser sair. Passar bem, Agente."
-	]
+		"De qualquer forma, me avise quando quiser sair. Passar bem, Agente."]
 	# Define as opções [0 = Ir, 1 = Ficar]
 	dialogo_inicial.opcoes = ["Preciso ir ao próximo setor.", "Quero ficar aqui um pouco mais."]
 

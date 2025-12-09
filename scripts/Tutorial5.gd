@@ -38,8 +38,9 @@ func _tocar_dialogo_tutorial():
 		"Estou anexando um Patch de Integridade ao seu Database. Use isso se você sofrer danos consideráveis. Mas seu Protocolo de Segurança deve ser robusto o suficiente para lidar com uma ameaça tão pequena.",
 		"Você já está equipado com o Executável SIGKILL. Este programa roda um protocolo de ataque contra ameaças próximas.",
 		"Quando o inimigo estiver à sua frente, simplesmente dê um passo em direção a ele e o Executável será acionado.",
-		"Quanto aos bits flutuantes, ignore-os. São apenas fragmentos de memória corrompida. O Coletor cuidará deles.",
-		"Execute todos os obstáculos e atinja o resultado otimizado. Um bom Agente deve ser adaptável. Este será seu teste final."
+		"Você também está equipado com a função Kill-9. Aperte F em seu terminal para atacar os inimigos à distância. Seu acesso a essa função é limitada, portanto, atente-se ao seu número restante de chamadas no canto superior direito de seu visor.",
+		"Quanto aos bits flutuantes, ignore-os. São fragmentos de memória corrompida. O Coletor cuidará deles.",
+		"Execute todos os obstáculos e atinja o resultado perfeito. Um bom Agente deve ser adaptável. Este será seu teste final."
 	]
 	dados.falas = textos
 	DialogueManager.iniciar_dialogo(dados)

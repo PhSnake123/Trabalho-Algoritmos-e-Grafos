@@ -52,7 +52,7 @@ max_hp = 80
 atk = 15
 def = 5
 poise = 6
-knockback_power = 5
+knockback_power = 6
 
 [node name="HealthBar" type="ProgressBar" parent="."]
 z_index = 90

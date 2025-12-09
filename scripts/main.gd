@@ -885,7 +885,7 @@ func usar_item(item: ItemData):
 			
 		ItemData.EFEITO_UPGRADE_MAX_DEF:
 			Game_State.upgrade_atributo("def", int(item.valor_efeito))
-			Game_State.upgrade_atributo("poise", int(item.valor_efeito/2))
+			Game_State.upgrade_atributo("poise", int(item.valor_efeito/3))
 			# Atualiza HUD visualmente se necessário
 			spawn_floating_text(player.global_position, "DEFENSE & POISE UP!", Color.GOLD)
 			_consumir_item_upgrade(item)

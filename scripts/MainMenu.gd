@@ -27,12 +27,12 @@ func _on_novo_jogo_pressed():
 	if LevelManager: LevelManager.indice_fase_atual = 0
 	Game_State.carregar_save_ao_iniciar = false
 	Game_State.carregar_auto_save_ao_iniciar = false
-	get_tree().change_scene_to_file("res://scenes/Main.tscn")
+	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 func _on_carregar_pressed():
 	Game_State.reset_run_state()
 	Game_State.carregar_save_ao_iniciar = true
-	get_tree().change_scene_to_file("res://scenes/Main.tscn")
+	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 func _on_arcade_pressed():
 	Game_State.reset_run_state()
@@ -40,7 +40,7 @@ func _on_arcade_pressed():
 	Game_State.carregar_save_ao_iniciar = false
 	Game_State.carregar_auto_save_ao_iniciar = false
 	Game_State.is_in_hub = false
-	get_tree().change_scene_to_file("res://scenes/Main.tscn")
+	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 # --- FUNÇÃO DO LEADERBOARD ---
 func _on_leaderboard_pressed():

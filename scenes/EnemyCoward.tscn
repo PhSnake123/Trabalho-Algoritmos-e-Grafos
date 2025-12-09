@@ -50,9 +50,9 @@ script = ExtResource("1_yt08f")
 passos_por_turno = 2
 peso_astar = 100.0
 max_hp = 30
-atk = 15
+atk = 12
 def = 3
-poise = 1
+poise = 0
 
 [node name="HealthBar" type="ProgressBar" parent="."]
 z_index = 90

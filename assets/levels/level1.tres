@@ -9,7 +9,7 @@
 [ext_resource type="Resource" uid="uid://dw8acft16nuye" path="res://assets/iteminfo/DEFUp.tres" id="3_x7rjk"]
 [ext_resource type="PackedScene" uid="uid://c7b14t62lbhak" path="res://scenes/EnemyMalware.tscn" id="5_5r8d4"]
 [ext_resource type="AudioStream" uid="uid://dsmv5ehn11k3x" path="res://Audio/music/Mercury.wav" id="9_e5mh7"]
-[ext_resource type="Script" uid="uid://c3gg5ncd3wjqb" path="res://scripts/contador_de_final.gd" id="11_x7rjk"]
+[ext_resource type="Script" uid="uid://cemxcytrrhs" path="res://scripts/fase1.gd" id="10_xbu8s"]
 
 [sub_resource type="Resource" id="Resource_n2dr7"]
 script = ExtResource("1_11fua")
@@ -52,7 +52,6 @@ intensidade_glow = 5.0
 lista_baus_especificos = Array[ExtResource("1_11fua")]([SubResource("Resource_n2dr7"), SubResource("Resource_4m703"), SubResource("Resource_bin7k")])
 qtd_moedas = 10
 modo_jogo = "MST"
-tempo_par_tolerancia = 2.5
 qtd_terminais = 2
 salas_qtd = 1
 salas_tamanho_min = 3
@@ -64,5 +63,5 @@ tiles_especiais = {
 "Lama": 10
 }
 lista_inimigos = Array[ExtResource("1_vgqkp")]([SubResource("Resource_e23yg"), SubResource("Resource_w4eao")])
-script_logico = ExtResource("11_x7rjk")
+script_logico = ExtResource("10_xbu8s")
 metadata/_custom_type_script = "uid://d34551vbrdkqx"

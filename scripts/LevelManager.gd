@@ -91,7 +91,7 @@ func avancar_para_proxima_fase():
 func _carregar_cena_main():
 	# Reinicia a cena Main. O Main._ready() vai perguntar ao LevelManager 
 	# "quem sou eu?" e o LevelManager vai responder baseado no is_in_hub.
-	get_tree().change_scene_to_file("res://scenes/Main.tscn")
+	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 # LevelManager.gd
 

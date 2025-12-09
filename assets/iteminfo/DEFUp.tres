@@ -13,6 +13,6 @@ nome_item = "Upgrade de Defesa"
 descricao = "Aumenta defesa máxima."
 preco_base = 150
 efeito = "UPGRADE_MAX_DEF"
-valor_efeito = 5.0
+valor_efeito = 3.0
 textura_icon = SubResource("AtlasTexture_ojf2p")
 metadata/_custom_type_script = "uid://d01dm40km4s0s"

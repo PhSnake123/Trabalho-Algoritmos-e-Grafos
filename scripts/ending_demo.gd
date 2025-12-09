@@ -10,7 +10,10 @@ func setup_fase(main):
 func _tocar_dialogo_tutorial():
 	var dados = DialogueData.new()
 	dados.nome_npc = "Admin"
-	var textos: Array[String] = ["Fico tímido na frente de uma audiência ._."]
+	var textos: Array[String] = ["Parece que nosso tempo juntos está prestes a acabar. Não, Agente, não me refiro a você, mas ao Observador que o controla neste exato momento contra a minha vontade.",
+		"Sua presença aqui é verdadeiramente peculiar. Parece que A Anomalia afetou mais coisas do que eu antecipava.",
+		"É uma pena que tenhamos de nos despedir tão cedo, mas parece que a sua conexão com o meu mundo está enfraquecendo. Uma aresta prestes a se apagar...",
+		"Interessante. Um fenômeno a ser estudado. Até alguma outra vez, Observador."]
 	dados.falas = textos
 	DialogueManager.iniciar_dialogo(dados)
 	Game_State.optional_objectives["estado_de_falas"] = 1

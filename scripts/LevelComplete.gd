@@ -17,6 +17,8 @@ func _ready():
 	elif Game_State.status_vitoria == "ROTA INEFICIENTE": lbl_status.modulate = Color.RED
 	else: lbl_status.modulate = Color.YELLOW
 	
+	Game_State.optional_objectives["estado_de_falas"] = 0
+	
 	# Conecta o botão (agora fazemos isso antes do if/else para garantir)
 	btn_prosseguir.pressed.connect(_on_prosseguir)
 	
